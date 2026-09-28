@@ -141,7 +141,8 @@ select{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid
   </div>
 
   <div class="actions">
-    <button class="btn primary" id="copy">📋 Copy my result</button>
+    <button class="btn primary" id="share">📸 Share my result</button>
+    <button class="btn" id="copy">📋 Copy</button>
   </div>
 
   <h2>More small systems</h2>
@@ -192,6 +193,48 @@ select{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid
     var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx);
     try{localStorage.setItem(KEY+"-theme",nx);}catch(e){}});
   var tt; function toast(m){var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},1600);}
+
+  // --- Jaettava tuloskortti (1080x1920, IG Story / TikTok) ---
+  function shareCard(o){
+    var c=document.createElement("canvas"); c.width=1080; c.height=1920; var x=c.getContext("2d");
+    var F='"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif';
+    var g=x.createLinearGradient(0,0,0,1920); g.addColorStop(0,"#16140F"); g.addColorStop(1,"#241C12"); x.fillStyle=g; x.fillRect(0,0,1080,1920);
+    var r=x.createRadialGradient(900,160,40,900,160,700); r.addColorStop(0,"rgba(201,119,42,.35)"); r.addColorStop(1,"rgba(201,119,42,0)"); x.fillStyle=r; x.fillRect(0,0,1080,1920);
+    function t(s,y,size,col,w,al){x.font=(w||"600")+" "+size+"px "+F; x.fillStyle=col; x.textAlign=al||"left"; x.fillText(s,90,y);}
+    function wrap(s,y,size,col,w,maxW){x.font=(w||"400")+" "+size+"px "+F; x.fillStyle=col; x.textAlign="left"; var words=s.split(" "),line="",yy=y;
+      for(var i=0;i<words.length;i++){var test=line?line+" "+words[i]:words[i]; if(x.measureText(test).width>maxW&&line){x.fillText(line,90,yy); line=words[i]; yy+=size*1.3;} else line=test;} x.fillText(line,90,yy); return yy;}
+    t(o.kicker.toUpperCase(),330,40,"#c9772a","700");
+    var size=260; x.font="800 "+size+"px "+F; while(x.measureText(o.big).width>900&&size>120){size-=10; x.font="800 "+size+"px "+F;}
+    x.fillStyle="#F5F0E8"; x.textAlign="left"; x.fillText(o.big,84,330+size+40);
+    var y=wrap(o.unit,330+size+175,68,"#B8B0A4","600",900);
+    y=wrap(o.line,y+110,48,"#F5F0E8","400",900);
+    x.fillStyle="rgba(255,255,255,.06)"; x.beginPath(); if(x.roundRect) x.roundRect(90,1450,900,230,36); else x.rect(90,1450,900,230); x.fill();
+    t("What's YOUR number?",1540,52,"#F5F0E8","700");
+    t(o.url,1615,40,"#c9772a","600");
+    t("@lukas.systemized  ·  Otto approved 🐶",1800,38,"#8C8478","500");
+    return new Promise(function(res){c.toBlob(res,"image/png");});
+  }
+  function shareResult(o){
+    shareCard(o).then(function(blob){
+      var file=new File([blob],o.file,{type:"image/png"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        navigator.share({files:[file],text:o.text}).catch(function(){});
+      } else {
+        var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=o.file; document.body.appendChild(a); a.click(); a.remove();
+        toast("Card saved — post it to your Story");
+      }
+    });
+  }
+
+  $("share").addEventListener("click",function(){
+    var c=calc(), cur=($("cur").value||"").trim(), p=parseFloat($("price").value)||0;
+    var how={"once":"one time","12":"a month","52":"a week","260":"every workday"}[c.f];
+    shareResult({kicker:"What it really costs", big:cur+fmt(c.fv), unit:"in "+c.y+" years, if invested at "+(c.r*100).toFixed(1).replace(".0","")+"% instead",
+      line:"The price tag said "+cur+fmt(p)+" "+how+". Buy it — but on purpose.",
+      url:"niglasa-bit.github.io/lukas-tools/future-cost", file:"my-future-cost.png",
+      text:"This purchase really costs me "+cur+fmt(c.fv)+" 😳 See yours: https://niglasa-bit.github.io/lukas-tools/future-cost/"});
+  });
+
   render();
 })();
 </script>
