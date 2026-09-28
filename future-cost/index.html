@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Future Cost Calculator</title>
+<meta name="description" content="What a purchase really costs if you had invested it instead — plus the Rich Dad asset test. Free, by Lukas · The Systemized Life.">
+<meta name="theme-color" content="#16140F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316140F'/%3E%3Ccircle cx='32' cy='30' r='14' fill='none' stroke='%23c9772a' stroke-width='5'/%3E%3Cpath d='M32 44v10' stroke='%23c9772a' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F7F3EC; --surface:#FFFFFF; --surface2:#F0EADF; --line:#E2D9CA;
+  --ink:#1E1B16; --ink2:#5E574C; --muted:#8A8276;
+  --accent:#B0621C; --accent-ink:#FFFFFF; --accent-soft:#F6E6D4;
+  --good:#2F7D4F; --bad:#B3261E;
+  --radius:16px; --shadow:0 1px 2px rgba(30,27,22,.06),0 6px 20px rgba(30,27,22,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16140F; --surface:#1F1C16; --surface2:#27231C; --line:#3A342A;
+    --ink:#F5F0E8; --ink2:#B8B0A4; --muted:#8C8478;
+    --accent:#c9772a; --accent-ink:#16140F; --accent-soft:#3A2915;
+    --good:#5DBB84; --bad:#EF7A70; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16140F; --surface:#1F1C16; --surface2:#27231C; --line:#3A342A;
+  --ink:#F5F0E8; --ink2:#B8B0A4; --muted:#8C8478;
+  --accent:#c9772a; --accent-ink:#16140F; --accent-soft:#3A2915;
+  --good:#5DBB84; --bad:#EF7A70; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 40px}
+header{padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand b{display:block;font-size:20px;letter-spacing:-.01em}
+.brand span{font-size:13px;color:var(--muted)}
+h2{font-size:17px;margin:24px 0 10px;letter-spacing:-.01em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card+.card{margin-top:12px}
+.muted{color:var(--muted)} .ink2{color:var(--ink2)} .small{font-size:13px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:12px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;min-height:44px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:14px}
+.btn:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:44px;width:100%}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
+.field{margin-top:14px}
+.field:first-child{margin-top:0}
+.field .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.field label{font-size:14px;font-weight:600;color:var(--ink2)}
+.field output{font-weight:700;font-variant-numeric:tabular-nums}
+.hint{font-size:12.5px;color:var(--muted);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hero{padding:22px 16px}
+.hero .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.big{font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums;margin:6px 0 2px}
+.big small{font-size:20px;font-weight:700;color:var(--ink2);letter-spacing:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:12px;padding:10px}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.bar{height:12px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+.bar.good i{background:var(--good)}
+.cmp{display:grid;grid-template-columns:52px minmax(0,1fr) 58px;gap:10px;align-items:center;margin-top:10px;font-size:14px}
+.cmp .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.cmp .bar{margin:0}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.check:first-of-type{border-top:0}
+.check input{width:22px;height:22px;margin-top:1px;accent-color:var(--good);flex:none}
+.check div b{display:block;font-size:15px}
+.check div span{font-size:13px;color:var(--muted)}
+.check.done div b{text-decoration:line-through;color:var(--muted)}
+.progress{font-size:13px;font-weight:700;color:var(--good)}
+.source{font-size:12.5px;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px;margin-top:10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6}
+footer a{color:var(--accent)}
+@media (max-width:400px){.big{font-size:42px}.stat b{font-size:17px}.stat{padding:8px}}
+select{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:44px;width:100%}
+.big{font-size:48px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><b>The Future Cost Calculator</b><span>by Lukas · The Systemized Life</span></div>
+    <button class="btn sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
+  </header>
+
+  <div class="card hero" aria-live="polite">
+    <div class="kicker">What it really costs you</div>
+    <div class="big"><span id="fv">0</span></div>
+    <div class="ink2" id="fvLine">in 30 years, if invested instead.</div>
+    <div class="stats">
+      <div class="stat"><b id="paid">0</b><span>you pay</span></div>
+      <div class="stat"><b id="lost">0</b><span>growth given up</span></div>
+      <div class="stat"><b id="hours">—</b><span>hours of work</span></div>
+    </div>
+  </div>
+
+  <h2>1 · The purchase</h2>
+  <div class="card">
+    <div class="grid2 field">
+      <div><label class="small ink2" for="price"><b>Price</b></label><input type="number" id="price" min="0" step="1" value="1000" inputmode="decimal"></div>
+      <div><label class="small ink2" for="freq"><b>How often</b></label>
+        <select id="freq"><option value="once">One time</option><option value="12">Every month</option><option value="52">Every week</option><option value="260">Every workday</option></select></div>
+    </div>
+    <div class="field">
+      <div class="top"><label for="years">Years</label><output id="yearsOut"></output></div>
+      <input type="range" id="years" min="1" max="40" value="30">
+    </div>
+    <div class="field">
+      <div class="top"><label for="rate">Yearly return if invested</label><output id="rateOut"></output></div>
+      <input type="range" id="rate" min="0" max="10" step="0.5" value="7">
+      <div class="hint">Long-run stock index averages have been around 7–10% a year before inflation. Not a promise.</div>
+    </div>
+    <div class="grid2 field">
+      <div><label class="small ink2" for="wage"><b>Your hour is worth</b></label><input type="number" id="wage" min="0" step="1" placeholder="optional" inputmode="decimal"></div>
+      <div><label class="small ink2" for="cur"><b>Currency</b></label><input type="text" id="cur" maxlength="4" value="$"></div>
+    </div>
+  </div>
+
+  <h2>2 · The Rich Dad test: asset or liability?</h2>
+  <div class="card">
+    <p class="small ink2" style="margin:0 0 6px">Robert Kiyosaki's rule: an asset puts money in your pocket, a liability takes money out.</p>
+    <label class="check"><input type="checkbox" id="q1"><div><b>It earns money or saves more than it costs</b><span>Rent, dividends, a tool that pays for itself.</span></div></label>
+    <label class="check"><input type="checkbox" id="q2"><div><b>It will likely be worth more later</b><span>Not a phone, not a car.</span></div></label>
+    <label class="check"><input type="checkbox" id="q3"><div><b>I'd still buy it if nobody could see it</b><span>No status tax.</span></div></label>
+    <p style="margin:12px 0 0"><b id="verdict">Verdict: liability</b> <span class="ink2" id="verdictSub"></span></p>
+  </div>
+
+  <h2>3 · Buffett's version</h2>
+  <div class="card">
+    <p style="margin:0">Warren Buffett still lives in the Omaha house he bought in 1958. Frugal isn't cheap — it's refusing to pay the future cost of things you won't remember owning.</p>
+    <p class="source">Illustration only. Returns are not guaranteed; past performance ≠ future results. Not financial advice.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" id="copy">📋 Copy my result</button>
+  </div>
+
+  <h2>More small systems</h2>
+  <div class="card">
+    <p style="margin:0 0 10px">Run your whole plan, not just one purchase: the free Sunday Wealth Tracker has a compounding tab.</p>
+    <a class="btn" href="https://beacons.ai/lukas.minimal" target="_blank" rel="noopener">🆓 Free tracker &amp; more tools →</a>
+  </div>
+
+  <footer>
+    One small system at a time. ☕<br>
+    Lukas is an AI-generated character. Your numbers stay on this device.<br>
+    <a href="https://beacons.ai/lukas.minimal" target="_blank" rel="noopener">beacons.ai/lukas.minimal</a>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+  var KEY="lukas-future-cost-v1", $=function(i){return document.getElementById(i);};
+  var ids=["price","freq","years","rate","wage","cur","q1","q2","q3"];
+  var st={}; try{st=JSON.parse(localStorage.getItem(KEY)||"{}");}catch(e){}
+  try{var t=localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
+  ids.forEach(function(i){var el=$(i); if(st[i]!==undefined){ if(el.type==="checkbox") el.checked=st[i]; else el.value=st[i]; }
+    el.addEventListener("input",save); el.addEventListener("change",save);});
+  function save(){ids.forEach(function(i){var el=$(i); st[i]=el.type==="checkbox"?el.checked:el.value;}); try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){} render();}
+  function fmt(n){return Math.round(n).toLocaleString("en-US");}
+  function calc(){
+    var p=Math.max(0,parseFloat($("price").value)||0), y=+$("years").value, r=(+$("rate").value)/100, f=$("freq").value;
+    var fv, paid;
+    if(f==="once"){ fv=p*Math.pow(1+r,y); paid=p; }
+    else { var n=+f, rp=r/n, k=n*y; fv=rp>0? p*((Math.pow(1+rp,k)-1)/rp) : p*k; paid=p*k; }
+    return {fv:fv, paid:paid, y:y, r:r, f:f};
+  }
+  function render(){
+    var c=calc(), cur=($("cur").value||"").trim(), w=parseFloat($("wage").value);
+    $("yearsOut").textContent=c.y+" yrs"; $("rateOut").textContent=(c.r*100).toFixed(1).replace(".0","")+"%";
+    $("fv").textContent=cur+fmt(c.fv);
+    $("fvLine").textContent="in "+c.y+" years, if invested at "+(c.r*100).toFixed(1).replace(".0","")+"% instead.";
+    $("paid").textContent=cur+fmt(c.paid); $("lost").textContent=cur+fmt(Math.max(0,c.fv-c.paid));
+    $("hours").textContent=w>0? fmt(c.paid/w)+" h" : "—";
+    var yes=["q1","q2","q3"].filter(function(q){return $(q).checked;}).length;
+    $("verdict").textContent= yes>=2 ? "Verdict: probably an asset" : "Verdict: liability";
+    $("verdictSub").textContent= yes>=2 ? "— it may pay you back." : "— fine if it's worth "+cur+fmt(c.fv)+" to you. Just decide on purpose.";
+  }
+  $("copy").addEventListener("click",function(){var c=calc(),cur=($("cur").value||"").trim();
+    var txt="This purchase really costs me "+cur+fmt(c.fv)+" in "+c.y+" years. Future Cost Calculator by Lukas → beacons.ai/lukas.minimal";
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function(){toast("Copied");},function(){prompt("Copy this:",txt);}); else prompt("Copy this:",txt);});
+  $("theme").addEventListener("click",function(){var root=document.documentElement,cu=root.getAttribute("data-theme");
+    var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx);
+    try{localStorage.setItem(KEY+"-theme",nx);}catch(e){}});
+  var tt; function toast(m){var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},1600);}
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Focus Leak Calculator</title>
+<meta name="description" content="How many hours a year do interruptions and desk clutter cost you? A free calculator by Lukas · The Systemized Life.">
+<meta name="theme-color" content="#16140F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316140F'/%3E%3Ccircle cx='32' cy='30' r='14' fill='none' stroke='%23c9772a' stroke-width='5'/%3E%3Cpath d='M32 44v10' stroke='%23c9772a' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F7F3EC; --surface:#FFFFFF; --surface2:#F0EADF; --line:#E2D9CA;
+  --ink:#1E1B16; --ink2:#5E574C; --muted:#8A8276;
+  --accent:#B0621C; --accent-ink:#FFFFFF; --accent-soft:#F6E6D4;
+  --good:#2F7D4F; --bad:#B3261E;
+  --radius:16px; --shadow:0 1px 2px rgba(30,27,22,.06),0 6px 20px rgba(30,27,22,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16140F; --surface:#1F1C16; --surface2:#27231C; --line:#3A342A;
+    --ink:#F5F0E8; --ink2:#B8B0A4; --muted:#8C8478;
+    --accent:#c9772a; --accent-ink:#16140F; --accent-soft:#3A2915;
+    --good:#5DBB84; --bad:#EF7A70; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16140F; --surface:#1F1C16; --surface2:#27231C; --line:#3A342A;
+  --ink:#F5F0E8; --ink2:#B8B0A4; --muted:#8C8478;
+  --accent:#c9772a; --accent-ink:#16140F; --accent-soft:#3A2915;
+  --good:#5DBB84; --bad:#EF7A70; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 40px}
+header{padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand b{display:block;font-size:20px;letter-spacing:-.01em}
+.brand span{font-size:13px;color:var(--muted)}
+h2{font-size:17px;margin:24px 0 10px;letter-spacing:-.01em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card+.card{margin-top:12px}
+.muted{color:var(--muted)} .ink2{color:var(--ink2)} .small{font-size:13px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:12px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;min-height:44px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:14px}
+.btn:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:44px;width:100%}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
+.field{margin-top:14px}
+.field:first-child{margin-top:0}
+.field .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.field label{font-size:14px;font-weight:600;color:var(--ink2)}
+.field output{font-weight:700;font-variant-numeric:tabular-nums}
+.hint{font-size:12.5px;color:var(--muted);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hero{padding:22px 16px}
+.hero .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.big{font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums;margin:6px 0 2px}
+.big small{font-size:20px;font-weight:700;color:var(--ink2);letter-spacing:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stat{background:var(--surface2);border-radius:12px;padding:10px}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.bar{height:12px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+.bar.good i{background:var(--good)}
+.cmp{display:grid;grid-template-columns:52px minmax(0,1fr) 58px;gap:10px;align-items:center;margin-top:10px;font-size:14px}
+.cmp .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.cmp .bar{margin:0}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.check:first-of-type{border-top:0}
+.check input{width:22px;height:22px;margin-top:1px;accent-color:var(--good);flex:none}
+.check div b{display:block;font-size:15px}
+.check div span{font-size:13px;color:var(--muted)}
+.check.done div b{text-decoration:line-through;color:var(--muted)}
+.progress{font-size:13px;font-weight:700;color:var(--good)}
+.source{font-size:12.5px;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px;margin-top:10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6}
+footer a{color:var(--accent)}
+@media (max-width:400px){.big{font-size:42px}.stat b{font-size:17px}.stat{padding:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><b>Focus Leak Calculator</b><span>by Lukas · The Systemized Life</span></div>
+    <button class="btn sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
+  </header>
+
+  <div class="card hero" aria-live="polite">
+    <div class="kicker">Your desk leaks</div>
+    <div class="big"><span id="yearHours">0</span> <small>hours a year</small></div>
+    <div class="ink2" id="yearDays">That's 0 full workdays.</div>
+    <div class="stats">
+      <div class="stat"><b id="dayMin">0</b><span>min / day</span></div>
+      <div class="stat"><b id="weekHours">0</b><span>hours / week</span></div>
+      <div class="stat"><b id="yearMoney">—</b><span>value / year</span></div>
+    </div>
+  </div>
+
+  <h2>1 · Your numbers</h2>
+  <div class="card">
+    <div class="field">
+      <div class="top"><label for="interrupts">Interruptions per workday</label><output id="interruptsOut"></output></div>
+      <input type="range" id="interrupts" min="1" max="40" step="1" value="10">
+      <div class="hint">Phone buzz, a notification, "just checking" email, looking at a mess.</div>
+    </div>
+    <div class="field">
+      <div class="top"><label for="minutes">Minutes to get back in the zone</label><output id="minutesOut"></output></div>
+      <input type="range" id="minutes" min="1" max="25" step="1" value="3">
+      <div class="hint">Be honest. Not the glance — the time until you're working at full speed again.</div>
+    </div>
+    <div class="grid2 field">
+      <div>
+        <label class="small ink2" for="days"><b>Workdays / week</b></label>
+        <input type="number" id="days" min="1" max="7" value="5" inputmode="numeric">
+      </div>
+      <div>
+        <label class="small ink2" for="weeks"><b>Work weeks / year</b></label>
+        <input type="number" id="weeks" min="1" max="52" value="46" inputmode="numeric">
+      </div>
+    </div>
+    <div class="grid2 field">
+      <div>
+        <label class="small ink2" for="rate"><b>Hour is worth</b></label>
+        <input type="number" id="rate" min="0" step="1" placeholder="optional" inputmode="decimal">
+      </div>
+      <div>
+        <label class="small ink2" for="cur"><b>Currency</b></label>
+        <input type="text" id="cur" maxlength="4" value="$">
+      </div>
+    </div>
+  </div>
+
+  <h2>2 · What if you fixed half of it?</h2>
+  <div class="card">
+    <div class="field">
+      <div class="top"><label for="cut">Interruptions removed</label><output id="cutOut"></output></div>
+      <input type="range" id="cut" min="0" max="100" step="10" value="50">
+    </div>
+    <div class="cmp"><span>Now</span><div class="bar"><i id="barNow"></i></div><span class="v" id="vNow"></span></div>
+    <div class="cmp"><span>After</span><div class="bar good"><i id="barAfter"></i></div><span class="v" id="vAfter"></span></div>
+    <p class="ink2" style="margin:14px 0 0">You get back <b id="backHours">0 hours</b> a year — <b id="backDays">0 workdays</b> — without working a minute longer.</p>
+  </div>
+
+  <h2>3 · The one-rule desk reset <span class="progress" id="progress"></span></h2>
+  <div class="card" id="checklist">
+    <p class="small ink2" style="margin:0 0 6px"><b>Rule:</b> nothing on the desk that doesn't earn its place. 10 minutes, once.</p>
+  </div>
+
+  <h2>Why a clean desk actually matters</h2>
+  <div class="card">
+    <p style="margin:0">Your brain can't fully ignore what's in front of you. When several objects are in view, they compete for processing in the visual cortex. Fewer things in view means less competition for your attention.</p>
+    <p class="source">McMains, S. &amp; Kastner, S. (2011). Interactions of top-down and bottom-up mechanisms in human visual cortex. <i>Journal of Neuroscience</i>, 31(2), 587–597. Princeton Neuroscience Institute.</p>
+    <p class="small muted" style="margin:10px 0 0">The calculator uses only your own estimates. It's a mirror, not a diagnosis.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" id="copy">📋 Copy my result</button>
+    <button class="btn" id="reset">Reset</button>
+  </div>
+
+  <h2>More small systems</h2>
+  <div class="card">
+    <p style="margin:0 0 10px">Hours back are only useful if they go somewhere. Put the time into one weekly 30-minute money reset.</p>
+    <a class="btn" href="https://beacons.ai/lukas.minimal" target="_blank" rel="noopener">🆓 Free Sunday Wealth Tracker &amp; more tools →</a>
+  </div>
+
+  <footer>
+    One small system at a time. ☕<br>
+    Lukas is an AI-generated character. Your numbers stay on this device.<br>
+    <a href="https://beacons.ai/lukas.minimal" target="_blank" rel="noopener">beacons.ai/lukas.minimal</a>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var KEY = "lukas-focus-leak-v1";
+  var $ = function(id){ return document.getElementById(id); };
+  var TASKS = [
+    ["Clear everything off the desk", "Yes, everything. Start from zero."],
+    ["Put back only what you use daily", "Laptop, one notebook, one pen. Maybe a lamp."],
+    ["Hide the cables", "Under the desk: clips, a tray, magnets, velcro."],
+    ["Phone out of sight", "Another room, a drawer, or face-down behind you."],
+    ["Turn off non-human notifications", "If a person didn't send it, it can wait."],
+    ["Give leftovers one home", "A box or drawer. Out of view, not thrown away."],
+    ["Take a 'before & after' photo", "Proof for future you. It works."]
+  ];
+  var state = { interrupts:10, minutes:3, days:5, weeks:46, rate:"", cur:"$", cut:50, done:[] };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) for (var k in saved) state[k] = saved[k]; } catch(e){}
+  try { var t = localStorage.getItem(KEY + "-theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch(e){}
+
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+  function fmt(n, d){ return Number(n).toLocaleString("en-US", { maximumFractionDigits: d == null ? 0 : d, minimumFractionDigits: 0 }); }
+  function num(v, lo, hi, def){ v = parseFloat(v); if (isNaN(v)) return def; return Math.min(hi, Math.max(lo, v)); }
+
+  var list = $("checklist");
+  TASKS.forEach(function(t, i){
+    var l = document.createElement("label"); l.className = "check";
+    l.innerHTML = '<input type="checkbox"><div><b></b><span></span></div>';
+    l.querySelector("b").textContent = t[0]; l.querySelector("span").textContent = t[1];
+    var cb = l.querySelector("input"); cb.checked = state.done.indexOf(i) > -1;
+    cb.addEventListener("change", function(){
+      state.done = state.done.filter(function(x){ return x !== i; });
+      if (cb.checked) state.done.push(i);
+      save(); render();
+    });
+    list.appendChild(l);
+  });
+
+  var ids = ["interrupts","minutes","days","weeks","rate","cur","cut"];
+  ids.forEach(function(id){
+    var el = $(id); el.value = state[id];
+    el.addEventListener("input", function(){ state[id] = el.value; save(); render(); });
+  });
+
+  function calc(){
+    var i = num(state.interrupts,1,40,10), m = num(state.minutes,1,25,3);
+    var d = num(state.days,1,7,5), w = num(state.weeks,1,52,46);
+    var dayMin = i * m, weekH = dayMin * d / 60, yearH = weekH * w;
+    return { i:i, m:m, dayMin:dayMin, weekH:weekH, yearH:yearH, yearDays: yearH / 8 };
+  }
+
+  function render(){
+    var c = calc(), cur = (state.cur || "").trim(), rate = parseFloat(state.rate);
+    $("interruptsOut").textContent = c.i + "×";
+    $("minutesOut").textContent = c.m + " min";
+    $("yearHours").textContent = fmt(c.yearH);
+    $("yearDays").textContent = "That's " + fmt(c.yearDays, 1) + " full 8-hour workdays. Every year.";
+    $("dayMin").textContent = fmt(c.dayMin);
+    $("weekHours").textContent = fmt(c.weekH, 1);
+    $("yearMoney").textContent = rate > 0 ? cur + fmt(c.yearH * rate) : "—";
+
+    var cut = num(state.cut,0,100,50) / 100, after = c.yearH * (1 - cut), back = c.yearH - after;
+    $("cutOut").textContent = Math.round(cut * 100) + "%";
+    $("barNow").style.width = "100%";
+    $("barAfter").style.width = (c.yearH ? after / c.yearH * 100 : 0) + "%";
+    $("vNow").textContent = fmt(c.yearH) + " h";
+    $("vAfter").textContent = fmt(after) + " h";
+    $("backHours").textContent = fmt(back) + " hours" + (rate > 0 ? " (" + cur + fmt(back * rate) + ")" : "");
+    $("backDays").textContent = fmt(back / 8, 1) + " workdays";
+
+    var boxes = list.querySelectorAll(".check");
+    boxes.forEach(function(b, i){ b.classList.toggle("done", state.done.indexOf(i) > -1); });
+    $("progress").textContent = state.done.length ? state.done.length + "/" + TASKS.length : "";
+  }
+
+  $("copy").addEventListener("click", function(){
+    var c = calc();
+    var txt = "My desk leaks " + fmt(c.yearH) + " hours of focus a year (" + fmt(c.yearDays,1) + " workdays). " +
+              "Calculated with Lukas's free Focus Leak Calculator → beacons.ai/lukas.minimal";
+    var done = function(){ toast("Copied — paste it anywhere"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ prompt("Copy this:", txt); });
+    else prompt("Copy this:", txt);
+  });
+  $("reset").addEventListener("click", function(){
+    state = { interrupts:10, minutes:3, days:5, weeks:46, rate:"", cur:state.cur, cut:50, done:[] };
+    ids.forEach(function(id){ $(id).value = state[id]; });
+    list.querySelectorAll("input").forEach(function(cb){ cb.checked = false; });
+    save(); render();
+  });
+  $("theme").addEventListener("click", function(){
+    var root = document.documentElement, cur = root.getAttribute("data-theme");
+    var dark = cur ? cur === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = dark ? "light" : "dark"; root.setAttribute("data-theme", next);
+    try { localStorage.setItem(KEY + "-theme", next); } catch(e){}
+  });
+  var tt;
+  function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(tt); tt = setTimeout(function(){ t.classList.remove("on"); }, 1800); }
+
+  render();
+})();
+</script>
+</body>
+</html>
