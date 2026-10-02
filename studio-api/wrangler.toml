@@ -6,7 +6,7 @@ compatibility_date = "2026-01-01"
 # then paste the id it prints below.
 [[kv_namespaces]]
 binding = "STUDIO"
-id = "REPLACE_WITH_KV_ID"
+id = "92f802a9b9a246ddb3a8f4ab17dc22bb"
 
 [vars]
 # Only orders whose Beacons product name contains this text unlock the app (case-insensitive).
