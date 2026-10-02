@@ -80,4 +80,67 @@ assert.equal(r.j.error, "revoked");
 r = await call("/admin", { headers: { "X-Admin-Token": "nope" } });
 assert.equal(r.status, 403);
 
+// 9. several products on one lock (default rules, no PRODUCT_MATCH)
+delete env.PRODUCT_MATCH; env.STUDIO = new KV();
+const sale = (email, order, product) => call("/sync", { method: "POST", headers: { "X-Sync-Secret": "sync" }, body: { sales: [{ email, name: "T", order, product }] } });
+const codeFor = async (email) => { const m = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((x) => x.to === email).pop(); return m.subject.match(/\d{6}/)[0]; };
+const unlock = async (email, order, deviceId, product) => {
+  const a = await call("/activate", { method: "POST", body: { email, order, deviceId, product } });
+  if (a.j.status !== "code_sent") return a.j;
+  return (await call("/verify", { method: "POST", body: { email, code: await codeFor(email), deviceId } })).j;
+};
+const get = (token, product) => call("/content" + (product ? "?product=" + product : ""), { headers: { Authorization: "Bearer " + token } });
+
+// Studio buyer: Studio opens as before, Year does not
+await sale("s@x.com", "studio-order-1", "Money Plan Studio");
+r = await unlock("s@x.com", "studio-order-1", "s1");
+assert.equal(r.status, "ok"); const sTok = r.token;
+r = await get(sTok); assert.equal(r.status, 200); assert.equal(r.j.content.stages.secure.title, "Secure"); assert.deepEqual(r.j.products, ["studio"]);
+r = await get(sTok, "year"); assert.equal(r.status, 403); assert.equal(r.j.error, "not_owned");
+r = await call("/activate", { method: "POST", body: { email: "s@x.com", order: "studio-order-1", deviceId: "s2", product: "year" } });
+assert.equal(r.j.status, "pending", "Studio order does not unlock Year");
+assert.equal((await env.STUDIO.get("pending:s@x.com", "json")).product, "year");
+
+// the hidden upgrade syncs → the same device opens Year with no new code
+await sale("s@x.com", "upgrade-order-1", "The Systemized Year Upgrade");
+r = await get(sTok, "year"); assert.equal(r.status, 200); assert.equal(r.j.content.version, 0); assert.deepEqual(r.j.products.sort(), ["studio", "year"]);
+r = await call("/activate", { method: "POST", body: { email: "s@x.com", order: "upgrade-order-1", deviceId: "s1", product: "year" } });
+assert.equal(r.j.status, "already_active");
+
+// upgrade bought without the Studio unlocks nothing
+await sale("u@x.com", "upgrade-order-2", "The Systemized Year Upgrade");
+r = await call("/activate", { method: "POST", body: { email: "u@x.com", order: "upgrade-order-2", deviceId: "u1", product: "year" } });
+assert.equal(r.j.status, "pending");
+
+// Year alone: Year opens, the Studio app does not, code email names the product
+await sale("y@x.com", "year-order-1", "The Systemized Year");
+r = await call("/activate", { method: "POST", body: { email: "y@x.com", order: "year-order-1", deviceId: "y1" } });
+assert.equal(r.j.status, "pending", "Studio app (no product) stays locked for a Year-only buyer");
+r = await call("/activate", { method: "POST", body: { email: "y@x.com", order: "year-order-1", deviceId: "y1", product: "year" } });
+assert.equal(r.j.status, "code_sent");
+let ym = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((x) => x.to === "y@x.com").pop();
+assert.match(ym.subject, /The Systemized Year code/);
+r = await call("/verify", { method: "POST", body: { email: "y@x.com", code: ym.subject.match(/\d{6}/)[0], deviceId: "y1" } });
+r = await get(r.j.token); assert.equal(r.status, 403);
+
+// bundle opens both; devices are shared across products (limit 2)
+await sale("b@x.com", "pass-order-1", "Systemized Life Pass");
+r = await unlock("b@x.com", "pass-order-1", "b1", "year"); const bTok = r.token;
+assert.equal((await get(bTok)).status, 200); assert.equal((await get(bTok, "year")).status, 200);
+r = await unlock("b@x.com", "pass-order-1", "b2"); assert.equal(r.status, "ok");
+r = await call("/activate", { method: "POST", body: { email: "b@x.com", order: "pass-order-1", deviceId: "b3", product: "year" } });
+assert.equal(r.j.status, "device_limit");
+
+// hand approval: products chosen on the admin page; old approvals mean Studio
+r = await call("/admin/approve", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { email: "h@x.com", products: ["year"] } });
+r = await call("/activate", { method: "POST", body: { email: "h@x.com", order: "whatever-123", deviceId: "h1", product: "year" } });
+assert.equal(r.j.status, "code_sent");
+r = await call("/activate", { method: "POST", body: { email: "h@x.com", order: "whatever-123", deviceId: "h1" } });
+assert.equal(r.j.status, "pending");
+await env.STUDIO.put("buyer:old@x.com", JSON.stringify({ email: "old@x.com", orders: [], devices: [], approved: true }));
+r = await call("/activate", { method: "POST", body: { email: "old@x.com", order: "whatever-123", deviceId: "o1" } });
+assert.equal(r.j.status, "code_sent", "approvals made before this change still open the Studio");
+r = await call("/admin", { headers: { "X-Admin-Token": "admin", Accept: "application/json" } });
+assert.deepEqual(r.j.buyers.find((b) => b.email === "s@x.com").products.sort(), ["studio", "year"]);
+
 console.log("ok · all API checks passed");
