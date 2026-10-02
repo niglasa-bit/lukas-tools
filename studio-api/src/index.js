@@ -6,13 +6,38 @@
 // code sent to that email, and may activate up to MAX_DEVICES devices.
 // Premium content is only served to a device that holds a valid signed token.
 //
+// Several products share this lock (Money Plan Studio, The Systemized Year, the
+// bundle). One buyer = one email = one device list; what a buyer may open is
+// worked out from their orders on every request (see entitlements()), so a new
+// purchase, an upgrade or a refund applies at the next launch without new codes.
+//
 // KV layout (binding STUDIO):
-//   buyer:<email>   {name,email,orders:[{order,product,amount,date}],devices:[{id,name,created}],approved,created}
-//   pending:<email> {email,order,deviceName,created,attempts}   (activation tried before the sale synced)
+//   buyer:<email>   {name,email,orders:[{order,product,amount,date}],devices:[{id,name,created}],approved,approvedProducts,created}
+//   pending:<email> {email,order,product,deviceName,created,attempts}   (activation tried before the sale synced)
 //   code:<email>    {code,deviceId,deviceName,exp,tries}          (TTL 15 min)
 //   mail:<id>       {to,subject,html,created}                     (outbox, only when no MAIL_WEBHOOK_URL)
 
 import { CONTENT } from "./content.js";
+import { CONTENT_YEAR } from "./content-year.js";
+
+// Product keys an app can ask for, the name used in emails, and the content it gets.
+const PRODUCT_INFO = {
+  studio: { name: "Money Plan Studio", content: CONTENT },
+  year: { name: "The Systemized Year", content: CONTENT_YEAR },
+};
+
+// Which Beacons product names unlock which product keys. First matching rule wins,
+// matched case-insensitively against the product name in the sale email.
+// `requires`: the rule only counts if the buyer already owns that key through
+// another order (the hidden upgrade product is only for Studio buyers).
+// Override with the PRODUCTS var (same JSON shape). Without it, the old single
+// PRODUCT_MATCH keeps working and unlocks the Studio only.
+const DEFAULT_PRODUCTS = [
+  { match: "systemized year upgrade", grants: ["year"], requires: "studio" },
+  { match: "systemized life pass", grants: ["studio", "year"] },
+  { match: "systemized year", grants: ["year"] },
+  { match: "money plan studio", grants: ["studio"] },
+];
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const CODE_TTL = 15 * 60;       // seconds
@@ -42,7 +67,7 @@ async function route(request, env, url) {
   if (p === "/" && m === "GET") return json({ ok: true, service: "money-plan-studio-api" });
   if (p === "/activate" && m === "POST") return activate(request, env);
   if (p === "/verify" && m === "POST") return verify(request, env);
-  if (p === "/content" && m === "GET") return content(request, env);
+  if (p === "/content" && m === "GET") return content(request, env, url);
   if (p === "/me" && m === "GET") return me(request, env);
   if (p === "/me/remove-device" && m === "POST") return removeDevice(request, env);
   if (p === "/sync" && m === "POST") return sync(request, env);
@@ -60,18 +85,19 @@ async function activate(request, env) {
   const order = normOrder(b.order);
   const deviceId = String(b.deviceId || "").slice(0, 64);
   const deviceName = String(b.deviceName || "device").slice(0, 60);
+  const product = productKey(b.product);
   if (!isEmail(email)) return json({ error: "bad_email" }, 400);
   if (order.length < 8) return json({ error: "bad_order" }, 400);
   if (!deviceId) return json({ error: "bad_device" }, 400);
 
   const buyer = await getBuyer(env, email);
-  const ok = buyer && (buyer.approved || hasOrder(buyer, order, env));
+  const ok = buyer && orderUnlocks(buyer, order, product, env);
   if (!ok) {
     // Sale may not have synced yet (Gmail script runs every few minutes). Park it;
     // the admin page shows it with a one-click approve. Never reveal whether the email exists.
     const key = "pending:" + email;
     const prev = (await env.STUDIO.get(key, "json")) || { attempts: 0 };
-    await env.STUDIO.put(key, JSON.stringify({ email, order, deviceName, created: prev.created || now(), last: now(), attempts: (prev.attempts || 0) + 1 }));
+    await env.STUDIO.put(key, JSON.stringify({ email, order, product, deviceName, created: prev.created || now(), last: now(), attempts: (prev.attempts || 0) + 1 }));
     return json({ status: "pending", message: "We couldn't match that order yet. New purchases take a few minutes to arrive. Try again shortly, or reply to your receipt email and Lukas will unlock it by hand." });
   }
 
@@ -90,8 +116,8 @@ async function activate(request, env) {
   await env.STUDIO.put("code:" + email, JSON.stringify({ code, deviceId, deviceName, exp: now() + CODE_TTL, tries: 0 }), { expirationTtl: CODE_TTL });
   await sendMail(env, {
     to: email,
-    subject: `${code} is your Money Plan Studio code`,
-    html: codeMail(buyer.name, code, deviceName),
+    subject: `${code} is your ${PRODUCT_INFO[product].name} code`,
+    html: codeMail(buyer.name, code, deviceName, PRODUCT_INFO[product].name),
   });
   return json({ status: "code_sent", message: "Check your email for a 6-digit code (valid 15 minutes)." });
 }
@@ -128,17 +154,21 @@ async function verify(request, env) {
   return json({ status: "ok", token, name: buyer.name || "", email });
 }
 
-async function content(request, env) {
+async function content(request, env, url) {
   const auth = await authed(request, env);
   if (!auth.ok) return json({ error: auth.error }, 401);
   const { buyer, payload } = auth;
+  const product = productKey(url.searchParams.get("product"));
+  const products = entitlements(buyer, env);
+  if (!products.includes(product)) return json({ error: "not_owned", product, products }, 403);
   // Content is the premium part. Nothing here is cached by the app on disk; every launch re-checks the device.
   const res = {
     name: buyer.name || "",
     email: buyer.email,
     devices: (buyer.devices || []).map((d) => ({ id: d.id, name: d.name, created: d.created, this: d.id === payload.d })),
     maxDevices: parseInt(env.MAX_DEVICES || "3", 10),
-    content: CONTENT,
+    products,
+    content: PRODUCT_INFO[product].content,
   };
   // Refresh token quietly when it is getting old.
   if (now() - payload.iat > TOKEN_MAX_AGE / 2) res.token = await sign(env, { e: buyer.email, d: payload.d, iat: now() });
@@ -148,7 +178,7 @@ async function content(request, env) {
 async function me(request, env) {
   const auth = await authed(request, env);
   if (!auth.ok) return json({ error: auth.error }, 401);
-  return json({ name: auth.buyer.name || "", email: auth.buyer.email, devices: auth.buyer.devices || [] });
+  return json({ name: auth.buyer.name || "", email: auth.buyer.email, devices: auth.buyer.devices || [], products: entitlements(auth.buyer, env) });
 }
 
 // A device can remove another device of the same purchase (so the 3-device limit never traps the buyer).
@@ -216,9 +246,9 @@ async function admin(request, env, url, p) {
   if (p === "/admin" && request.method === "GET") {
     if ((request.headers.get("Accept") || "").includes("text/html")) return new Response(ADMIN_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
     const buyers = [], pending = [];
-    for (const k of (await env.STUDIO.list({ prefix: "buyer:" })).keys) { const b = await env.STUDIO.get(k.name, "json"); if (b) buyers.push(b); }
+    for (const k of (await env.STUDIO.list({ prefix: "buyer:" })).keys) { const b = await env.STUDIO.get(k.name, "json"); if (b) buyers.push({ ...b, products: entitlements(b, env) }); }
     for (const k of (await env.STUDIO.list({ prefix: "pending:" })).keys) { const b = await env.STUDIO.get(k.name, "json"); if (b) pending.push(b); }
-    return json({ buyers, pending, productMatch: env.PRODUCT_MATCH || "", mailMode: env.MAIL_WEBHOOK_URL ? "webhook" : env.RESEND_API_KEY ? "resend" : "outbox" });
+    return json({ buyers, pending, productMatch: productRules(env).map((r) => r.match + " → " + r.grants.join("+") + (r.requires ? " (needs " + r.requires + ")" : "")).join(" · "), mailMode: env.MAIL_WEBHOOK_URL ? "webhook" : env.RESEND_API_KEY ? "resend" : "outbox" });
   }
   const b = request.method === "POST" ? await body(request) : {};
   const email = normEmail(b.email);
@@ -226,6 +256,9 @@ async function admin(request, env, url, p) {
     if (!isEmail(email)) return json({ error: "bad_email" }, 400);
     const buyer = (await getBuyer(env, email)) || { email, name: "", orders: [], devices: [], created: now() };
     buyer.approved = true;
+    // Which products a hand approval opens. Older approvals carry no list and mean the Studio.
+    const grants = (Array.isArray(b.products) ? b.products : ["studio"]).filter((k) => PRODUCT_INFO[k]);
+    buyer.approvedProducts = [...new Set([...(buyer.approvedProducts || []), ...(grants.length ? grants : ["studio"])])];
     if (b.name) buyer.name = String(b.name).slice(0, 80);
     if (b.order) buyer.orders.push({ order: normOrder(b.order), product: "manual", amount: "", date: "", synced: now() });
     await putBuyer(env, buyer);
@@ -262,9 +295,43 @@ async function authed(request, env) {
   return { ok: true, buyer, payload };
 }
 
-function hasOrder(buyer, order, env) {
-  const match = (env.PRODUCT_MATCH || "").toLowerCase();
-  return (buyer.orders || []).some((o) => o.order === order && (!match || o.product === "manual" || (o.product || "").toLowerCase().includes(match)));
+function productKey(s) { const k = String(s || "studio").toLowerCase(); return PRODUCT_INFO[k] ? k : "studio"; }
+
+function productRules(env) {
+  if (env.PRODUCTS) { try { const r = JSON.parse(env.PRODUCTS); if (Array.isArray(r)) return r; } catch {} }
+  if (env.PRODUCT_MATCH && !env.PRODUCTS) return [{ match: env.PRODUCT_MATCH, grants: ["studio"] }];
+  return DEFAULT_PRODUCTS;
+}
+
+// What one order unlocks on its own, before `requires` is checked.
+function orderRule(o, rules) {
+  if (o.product === "manual") return null; // hand approvals live in buyer.approvedProducts
+  const name = String(o.product || "").toLowerCase();
+  return rules.find((r) => name.includes(String(r.match).toLowerCase())) || null;
+}
+
+// Every product key this buyer may open.
+function entitlements(buyer, env) {
+  const rules = productRules(env);
+  const owned = new Set(buyer.approved ? (buyer.approvedProducts || ["studio"]) : []);
+  const later = [];
+  for (const o of buyer.orders || []) {
+    const r = orderRule(o, rules);
+    if (!r) continue;
+    if (r.requires) later.push(r); else r.grants.forEach((k) => owned.add(k));
+  }
+  for (const r of later) if (owned.has(r.requires)) r.grants.forEach((k) => owned.add(k));
+  return [...owned].filter((k) => PRODUCT_INFO[k]);
+}
+
+// Activation: the email + order pair must be real, and the buyer must own the product
+// the app is asking for. A hand-approved buyer needs no order match.
+function orderUnlocks(buyer, order, product, env) {
+  const owned = entitlements(buyer, env);
+  if (!owned.includes(product)) return false;
+  if (buyer.approved && (buyer.approvedProducts || ["studio"]).includes(product)) return true;
+  const rules = productRules(env);
+  return (buyer.orders || []).some((o) => o.order === order && orderRule(o, rules));
 }
 
 async function getBuyer(env, email) { return env.STUDIO.get("buyer:" + email, "json"); }
@@ -327,11 +394,11 @@ async function sendMail(env, mail) {
   await env.STUDIO.put("mail:" + crypto.randomUUID(), JSON.stringify({ ...mail, created: now() }), { expirationTtl: CODE_TTL });
 }
 
-function codeMail(name, code, deviceName) {
+function codeMail(name, code, deviceName, productName) {
   const hi = name ? `Hi ${escapeHtml(name.split(" ")[0])},` : "Hi,";
   return `<div style="font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1F3A5F;max-width:480px">
   <p>${hi}</p>
-  <p>Your Money Plan Studio code for <b>${escapeHtml(deviceName || "your device")}</b>:</p>
+  <p>Your ${escapeHtml(productName || "Money Plan Studio")} code for <b>${escapeHtml(deviceName || "your device")}</b>:</p>
   <p style="font-size:34px;font-weight:800;letter-spacing:.12em;margin:8px 0 16px">${code}</p>
   <p>It works for 15 minutes. If you didn't request this, just ignore the email.</p>
   <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life (an AI-made character)</p>
@@ -344,22 +411,22 @@ const ADMIN_HTML = `<!doctype html><meta charset="utf-8"><meta name="viewport" c
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}td,th{padding:8px 10px;border-bottom:1px solid #CFE6E1;text-align:left;font-size:14px;vertical-align:top}th{background:#E6F3F0}
 button{font:inherit;border:1px solid #CFE6E1;background:#E6F3F0;border-radius:8px;padding:4px 8px;cursor:pointer;margin:2px}button.p{background:#2A9D8F;color:#fff;border-color:#2A9D8F}input{font:inherit;padding:6px 8px;border:1px solid #CFE6E1;border-radius:8px}
 .muted{color:#5F8A99;font-size:13px}</style>
-<h1>Money Plan Studio · buyers</h1><p class="muted" id="meta"></p>
-<h2>Waiting for approval</h2><table id="pending"><tr><th>Email</th><th>Order # they typed</th><th>Tries</th><th></th></tr></table>
-<h2>Buyers</h2><table id="buyers"><tr><th>Buyer</th><th>Orders</th><th>Devices</th><th></th></tr></table>
-<h2>Add a buyer by hand</h2><p><input id="aEmail" placeholder="email"> <input id="aName" placeholder="name"> <input id="aOrder" placeholder="order # (optional)"> <button class="p" onclick="approve()">Approve</button></p>
+<h1>Lukas products · buyers</h1><p class="muted" id="meta"></p>
+<h2>Waiting for approval</h2><table id="pending"><tr><th>Email</th><th>Order # they typed</th><th>For</th><th>Tries</th><th></th></tr></table>
+<h2>Buyers</h2><table id="buyers"><tr><th>Buyer</th><th>Owns</th><th>Orders</th><th>Devices</th><th></th></tr></table>
+<h2>Add a buyer by hand</h2><p><input id="aEmail" placeholder="email"> <input id="aName" placeholder="name"> <input id="aOrder" placeholder="order # (optional)"> <select id="aProd"><option value="studio">Money Plan Studio</option><option value="year">The Systemized Year</option><option value="studio,year">Both</option></select> <button class="p" onclick="approve()">Approve</button></p>
 <script>
 const T=new URLSearchParams(location.search).get("token"); const H={"content-type":"application/json","X-Admin-Token":T};
 async function load(){const r=await fetch("/admin",{headers:{"X-Admin-Token":T,"Accept":"application/json"}}); const d=await r.json(); if(d.error){document.body.innerHTML="<p>Forbidden</p>";return;}
-document.getElementById("meta").textContent="Product match: "+(d.productMatch||"(any)")+" · mail mode: "+d.mailMode;
+document.getElementById("meta").textContent="Products: "+(d.productMatch||"(none)")+" · mail mode: "+d.mailMode;
 const P=document.getElementById("pending"); P.querySelectorAll("tr+tr").forEach(e=>e.remove());
-for(const p of d.pending){const tr=P.insertRow(); tr.innerHTML="<td>"+esc(p.email)+"</td><td><code>"+esc(p.order)+"</code></td><td>"+(p.attempts||1)+"</td><td><button class=p onclick=\\"act('approve','"+esc(p.email)+"','"+esc(p.order)+"')\\">Approve</button> <button onclick=\\"act('dismiss-pending','"+esc(p.email)+"')\\">Dismiss</button></td>";}
-if(!d.pending.length){P.insertRow().innerHTML="<td colspan=4 class=muted>Nothing waiting.</td>";}
+for(const p of d.pending){const tr=P.insertRow(); tr.innerHTML="<td>"+esc(p.email)+"</td><td><code>"+esc(p.order)+"</code></td><td>"+esc(p.product||"studio")+"</td><td>"+(p.attempts||1)+"</td><td><button class=p onclick=\\"act('approve','"+esc(p.email)+"','"+esc(p.order)+"',null,'"+esc(p.product||"studio")+"')\\">Approve</button> <button onclick=\\"act('dismiss-pending','"+esc(p.email)+"')\\">Dismiss</button></td>";}
+if(!d.pending.length){P.insertRow().innerHTML="<td colspan=5 class=muted>Nothing waiting.</td>";}
 const B=document.getElementById("buyers"); B.querySelectorAll("tr+tr").forEach(e=>e.remove());
-for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.approved?" · manual":"")+"</span></td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,8))+"…</code> "+esc(o.product||"")+" "+esc(o.amount||"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
-if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=4 class=muted>No buyers yet.</td>";}}
-async function act(a,email,order,deviceId){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify({email,order,deviceId})}); load();}
-async function approve(){await fetch("/admin/approve",{method:"POST",headers:H,body:JSON.stringify({email:aEmail.value,name:aName.value,order:aOrder.value})}); aEmail.value=aName.value=aOrder.value=""; load();}
+for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,8))+"…</code> "+esc(o.product||"")+" "+esc(o.amount||"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
+if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=5 class=muted>No buyers yet.</td>";}}
+async function act(a,email,order,deviceId,product){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify({email,order,deviceId,products:product?[product]:undefined})}); load();}
+async function approve(){await fetch("/admin/approve",{method:"POST",headers:H,body:JSON.stringify({email:aEmail.value,name:aName.value,order:aOrder.value,products:aProd.value.split(",")})}); aEmail.value=aName.value=aOrder.value=""; load();}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 load();
 </script>`;

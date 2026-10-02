@@ -35,12 +35,23 @@ Run `testParse()` in the script editor to check the email parser without waiting
 ## 3 · Beacons product
 
 1. Open `studio/start-here.html` in Edge → Print → Save as PDF.
-2. Create the product in Beacons named **Money Plan Studio** (the Worker only unlocks orders whose product name contains `PRODUCT_MATCH`, see `wrangler.toml`), upload the PDF as the download.
+2. Create the product in Beacons named **Money Plan Studio**, upload the PDF as the download. The Worker decides what an order unlocks from the product name (`DEFAULT_PRODUCTS` in `src/index.js`), so keep these words in the Beacons product names:
+
+   | Beacons product name contains | Unlocks |
+   |---|---|
+   | `Money Plan Studio` | the Studio |
+   | `The Systemized Year` | the Year app |
+   | `Systemized Year Upgrade` (hidden, for Studio buyers) | the Year app, only if the same email already owns the Studio |
+   | `Systemized Life Pass` | both |
 3. In the product's thank-you text, repeat the link and “use the email you bought with + your Order #”.
 
 ## Admin
 
 `https://lukas-studio-api.<you>.workers.dev/admin?token=YOUR_ADMIN_TOKEN` shows buyers, their devices and anyone whose activation arrived before the sale synced (one-click approve). Revoke after a refund.
+
+## Several products, one lock
+
+One buyer is one email with one list of devices (`MAX_DEVICES` in total, not per product). An app asks for its product: the Studio sends nothing (means `studio`), the Year app sends `product: "year"` to `/activate` and reads `/content?product=year`. What a buyer owns is worked out from their orders on every request, so when a Studio buyer's Year purchase syncs, the device they already use opens the Year app without a new code. The admin page shows what each buyer owns, and a hand approval lets you pick the product.
 
 ## How the lock works, honestly
 
