@@ -167,13 +167,13 @@ footer a{color:var(--accent)}
   <h2>More small systems</h2>
   <div class="card">
     <p style="margin:0 0 10px">Hours back are only useful if they go somewhere. Put the time into one weekly 30-minute money reset.</p>
-    <a class="btn" href="https://beacons.ai/lukas.minimal" target="_blank" rel="noopener">🆓 Free Sunday Wealth Tracker &amp; more tools →</a>
+    <a class="btn" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">🆓 Free Sunday Wealth Tracker &amp; more tools →</a>
   </div>
 
   <footer>
     One small system at a time. ☕<br>
     Lukas is an AI-generated character. Your numbers stay on this device.<br>
-    <a href="https://beacons.ai/lukas.minimal" target="_blank" rel="noopener">beacons.ai/lukas.minimal</a>
+    <a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a>
   </footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -253,7 +253,7 @@ footer a{color:var(--accent)}
   $("copy").addEventListener("click", function(){
     var c = calc();
     var txt = "My desk leaks " + fmt(c.yearH) + " hours of focus a year (" + fmt(c.yearDays,1) + " workdays). " +
-              "Calculated with Lukas's free Focus Leak Calculator → beacons.ai/lukas.minimal";
+              "Calculated with Lukas's free Focus Leak Calculator → beacons.ai/lukas.systemized";
     var done = function(){ toast("Copied — paste it anywhere"); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ prompt("Copy this:", txt); });
     else prompt("Copy this:", txt);
