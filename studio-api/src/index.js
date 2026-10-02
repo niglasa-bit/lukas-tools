@@ -401,7 +401,7 @@ function codeMail(name, code, deviceName, productName) {
   <p>Your ${escapeHtml(productName || "Money Plan Studio")} code for <b>${escapeHtml(deviceName || "your device")}</b>:</p>
   <p style="font-size:34px;font-weight:800;letter-spacing:.12em;margin:8px 0 16px">${code}</p>
   <p>It works for 15 minutes. If you didn't request this, just ignore the email.</p>
-  <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life (an AI-made character)</p>
+  <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life</p>
 </div>`;
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
