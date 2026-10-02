@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Systemized Year</title>
+<meta name="description" content="Your whole year on one page: money, time, focus and the things money is actually for. Twelve fifteen-minute check-ins. By Lukas · The Systemized Life.">
+<meta name="theme-color" content="#12303A">
+<meta name="studio-api" content="https://lukas-studio-api.lukas-systemized.workers.dev">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" href="fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:Fraunces;font-weight:600;font-display:swap;src:url(fonts/fraunces-600.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(fonts/inter-400.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(fonts/inter-600.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:700;font-display:swap;src:url(fonts/inter-700.woff2) format("woff2")}
+:root{
+  --bg:#FBF8F2; --surface:#FFFFFF; --surface2:#F3EEE4; --line:#E4DED2;
+  --ink:#12303A; --ink2:#3E5F7A; --muted:#7A949C;
+  --accent:#2A9D8F; --accent-ink:#FFFFFF; --accent-soft:#DCEFEA;
+  --sand:#E9C46A; --sand-soft:#F6EBCB; --sand-ink:#7A5C14; --coral:#E07A5F; --gold:#C9A43F;
+  --hero:#12303A; --hero-ink:#EAF6F4; --hero-muted:#8FB5BB;
+  --radius:18px; --shadow:0 1px 2px rgba(18,48,58,.05),0 8px 24px rgba(18,48,58,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F2A33; --surface:#16363F; --surface2:#1C434D; --line:#2A5561;
+    --ink:#EAF6F4; --ink2:#B9D7DA; --muted:#8FB5BB;
+    --accent:#5CC8B8; --accent-ink:#0F2A33; --accent-soft:#1F4B52;
+    --sand-soft:#4A3F22; --sand-ink:#F2D28C; --hero:#0B222A; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F2A33; --surface:#16363F; --surface2:#1C434D; --line:#2A5561;
+  --ink:#EAF6F4; --ink2:#B9D7DA; --muted:#8FB5BB;
+  --accent:#5CC8B8; --accent-ink:#0F2A33; --accent-soft:#1F4B52;
+  --sand-soft:#4A3F22; --sand-ink:#F2D28C; --hero:#0B222A; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.02em}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px 24px}
+header{padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none}
+.brand b{display:block;font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+.brand span{font-size:12px;color:var(--muted)}
+h2{font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin:26px 0 10px;color:var(--ink2)}
+h3{font-size:15px;margin:0 0 6px}
+p{margin:0 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card+.card{margin-top:12px}
+.muted{color:var(--muted)} .ink2{color:var(--ink2)} .small{font-size:13px}
+.kicker{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:14px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.mchip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=number],input[type=text],input[type=email],select,textarea{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:46px;width:100%}
+textarea{min-height:64px;resize:vertical}
+.field{margin-top:14px}.field:first-child{margin-top:0}
+.field label{font-size:14px;font-weight:600;color:var(--ink2);display:block;margin-bottom:4px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.hidden{display:none!important}
+.view{display:none}.view.on{display:block}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6}
+footer a{color:var(--accent)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav.tabs button{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:11.5px;font-weight:600;padding:6px 14px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:72px;cursor:pointer}
+nav.tabs button i{font-style:normal;font-size:20px;line-height:1}
+nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
+
+/* hero + wizard */
+.hero{background:var(--hero);color:var(--hero-ink);border:0;border-radius:22px;padding:22px}
+.hero .kicker{color:#5CC8B8}
+.hero p{color:var(--hero-muted)}
+.steps{display:flex;gap:6px;margin:0 0 14px}.steps i{flex:1;height:5px;border-radius:4px;background:var(--line)}.steps i.on{background:var(--accent)}
+.wz-title{font-size:30px;line-height:1.08;margin:8px 0 10px}
+.lead{font-size:15.5px;line-height:1.55;color:var(--ink2)}
+.rows .row{display:grid;grid-template-columns:1fr 92px 108px 34px;gap:8px;align-items:center;margin-top:8px}
+.rows .row.three{grid-template-columns:1fr 108px 34px}
+.rows .row input,.rows .row select{min-height:42px;padding:8px 10px}
+.x{appearance:none;border:0;background:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;height:42px}
+.total{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--sand);color:#12303A}
+.total small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;display:block}
+.total b{font-family:Fraunces,Georgia,serif;font-size:26px;font-weight:600}
+.import{background:var(--accent-soft);border-radius:14px;padding:10px 12px;font-size:13.5px;margin-top:12px}
+
+/* year dashboard */
+.yh{font-size:64px;line-height:.95;margin:6px 0 8px}
+.yh em{font-style:normal;color:var(--accent)}
+.theme{margin-top:14px;padding:18px 20px;border-radius:18px;background:var(--hero);color:var(--hero-ink)}
+.theme small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--hero-muted);font-weight:700}
+.theme p{font-family:Fraunces,Georgia,serif;font-size:21px;line-height:1.25;margin:4px 0 0;color:var(--hero-ink)}
+.areas{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.area{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.area h4{margin:0;font-size:11px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.area h4 i{width:22px;height:22px;border-radius:7px;display:inline-grid;place-items:center;font-style:normal;font-size:11px;color:#fff}
+.area .big{font-family:Fraunces,Georgia,serif;font-size:19px;line-height:1.15;margin:10px 0 8px;font-weight:600}
+.area ul{list-style:none;margin:0;padding:0}
+.area li{font-size:13.5px;padding:6px 0;border-top:1px solid var(--line);display:flex;gap:8px}
+.area li span{color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;min-width:58px;padding-top:2px}
+.bar{height:9px;border-radius:6px;background:var(--surface2);overflow:hidden;margin:6px 0 2px}
+.bar b{display:block;height:100%;border-radius:6px;background:var(--accent);transition:width .3s}
+.meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 6px;margin-top:6px}
+.mchip{appearance:none;border:0;background:none;text-align:center;cursor:pointer;color:inherit;font:inherit;padding:0}
+.mchip .c{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);margin:0 auto;display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink2)}
+.mchip.done .c{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.mchip.now .c{border-color:var(--accent)}
+.mchip .n{font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-top:5px;color:var(--ink2);font-weight:600}
+.mchip .f{margin-top:4px;font-size:10.5px;line-height:1.2;color:var(--sand-ink);min-height:13px;font-weight:600}
+.today{margin-top:12px;border-radius:18px;background:var(--accent);color:var(--accent-ink);padding:16px 18px}
+.today small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;opacity:.85}
+.today p{font-family:Fraunces,Georgia,serif;font-size:20px;margin:4px 0 0;line-height:1.25}
+
+/* month */
+.mtabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.mtabs button{flex:none;appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.mtabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mtabs button.done::after{content:" ✓";color:var(--accent)}
+.mh{font-size:44px;line-height:1;margin:14px 0 4px}
+.mh em{font-style:normal;color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 10px 8px}
+.stat small{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.stat b{display:block;font-family:Fraunces,Georgia,serif;font-size:20px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--accent);font-weight:600}.stat span.bad{color:var(--coral)}
+.goal{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(60px,1fr) auto;gap:10px;align-items:center;padding:6px 0;font-size:13.5px}
+.goal .v{text-align:right;color:var(--ink2);font-size:12.5px}
+.funds{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.fund{border-radius:12px;background:var(--sand-soft);padding:10px;font-size:12.5px}
+.fund small{color:var(--sand-ink);font-weight:600}
+.fund b{display:block;font-size:14.5px;margin:2px 0}
+.quote{margin-top:14px;font-family:Fraunces,Georgia,serif;font-size:18px;line-height:1.35;color:var(--ink2)}
+.source{font-size:12.5px;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px;margin-top:10px}
+.list{list-style:none;margin:0;padding:0}
+.list li{padding:10px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:14px}
+.list li:first-child{border-top:0}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--surface2);font-size:12px;color:var(--ink2)}
+.code{letter-spacing:.3em;font-size:24px;text-align:center;font-weight:800}
+.seller{background:var(--surface2);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px}
+.seller b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.rules{margin:8px 0 0;padding-left:18px}.rules li{margin:4px 0;font-size:14px}
+@media (max-width:420px){.yh{font-size:52px}.areas{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.rows .row{grid-template-columns:1fr 78px 92px 28px}.mh{font-size:38px}}
+
+/* ---- print sheets (built only when printing) ---- */
+#print{display:none}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#FBF8F2!important;padding:0!important}
+  body>*:not(#print){display:none!important}
+  #print{display:block}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.sheet{width:210mm;height:296mm;position:relative;overflow:hidden;background:#FBF8F2;color:#12303A;font-family:Inter,Arial,sans-serif;page-break-after:always}
+.sheet .pg{position:absolute;inset:13mm 14mm 11mm}
+.sheet .top{display:flex;justify-content:space-between;font-size:7.5pt;letter-spacing:.22em;text-transform:uppercase;color:#3E5F7A;font-weight:600}
+.sheet .top .d{display:inline-block;width:2.2mm;height:2.2mm;border-radius:50%;background:#2A9D8F;margin-right:2mm}
+.sheet h1{font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.035em;margin:0}
+.sheet h1 em{font-style:normal;color:#2A9D8F}
+.sheet .sub{font-size:10pt;color:#3E5F7A;margin-top:3mm}.sheet .sub b{color:#12303A}
+.sheet .th{margin-top:5mm;padding:5mm 6mm;border-radius:5mm;background:#12303A;color:#EAF6F4;display:flex;gap:6mm;align-items:center}
+.sheet .th small{font-size:6.5pt;letter-spacing:.2em;text-transform:uppercase;color:#8FB5BB;font-weight:700;white-space:nowrap}
+.sheet .th p{font-family:Fraunces,Georgia,serif;font-size:14pt;line-height:1.2;margin:0}
+.sheet .grid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:5mm}
+.sheet .q{border:.35mm solid #E4DED2;border-radius:5mm;padding:4.5mm 5mm;background:#fff}
+.sheet .q h2{margin:0;font-size:7pt;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:#12303A;display:flex;align-items:center;gap:2mm}
+.sheet .q h2 i{width:5mm;height:5mm;border-radius:1.5mm;display:inline-grid;place-items:center;font-style:normal;font-size:6.5pt;color:#fff}
+.sheet .q .big{font-family:Fraunces,Georgia,serif;font-size:14pt;line-height:1.12;margin:3mm 0 2.5mm;font-weight:600}
+.sheet .q ul{list-style:none;margin:0;padding:0}
+.sheet .q li{font-size:9pt;line-height:1.3;padding:1.8mm 0;border-top:.25mm solid #EFEAE0;display:flex;gap:2.5mm}
+.sheet .q li span{color:#7A949C;min-width:15mm;font-size:6.8pt;letter-spacing:.06em;text-transform:uppercase;padding-top:.5mm;font-weight:700}
+.sheet .sbar{height:2mm;border-radius:1mm;background:#EFEAE0;overflow:hidden;margin:1.5mm 0 .6mm}
+.sheet .sbar b{display:block;height:100%;border-radius:1mm}
+.sheet .smeta{display:flex;justify-content:space-between;font-size:7pt;color:#7A949C}
+.sheet .box{border:.35mm solid #E4DED2;border-radius:5mm;padding:4.5mm 5mm;background:#fff;margin-top:4mm}
+.sheet .box h2{margin:0 0 3mm;font-size:7pt;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:#12303A;display:flex;justify-content:space-between;gap:4mm}
+.sheet .box h2 em{font-style:normal;color:#7A949C;letter-spacing:.02em;text-transform:none;font-weight:600;font-size:7.5pt}
+.sheet .mrow{display:grid;grid-template-columns:repeat(12,1fr);gap:1.2mm}
+.sheet .mm{text-align:center}
+.sheet .mm .c{width:8.5mm;height:8.5mm;border-radius:50%;border:.45mm solid #E4DED2;margin:0 auto;display:grid;place-items:center;font-size:7pt;font-weight:700;color:#3E5F7A}
+.sheet .mm .c.done{background:#2A9D8F;border-color:#2A9D8F;color:#fff}
+.sheet .mm .n{font-size:6.5pt;letter-spacing:.12em;text-transform:uppercase;margin-top:1.5mm;color:#3E5F7A;font-weight:700}
+.sheet .mm .f{margin-top:1.5mm;font-size:6pt;line-height:1.2;min-height:6mm}
+.sheet .mm .f b{display:inline-block;background:#F6EBCB;border-radius:1.2mm;padding:.5mm .8mm;font-weight:700;margin-top:.5mm;white-space:nowrap;font-size:5.6pt}
+.sheet .foot{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:6mm}
+.sheet .one{font-family:Fraunces,Georgia,serif;font-size:13pt;font-weight:600}
+.sheet .one small{display:block;font-family:Inter,Arial,sans-serif;font-size:6.5pt;letter-spacing:.2em;text-transform:uppercase;color:#7A949C;font-weight:700;margin-bottom:1mm}
+.sheet .lic{font-size:7pt;color:#7A949C;text-align:right;line-height:1.5}
+.sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
+.sheet .wm span{transform:rotate(-28deg);font-size:22pt;font-weight:800;letter-spacing:.12em;color:rgba(18,48,58,.035);white-space:nowrap}
+.sheet .st{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin-top:6mm}
+.sheet .st div{background:#fff;border:.35mm solid #E4DED2;border-radius:4mm;padding:3.5mm 4mm}
+.sheet .st small{font-size:6.3pt;letter-spacing:.18em;text-transform:uppercase;color:#7A949C;font-weight:700}
+.sheet .st b{display:block;font-family:Fraunces,Georgia,serif;font-size:17pt;font-weight:600;margin-top:1mm}
+.sheet .st span{font-size:7.5pt;color:#2A9D8F;font-weight:700}.sheet .st span.bad{color:#E07A5F}
+.sheet .goal{display:grid;grid-template-columns:34mm 1fr 26mm;gap:4mm;align-items:center;padding:1.3mm 0;font-size:9pt}
+.sheet .goal .v{text-align:right;color:#3E5F7A;font-size:8.5pt}
+.sheet .funds{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5mm}
+.sheet .fund{border-radius:3mm;background:#F6EBCB;padding:2.5mm 3mm;font-size:8.5pt}
+.sheet .fund small{color:#8A6D1E}.sheet .fund b{display:block;font-size:10.5pt}
+.sheet .two{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+.sheet .write{font-family:Fraunces,Georgia,serif;font-size:12pt;line-height:1.35;min-height:14mm;margin:0}
+.sheet .ln{border-bottom:.3mm dashed #E4DED2;height:7mm}
+.sheet .nx{margin-top:4mm;border-radius:5mm;background:#2A9D8F;color:#fff;padding:4.5mm 5.5mm;display:flex;justify-content:space-between;align-items:center;gap:4mm}
+.sheet .nx small{font-size:6.5pt;letter-spacing:.22em;text-transform:uppercase;font-weight:700;opacity:.85}
+.sheet .nx p{font-family:Fraunces,Georgia,serif;font-size:14pt;margin:1mm 0 0}
+.sheet .nx .ck{width:9mm;height:9mm;border:.5mm solid #fff;border-radius:2.5mm;flex:none}
+.sheet .lq{margin-top:4mm;font-size:8.5pt;color:#3E5F7A;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="dot"></span><div><b>The Systemized Year</b><span>by Lukas · The Systemized Life</span></div></div>
+    <button class="btn sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
+  </header>
+
+  <!-- ===================== GATE ===================== -->
+  <section id="gate" class="view on">
+    <div class="card hero">
+      <div class="kicker">Unlock your copy</div>
+      <h3 class="serif" style="font-size:26px;margin:6px 0 8px;line-height:1.1">Your whole year, set in one evening.</h3>
+      <p class="small">Use the email you bought with and the <b>Order #</b> from your Beacons receipt (“Your purchase from lukas.systemized…”). We'll email you a 6-digit code. One purchase works on up to 3 devices, shared with Money Plan Studio if you have it.</p>
+    </div>
+    <div class="card hidden" id="g-owned">
+      <p class="ink2" id="g-owned-msg"></p>
+      <div class="actions"><a class="btn primary" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">See it on Beacons</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
+    </div>
+    <div class="card" id="g-step1">
+      <div class="field"><label for="g-email">Purchase email</label><input type="email" id="g-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
+      <div class="field"><label for="g-order">Order #</label><input type="text" id="g-order" autocomplete="off" placeholder="c47d3f10-8a6d-4f86-…" spellcheck="false"><div class="hint">It's in the receipt email under “Order Summary”. Paste the whole thing.</div></div>
+      <div class="field"><label for="g-device">Name this device</label><input type="text" id="g-device" maxlength="40" placeholder="e.g. Phone"></div>
+      <div class="actions"><button class="btn primary" id="g-send">Send my code</button></div>
+      <p class="small muted" id="g-msg" role="status" style="margin-top:10px"></p>
+    </div>
+    <div class="card hidden" id="g-step2">
+      <p class="ink2">Enter the 6-digit code we just emailed to <b id="g-email-echo"></b>.</p>
+      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••"></div>
+      <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
+      <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
+    </div>
+    <footer>Lukas is an AI-generated character. Your numbers never leave this device; only your email and order number are checked.<br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+  </section>
+
+  <!-- ===================== YEAR ===================== -->
+  <section id="v-year" class="view">
+    <div id="wizard">
+      <div class="steps" id="w-steps"></div>
+      <div class="card" id="w-card"></div>
+      <div class="actions"><button class="btn ghost" id="w-prev">← Back</button><button class="btn primary" id="w-next" style="flex:1">Next →</button></div>
+    </div>
+    <div id="dash" class="hidden">
+      <div class="kicker" id="d-kicker"></div>
+      <h1 class="serif yh"><span id="d-year"></span>,<br><em>on one page.</em></h1>
+      <p class="ink2 small" id="d-sub"></p>
+      <div class="theme" id="d-theme"><small>This year is about</small><p id="d-themeText"></p></div>
+      <div class="areas" id="d-areas"></div>
+      <h2>Twelve check-ins</h2>
+      <div class="card"><div class="months" id="d-months"></div><p class="hint" id="d-fundsNote" style="margin-top:12px"></p></div>
+      <div class="today"><small>One thing today</small><p id="d-today"></p></div>
+      <div class="actions">
+        <button class="btn primary" id="d-print">🖨️ Print the poster</button>
+        <button class="btn" id="d-edit">✏️ Edit the year</button>
+        <button class="btn ghost" id="d-redo">↻ New year</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MONTH ===================== -->
+  <section id="v-month" class="view">
+    <div class="mtabs" id="m-tabs"></div>
+    <h1 class="serif mh" id="m-title"></h1>
+    <p class="small muted" id="m-sub"></p>
+    <div class="stats">
+      <div class="stat"><small>In</small><b id="m-in">—</b><span id="m-inNote"></span></div>
+      <div class="stat"><small>Out</small><b id="m-out">—</b><span id="m-outNote"></span></div>
+      <div class="stat"><small>Saved</small><b id="m-saved">—</b><span id="m-savedNote"></span></div>
+      <div class="stat"><small>Buffer</small><b id="m-buf">—</b><span id="m-bufNote"></span></div>
+    </div>
+    <h2>Goals</h2>
+    <div class="card" id="m-goals"></div>
+    <h2>Big yearly costs</h2>
+    <div class="card"><div class="funds" id="m-funds"></div><p class="hint" id="m-fundsNote" style="margin-top:10px"></p></div>
+    <h2>Check-in</h2>
+    <div class="card">
+      <p class="small ink2" id="m-intro"></p>
+      <div class="grid2 field">
+        <div><label for="m-fin" id="l-in"></label><input type="number" id="m-fin" inputmode="decimal" min="0" data-k="in"></div>
+        <div><label for="m-fout" id="l-out"></label><input type="number" id="m-fout" inputmode="decimal" min="0" data-k="out"></div>
+      </div>
+      <div class="grid2 field">
+        <div><label for="m-fbuf" id="l-buf"></label><input type="number" id="m-fbuf" inputmode="decimal" min="0" data-k="buffer"></div>
+        <div><label for="m-fdebt" id="l-debt"></label><input type="number" id="m-fdebt" inputmode="decimal" min="0" data-k="debt"></div>
+      </div>
+      <div class="field"><label for="m-fworked" id="l-worked"></label><input type="text" id="m-fworked" maxlength="140" data-k="worked"></div>
+      <div class="field"><label for="m-fleaked" id="l-leaked"></label><input type="text" id="m-fleaked" maxlength="140" data-k="leaked"></div>
+      <div class="field"><label for="m-ffix" id="l-fix"></label><input type="text" id="m-ffix" maxlength="140" data-k="fix"></div>
+      <div class="field"><label for="m-fnext" id="l-next"></label><input type="text" id="m-fnext" maxlength="100" data-k="next"></div>
+      <div class="actions"><button class="btn primary" id="m-save">Save this month</button><button class="btn" id="m-print">🖨️ Print this page</button></div>
+    </div>
+    <p class="quote" id="m-quote"></p>
+    <p class="source" id="m-fresh"></p>
+  </section>
+
+  <!-- ===================== MORE ===================== -->
+  <section id="v-more" class="view">
+    <div class="card">
+      <h3>Licensed to</h3>
+      <p id="o-who" class="ink2"></p>
+      <h3 style="margin-top:14px">Devices</h3>
+      <ul class="list" id="o-devices"></ul>
+      <p class="hint">One purchase, up to 3 devices, shared with Money Plan Studio. Remove one here to free a slot.</p>
+    </div>
+    <div class="card">
+      <h3>Your data</h3>
+      <p class="small ink2">Everything you type stays in this browser. Back it up before clearing the browser or switching phones.</p>
+      <div class="actions"><button class="btn sm" id="o-backup">⬇︎ Backup</button><label class="btn sm" for="o-restore">⬆︎ Restore<input type="file" id="o-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="o-wipe">Erase my data</button></div>
+    </div>
+    <h2>The four areas</h2>
+    <div id="o-lessons"></div>
+    <div class="card" style="margin-top:12px">
+      <div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div>
+    </div>
+    <footer>One small system at a time. ☕<br>Lukas is an AI-generated character. <span id="o-disc"></span><br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+  </section>
+</div>
+
+<nav class="tabs hidden" id="tabs">
+  <button data-v="year"><i>◎</i>Year</button>
+  <button data-v="month"><i>☕</i>Month</button>
+  <button data-v="more"><i>⋯</i>More</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<div id="print"></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i);};
+var KEY="lukas-year-v1", STUDIO_KEY="lukas-studio-v1", PRODUCT="year";
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var API=(function(){ try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o) return o; }catch(e){}
+  var q=new URLSearchParams(location.search).get("api"); if(q){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
+  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+
+// ---------- state ----------
+var S=load(), C=null; // C = premium content from /content?product=year
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+  d.y=d.y||{}; d.months=d.months||{}; d.auth=d.auth||{}; return d; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+// Money Plan Studio lives on the same site. Reading it lets the year start from the buyer's own plan,
+// and sharing the device id keeps one phone = one device across both apps.
+function studio(){ try{ return JSON.parse(localStorage.getItem(STUDIO_KEY)||"null"); }catch(e){ return null; } }
+function deviceId(){
+  if(!S.auth.deviceId){ var st=studio(); S.auth.deviceId=(st&&st.auth&&st.auth.deviceId)||(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); save(); }
+  try{ var st2=studio()||{plan:{},sunday:[],buy:{cool:[],hist:[]},auth:{}}; st2.auth=st2.auth||{}; if(!st2.auth.deviceId){ st2.auth.deviceId=S.auth.deviceId; localStorage.setItem(STUDIO_KEY,JSON.stringify(st2)); } }catch(e){}
+  return S.auth.deviceId; }
+try{ var t=localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
+$("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
+  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
+var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2400); }
+function fmt(n,d){ n=+n||0; return n.toLocaleString("en-US",{maximumFractionDigits:d||0}); }
+var CURS={eur:"€",euro:"€",euros:"€",usd:"$",dollar:"$",dollars:"$",gbp:"£",pound:"£",pounds:"£",jpy:"¥",yen:"¥",sek:"kr ",nok:"kr ",dkk:"kr ",kr:"kr ",chf:"CHF ",pln:"zł ",czk:"Kč ",inr:"₹",krw:"₩",brl:"R$",cad:"C$",aud:"A$"};
+function cur(){ var c=String(S.y.cur||"$").trim(); if(!c) return "$"; var k=c.toLowerCase().replace(/[^a-z$€£¥]/g,""); if(CURS[k]) return CURS[k]; return c.length>1&&/[a-z]/i.test(c)?c+" ":c; }
+function money(n){ return cur()+fmt(n); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function num(v){ v=parseFloat(v); return isFinite(v)&&v>0?v:0; }
+function download(name,text,type){ var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:type||"text/plain"})); a.download=name; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);},500); }
+
+// ---------- API ----------
+function api(path,opts,token){ opts=opts||{}; var h={"content-type":"application/json"}; var tk=token||S.auth.token; if(tk) h["Authorization"]="Bearer "+tk;
+  return fetch(API+path,{method:opts.method||(opts.body?"POST":"GET"),headers:h,body:opts.body?JSON.stringify(opts.body):undefined})
+    .then(function(r){ return r.json().then(function(j){ j._status=r.status; return j; }); }); }
+
+// ---------- gate ----------
+function msg(id,m){ $(id).textContent=m; }
+function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"Android":/Mac/.test(u)?"Mac":/Windows/.test(u)?"PC":"Device"; }
+(function(){ var st=studio(); $("g-email").value=S.auth.email||(st&&st.auth&&st.auth.email)||""; $("g-device").value=S.auth.deviceName||(st&&st.auth&&st.auth.deviceName)||""; })();
+$("g-send").addEventListener("click",function(){
+  var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
+  if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
+  if(order.length<8) return msg("g-msg","Paste the full Order # from your receipt.");
+  $("g-send").disabled=true; msg("g-msg","Checking your order…");
+  api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
+    $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
+    if(r.status==="code_sent"){ $("g-step1").classList.add("hidden"); $("g-step2").classList.remove("hidden"); $("g-email-echo").textContent=email; $("g-code").focus(); msg("g-msg2",r.message||""); }
+    else if(r.status==="already_active"){ S.auth.token=r.token; S.auth.name=r.name; save(); enter(); }
+    else msg("g-msg", r.message||r.error||"Something went wrong. Try again.");
+  }).catch(function(){ $("g-send").disabled=false; msg("g-msg","Can't reach the server. Check your connection and try again."); });
+});
+$("g-back").addEventListener("click",function(){ $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); });
+$("g-verify").addEventListener("click",function(){
+  var code=$("g-code").value.replace(/\D/g,""); if(code.length!==6) return msg("g-msg2","Enter the 6 digits.");
+  $("g-verify").disabled=true;
+  api("/verify",{body:{email:S.auth.email,code:code,deviceId:deviceId()}}).then(function(r){
+    $("g-verify").disabled=false;
+    if(r.status==="ok"){ S.auth.token=r.token; S.auth.name=r.name; save(); enter(); } else msg("g-msg2",r.message||r.error||"That didn't work.");
+  }).catch(function(){ $("g-verify").disabled=false; msg("g-msg2","Can't reach the server."); });
+});
+$("g-code").addEventListener("keydown",function(e){ if(e.key==="Enter") $("g-verify").click(); });
+$("g-other").addEventListener("click",function(){ $("g-owned").classList.add("hidden"); $("g-step1").classList.remove("hidden"); });
+
+function enter(token){
+  api("/content?product="+PRODUCT,null,token).then(function(r){
+    if(r.error==="not_owned"){ // signed in through Money Plan Studio, but the year isn't bought (yet)
+      showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
+      $("g-owned-msg").textContent="This device already has Money Plan Studio. The Systemized Year is its own purchase. If you just bought it, give it a few minutes and reopen this page. Studio owners get it at an upgrade price.";
+      return; }
+    if(r.error){ if(!token){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":""); return; }
+    C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
+    S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; save();
+    $("gate").classList.remove("on"); $("tabs").classList.remove("hidden");
+    renderAll(); show(S.ui||"year");
+  }).catch(function(){ if(C) return; showGate("Can't reach the server. You need a connection the first time each session."); });
+}
+function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
+(function(){ if(S.auth.token) return enter(); var st=studio(); if(!S.auth.signedOut&&st&&st.auth&&st.auth.token){ deviceId(); enter(st.auth.token); } })();
+
+// ---------- tabs ----------
+function show(v){ S.ui=v; save(); document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
+  if(v==="month") renderMonth(); if(v==="year") renderYear();
+  document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===v); }); window.scrollTo(0,0); }
+document.querySelectorAll("nav.tabs button").forEach(function(b){ b.addEventListener("click",function(){ show(b.dataset.v); }); });
+function renderAll(){ renderYear(); renderMonth(); renderMore(); }
+
+// ================= MODEL =================
+function defaultYear(){ var n=new Date(); return n.getMonth()>=9 ? n.getFullYear()+1 : n.getFullYear(); }
+function costs(){ // yearly costs + priced rich-life experiences = the sinking funds
+  var list=(S.y.costs||[]).filter(function(c){ return c.n&&num(c.a)&&c.m; }).map(function(c){ return {n:c.n,m:+c.m,a:num(c.a)}; });
+  (S.y.rich||[]).forEach(function(r){ if(r.what&&num(r.a)&&+r.m) list.push({n:r.what,m:+r.m,a:num(r.a),rich:true}); });
+  return list.sort(function(a,b){ return a.m-b.m; }); }
+function fundTotal(){ return costs().reduce(function(s,c){ return s+c.a; },0); }
+function monthly(){ return fundTotal()/12; }
+// Steady state: each cost is saved over the 12 months before it is due, so in its due month it's fully there.
+function ready(c,m){ var k=((m-c.m-1+12)%12)+1; return Math.min(c.a, c.a*k/12); }
+function nowMonth(){ var n=new Date(), y=+S.y.y||defaultYear(); return y===n.getFullYear()?n.getMonth()+1 : y>n.getFullYear()?1:12; }
+function lastCheck(m){ for(var i=m;i>=1;i--){ var x=S.months[i]; if(x&&x.done) return x; } return null; }
+function bufferNow(m){ var l=lastCheck(m||12); return l&&l.buffer!==""&&l.buffer!=null ? num(l.buffer) : num(S.y.buffer); }
+function debtNow(m){ var l=lastCheck(m||12); return l&&l.debt!==""&&l.debt!=null ? num(l.debt) : num(S.y.debt); }
+function bufTarget(){ return num(S.y.essentials)*(+S.y.bufMonths||6); }
+function bufMonths(v){ var e=num(S.y.essentials); return e>0 ? v/e : 0; }
+function pct(a,b){ return b>0 ? Math.max(0,Math.min(100,a/b*100)) : 0; }
+
+// ================= RESET WIZARD =================
+var MONTH_OPTS=function(sel,any){ return (any?'<option value="0"'+(!+sel?" selected":"")+'>Any</option>':"")+MONTHS.map(function(n,i){ return '<option value="'+(i+1)+'"'+(+sel===i+1?" selected":"")+'>'+n.slice(0,3)+'</option>'; }).join(""); };
+function fld(k,label,type,o){ o=o||{}; var v=S.y[k]!=null?S.y[k]:""; return '<div class="field"><label for="w-'+k+'">'+esc(label)+'</label><input type="'+type+'" id="w-'+k+'" data-k="'+k+'" value="'+esc(v)+'"'+(type==="number"?' inputmode="decimal" min="0"':'')+(o.maxlength?' maxlength="'+o.maxlength+'"':'')+(o.placeholder?' placeholder="'+esc(o.placeholder)+'"':'')+'>'+(o.hint?'<div class="hint">'+o.hint+'</div>':'')+'</div>'; }
+function importStudio(){ // once, and only into empty fields
+  if(S.y._imported) return null; var st=studio(); if(!st||!st.plan) return null; var p=st.plan, got=[];
+  var e=num(p.housing)+num(p.food)+num(p.bills)+num(p.minpay);
+  if(!S.y.cur&&p.cur){ S.y.cur=p.cur; } if(!S.y.name&&p.name){ S.y.name=p.name; }
+  if(!S.y.essentials&&e){ S.y.essentials=e; got.push("essentials"); }
+  var sun=(st.sunday||[]).slice().sort(function(a,b){ return a.d<b.d?1:-1; })[0];
+  var buf= sun&&sun.buffer!=null ? num(sun.buffer) : num(p.buffer);
+  if(!S.y.buffer&&buf){ S.y.buffer=buf; got.push("buffer"); }
+  if(!S.y.debt&&num(p.debt)){ S.y.debt=num(p.debt); got.push("debt"); }
+  if(S.y.invest==null&&p.autoPct!=null){ S.y.invest=p.autoPct; got.push("monthly transfer"); }
+  S.y._imported=true; save(); return got.length?got:null; }
+var W=[
+  {t:function(){ return "Start with a direction"; }, k:"start", render:function(){ var got=importStudio(); if(!S.y.y){ S.y.y=defaultYear(); save(); }
+    return '<p class="lead">'+esc(C.reset.intro)+'</p>'+(got?'<div class="import">✓ Brought in your '+esc(got.join(", "))+' from Money Plan Studio. Check them on the next step.</div>':'')+
+      '<div class="grid2 field"><div>'+fld("y","Which year","number",{placeholder:String(defaultYear())})+'</div><div>'+fld("name","Whose year","text",{placeholder:"Your first name",maxlength:30})+'</div></div>'+
+      '<div class="field"><label for="w-theme">This year is about…</label><textarea id="w-theme" data-k="theme" maxlength="120" placeholder="Calm money, slower evenings, and one trip I keep postponing.">'+esc(S.y.theme||"")+'</textarea><div class="hint">'+esc(C.reset.start)+'</div></div>'+
+      fld("cur","Currency symbol or code","text",{maxlength:5,placeholder:"$, €, EUR…"}); }},
+  {t:function(){ return "A floor nothing can knock over"; }, k:"money", kicker:"Money · Safety", render:function(){
+    return '<p class="lead">'+esc(C.areas.money.tagline)+' First the floor: a buffer for surprises and a date for the expensive debt.</p>'+
+      fld("essentials","Essentials per month","number",{placeholder:"e.g. 3000",hint:"Rent, food, bills, minimum debt payments. What you'd still pay if work stopped."})+
+      '<div class="grid2 field"><div>'+fld("buffer","Cash buffer today","number",{placeholder:"0"})+'</div><div class="field"><label for="w-bufMonths">Buffer goal</label><select id="w-bufMonths" data-k="bufMonths"><option value="3"'+(S.y.bufMonths==3?" selected":"")+'>3 months</option><option value="6"'+(S.y.bufMonths!=3?" selected":"")+'>6 months</option></select></div></div>'+
+      '<div class="grid2 field"><div>'+fld("debt","High-interest debt left","number",{placeholder:"0 if none"})+'</div><div class="field"><label for="w-debtM">Gone by</label><select id="w-debtM" data-k="debtM">'+MONTH_OPTS(S.y.debtM||6)+'</select></div></div>'+
+      fld("invest","Invest automatically, % of income","number",{placeholder:"e.g. 15",hint:"On payday, before you can spend it."}); }},
+  {t:function(){ return "What will surprise you next year?"; }, k:"costs", kicker:"Money · Big yearly costs", render:function(){
+    if(!S.y.costs||!S.y.costs.length) S.y.costs=[{n:"Insurance",m:1,a:""},{n:"Car or travel costs",m:3,a:""},{n:"Gifts & holidays",m:12,a:""}];
+    return '<p class="lead">'+esc(C.reset.money)+'</p><div class="rows" id="w-costs">'+S.y.costs.map(function(c,i){ return '<div class="row"><input type="text" data-c="n" data-i="'+i+'" value="'+esc(c.n)+'" maxlength="40" placeholder="What" aria-label="What"><select data-c="m" data-i="'+i+'" aria-label="Month">'+MONTH_OPTS(c.m)+'</select><input type="number" data-c="a" data-i="'+i+'" value="'+esc(c.a)+'" inputmode="decimal" min="0" placeholder="Amount" aria-label="Amount"><button class="x" data-del="'+i+'" aria-label="Remove">×</button></div>'; }).join("")+'</div>'+
+      '<div class="actions" style="margin-top:10px"><button class="btn sm" id="w-addCost">+ Add a yearly cost</button></div>'+
+      '<div class="total"><div><small>Monthly transfer</small><b id="w-month">'+money(monthly())+'</b></div><div style="text-align:right"><small>Per year</small><b id="w-yearTot">'+money(fundTotal())+'</b></div></div>'+
+      '<p class="hint" style="margin-top:10px">Rich-life experiences with a price join this list on the last step.</p>'; },
+    after:function(){ var box=$("w-costs");
+      box.querySelectorAll("[data-c]").forEach(function(el){ el.addEventListener("input",function(){ S.y.costs[+el.dataset.i][el.dataset.c]=el.value; save(); $("w-month").textContent=money(monthly()); $("w-yearTot").textContent=money(fundTotal()); }); });
+      box.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ S.y.costs.splice(+b.dataset.del,1); save(); renderWizard(); }); });
+      $("w-addCost").addEventListener("click",function(){ if(S.y.costs.length>=14) return toast("That's plenty. Group the small ones."); S.y.costs.push({n:"",m:nowMonth(),a:""}); save(); renderWizard(); var ins=$("w-costs").querySelectorAll('input[data-c="n"]'); ins[ins.length-1].focus(); }); }},
+  {t:function(){ return "Three blocks that repeat every week"; }, k:"time", kicker:"Time", render:function(){
+    if(!S.y.blocks) S.y.blocks=[{when:"Mon · Thu 7:00",what:""},{when:"Sunday",what:"Money hour, then close the app"},{when:"",what:""}];
+    return '<p class="lead">'+esc(C.reset.time)+'</p><div class="rows">'+S.y.blocks.map(function(b,i){ return '<div class="row three" style="grid-template-columns:130px 1fr"><input type="text" data-b="when" data-i="'+i+'" value="'+esc(b.when)+'" maxlength="24" placeholder="When" aria-label="When"><input type="text" data-b="what" data-i="'+i+'" value="'+esc(b.what)+'" maxlength="50" placeholder="What" aria-label="What"></div>'; }).join("")+'</div><p class="hint" style="margin-top:10px">Example: “Mon · Thu 7:00” → “Gym. Not negotiable.”</p>'; },
+    after:function(){ document.querySelectorAll("[data-b]").forEach(function(el){ el.addEventListener("input",function(){ S.y.blocks[+el.dataset.i][el.dataset.b]=el.value; save(); }); }); }},
+  {t:function(){ return "Quit one thing. Guard one thing."; }, k:"focus", kicker:"Focus", render:function(){
+    return '<p class="lead">'+esc(C.reset.focus)+'</p>'+fld("quit","Quit","text",{maxlength:60,placeholder:"Phone in the bedroom"})+fld("guard","Guard","text",{maxlength:60,placeholder:"90 minutes of deep work, mornings"})+
+      '<div class="grid2 field"><div>'+fld("leak","Hours a week that leak","number",{placeholder:"e.g. 11"})+'</div><div>'+fld("back","Hours you take back","number",{placeholder:"e.g. 5"})+'</div></div>'+
+      '<p class="hint">Not sure about the leak? The free Focus Leak calculator measures it in two minutes: <a href="../focus/" target="_blank" rel="noopener" style="color:var(--accent)">open it</a>.</p>'; }},
+  {t:function(){ return "Three things money is actually for"; }, k:"rich", kicker:"Rich life", render:function(){
+    if(!S.y.rich) S.y.rich=[{what:"",m:0,a:""},{what:"",m:0,a:""},{what:"",m:0,a:""}];
+    return '<p class="lead">'+esc(C.reset.rich)+'</p><div class="rows">'+S.y.rich.map(function(r,i){ return '<div class="row" style="grid-template-columns:1fr 84px 96px"><input type="text" data-r="what" data-i="'+i+'" value="'+esc(r.what)+'" maxlength="50" placeholder="'+["Ten days in Lisbon","A cooking course","A weekend with Dad"][i]+'" aria-label="What"><select data-r="m" data-i="'+i+'" aria-label="Month">'+MONTH_OPTS(r.m,true)+'</select><input type="number" data-r="a" data-i="'+i+'" value="'+esc(r.a)+'" inputmode="decimal" min="0" placeholder="Price" aria-label="Price"></div>'; }).join("")+'</div>'+
+      '<div class="total"><div><small>Monthly transfer, all in</small><b id="w-month2">'+money(monthly())+'</b></div><div style="text-align:right"><small>Per year</small><b id="w-yearTot2">'+money(fundTotal())+'</b></div></div>'; },
+    after:function(){ document.querySelectorAll("[data-r]").forEach(function(el){ el.addEventListener("input",function(){ S.y.rich[+el.dataset.i][el.dataset.r]=el.value; save(); $("w-month2").textContent=money(monthly()); $("w-yearTot2").textContent=money(fundTotal()); }); }); }},
+];
+var step=S.y._step||0;
+function renderWizard(){
+  var st=W[step]; $("w-steps").innerHTML=W.map(function(_,i){ return '<i class="'+(i<=step?"on":"")+'"></i>'; }).join("");
+  $("w-card").innerHTML='<div class="kicker">'+(step+1)+' / '+W.length+' · '+esc(st.kicker||"Year Reset")+'</div><h2 class="serif wz-title" style="letter-spacing:-.02em;text-transform:none;color:var(--ink)">'+esc(st.t())+'</h2>'+st.render();
+  $("w-card").querySelectorAll("[data-k]").forEach(function(el){ el.addEventListener("input",function(){ S.y[el.dataset.k]=el.value; save(); }); el.addEventListener("change",function(){ S.y[el.dataset.k]=el.value; save(); }); });
+  if(st.after) st.after();
+  $("w-prev").style.visibility=step===0?"hidden":"visible"; $("w-next").textContent= step===W.length-1 ? "Build my year →" : "Next →";
+}
+$("w-next").addEventListener("click",function(){
+  if(step===0 && !String(S.y.theme||"").trim()) return toast("One sentence is enough. Write the direction first.");
+  if(step<W.length-1){ step++; S.y._step=step; save(); renderWizard(); window.scrollTo(0,0); }
+  else { if(!S.y.y) S.y.y=defaultYear(); S.y.done=true; S.y.setAt=new Date().toISOString(); save(); renderYear(); window.scrollTo(0,0); toast(C.reset.done.split(".")[0]+"."); }
+});
+$("w-prev").addEventListener("click",function(){ if(step>0){ step--; S.y._step=step; save(); renderWizard(); window.scrollTo(0,0); } });
+
+// ================= YEAR DASHBOARD =================
+function areaCards(){ var y=S.y, b=bufferNow(), bt=bufTarget(), out=[], blocks=(y.blocks||[]).filter(function(x){ return x.what; }), rich=(y.rich||[]).filter(function(x){ return x.what; });
+  var mlist=[]; if(bt) mlist.push(["Buffer",(bufMonths(b)).toFixed(1)+" / "+(+y.bufMonths||6)+" months"]); if(num(y.invest)) mlist.push(["Invest",fmt(y.invest)+"% on payday, automatic"]); if(num(y.debt)) mlist.push(["Debt","Gone by "+MONTHS[(+y.debtM||6)-1]]); mlist.push(["Yearly",money(monthly())+" a month covers "+money(fundTotal())]);
+  out.push({k:"money",ic:"$",col:"var(--accent)",big:bt?(+y.bufMonths||6)+" months of calm in the bank.":"Surprises made boring.",bar:bt?pct(b,bt):null,meta:bt?[money(b)+" of "+money(bt),Math.round(pct(b,bt))+"%"]:null,li:mlist});
+  out.push({k:"time",ic:"◷",col:"var(--ink2)",big:"Fixed blocks first. The rest is free.",li:blocks.map(function(x){ return [x.when||"Weekly",x.what]; })});
+  var fl=[]; if(y.quit) fl.push(["Quit",y.quit]); if(y.guard) fl.push(["Guard",y.guard]); if(num(y.leak)) fl.push(["Leak",fmt(y.leak)+" h/week found."+(num(y.back)?" Taking back "+fmt(y.back)+".":"")]);
+  out.push({k:"focus",ic:"◎",col:"var(--coral)",big:"Quit one thing. Guard one thing.",li:fl});
+  out.push({k:"rich",ic:"✦",col:"var(--gold)",big:"Three things money is actually for.",li:rich.map(function(x){ return [+x.m?MONTHS[x.m-1].slice(0,3):"Any month",x.what+(num(x.a)?" · "+money(x.a):"")]; })});
+  return out; }
+function oneToday(){ var p=C.oneThingToday; if(fundTotal()>0 && !S.y._transferSet) return "Set the "+money(Math.ceil(monthly()))+" monthly transfer for your yearly costs."; return p[new Date().getDate()%p.length]; }
+function renderYear(){
+  if(!C) return; var done=S.y.done;
+  $("wizard").classList.toggle("hidden",!!done); $("dash").classList.toggle("hidden",!done);
+  if(!done) return renderWizard();
+  var y=S.y, who=y.name||S.auth.name||"Your";
+  $("d-kicker").textContent=(y.name?y.name+"'s year":"Your year"); $("d-year").textContent=y.y;
+  $("d-sub").textContent="Set on "+new Date(y.setAt||Date.now()).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+". Checked once a month, fifteen minutes.";
+  $("d-themeText").textContent=y.theme||"";
+  $("d-areas").innerHTML=areaCards().map(function(a){ var ar=C.areas[a.k];
+    return '<div class="area"><h4><i style="background:'+a.col+'">'+a.ic+'</i>'+esc(ar.title)+'</h4><p class="big">'+esc(a.big)+'</p>'+(a.bar!=null?'<div class="bar"><b style="width:'+a.bar+'%"></b></div><div class="meta"><span>'+esc(a.meta[0])+'</span><span>'+esc(a.meta[1])+'</span></div>':'')+
+      '<ul style="margin-top:6px">'+(a.li.length?a.li.map(function(l){ return '<li><span>'+esc(l[0])+'</span>'+esc(l[1])+'</li>'; }).join(""):'<li class="muted">Add this in “Edit the year”.</li>')+'</ul></div>'; }).join("");
+  var cs=costs(), nm=nowMonth();
+  $("d-months").innerHTML=MONTHS.map(function(n,i){ var m=i+1, d=S.months[m]&&S.months[m].done, due=cs.filter(function(c){ return c.m===m; });
+    return '<button class="mchip'+(d?" done":"")+(m===nm?" now":"")+'" data-m="'+m+'" aria-label="'+n+' check-in"><div class="c">'+(d?"✓":m)+'</div><div class="n">'+n.slice(0,3)+'</div><div class="f">'+(due.length?esc(due.length>1?due.length+" costs":due[0].n.split(/[\s,·]+/)[0]):"")+'</div></button>'; }).join("");
+  $("d-months").querySelectorAll("[data-m]").forEach(function(b){ b.addEventListener("click",function(){ S.mSel=+b.dataset.m; save(); show("month"); }); });
+  $("d-fundsNote").textContent= cs.length ? "Big yearly costs: "+money(fundTotal())+" a year = "+money(monthly())+" a month, moved automatically. "+(cs.some(function(c){ return c.m<=3; })?"In your first year, costs in the first months come partly from the buffer; after that the pot is always ready.":"") : "Add your big yearly costs in “Edit the year”.";
+  $("d-today").textContent=oneToday();
+}
+$("d-edit").addEventListener("click",function(){ S.y.done=false; step=1; S.y._step=1; save(); renderYear(); window.scrollTo(0,0); });
+$("d-redo").addEventListener("click",function(){ if(!confirm("Start a new year? Your answers and check-ins on this device are cleared. Back up first under More if you want to keep them.")) return; S.y={cur:S.y.cur,name:S.y.name,_imported:true}; S.months={}; step=0; save(); renderYear(); });
+$("d-print").addEventListener("click",function(){ printSheet(posterHTML()); });
+
+// ================= MONTH =================
+function selMonth(){ return S.mSel||nowMonth(); }
+function renderMonth(){
+  if(!C||!S.y.done){ if(C){ $("m-title").innerHTML=""; } if(C&&!S.y.done){ $("m-tabs").innerHTML=""; $("m-title").textContent="Set the year first"; $("m-sub").textContent="The monthly check-in follows your year page. It takes one evening."; } return; }
+  var m=selMonth(), rec=S.months[m]||{}, p=C.month.prompts, y=S.y, prev=lastCheck(m-1);
+  $("m-tabs").innerHTML=MONTHS.map(function(n,i){ var d=S.months[i+1]&&S.months[i+1].done; return '<button data-m="'+(i+1)+'" class="'+(i+1===m?"on ":"")+(d?"done":"")+'">'+n.slice(0,3)+'</button>'; }).join("");
+  $("m-tabs").querySelectorAll("[data-m]").forEach(function(b){ b.addEventListener("click",function(){ S.mSel=+b.dataset.m; save(); renderMonth(); }); });
+  var on=$("m-tabs").querySelector(".on"); if(on&&on.scrollIntoView) on.scrollIntoView({inline:"center",block:"nearest"});
+  $("m-title").innerHTML=esc(MONTHS[m-1])+" <em>"+esc(y.y)+"</em>";
+  $("m-sub").textContent="Check-in "+m+" of 12 · fifteen minutes"+(rec.done&&rec.at?" · saved "+new Date(rec.at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"");
+  var inn=num(rec.in), out=num(rec.out), saved=inn-out, buf=rec.buffer!==""&&rec.buffer!=null?num(rec.buffer):bufferNow(m-1), prevBuf=prev?num(prev.buffer):num(y.buffer);
+  $("m-in").textContent=inn?money(inn):"—"; $("m-inNote").textContent="";
+  $("m-out").textContent=out?money(out):"—"; $("m-outNote").textContent="";
+  $("m-saved").textContent=inn?money(saved):"—"; $("m-savedNote").textContent=inn?Math.round(saved/inn*100)+"% of income":""; $("m-savedNote").className=saved<0?"bad":"";
+  var bm=bufMonths(buf), d=bufMonths(buf)-bufMonths(prevBuf);
+  $("m-buf").textContent=num(y.essentials)?bm.toFixed(1)+" mo":money(buf); $("m-bufNote").textContent=num(y.essentials)&&(rec.buffer!=null&&rec.buffer!=="")?(d>=0?"+":"")+d.toFixed(1)+" this month":""; $("m-bufNote").className=d<0?"bad":"";
+  // goals
+  var g=[], bt=bufTarget(); if(bt) g.push([(+y.bufMonths||6)+"-month buffer",pct(buf,bt),bm.toFixed(1)+" / "+(+y.bufMonths||6)+" mo","var(--accent)"]);
+  var debt0=num(y.debt), dl=rec.debt!=null&&rec.debt!==""?num(rec.debt):debtNow(m-1); if(debt0) g.push(["Debt to zero",pct(debt0-dl,debt0),dl?money(dl)+" left":"✓ gone","var(--ink2)"]);
+  costs().filter(function(c){ return c.rich; }).forEach(function(c){ g.push([c.n,pct(ready(c,m),c.a),money(ready(c,m))+" / "+fmt(c.a),"var(--sand)"]); });
+  $("m-goals").innerHTML=g.length?g.map(function(x){ return '<div class="goal"><span>'+esc(x[0])+'</span><div class="bar"><b style="width:'+x[1]+'%;background:'+x[3]+'"></b></div><span class="v">'+esc(x[2])+'</span></div>'; }).join(""):'<p class="small muted" style="margin:0">Add a buffer goal, debt or a priced experience to see progress here.</p>';
+  // funds: due now, next, later
+  var cs=costs(), f=fundsFor(m, cs);
+  $("m-funds").innerHTML=f.length?f.map(function(x){ return '<div class="fund"><small>'+esc(x.label)+'</small><b>'+esc(x.c.n)+' '+esc(money(x.c.a))+'</b>'+esc(x.note)+'</div>'; }).join(""):'<p class="small muted" style="grid-column:1/-1;margin:0">No yearly costs yet.</p>';
+  $("m-fundsNote").textContent=cs.length?money(monthly())+" goes in every month. Nothing here is a surprise.":"";
+  // form
+  $("m-intro").textContent=C.month.intro;
+  [["in","fin"],["out","fout"],["buffer","fbuf"],["debt","fdebt"],["worked","fworked"],["leaked","fleaked"],["fix","ffix"],["next","fnext"]].forEach(function(k){ var el=$("m-"+k[1]); el.value=rec[k[0]]!=null?rec[k[0]]:""; });
+  $("l-in").textContent=p.income; $("l-out").textContent=p.spent; $("l-buf").textContent=p.buffer; $("l-debt").textContent=p.debt; $("l-worked").textContent=p.worked; $("l-leaked").textContent=p.leaked; $("l-fix").textContent=p.fix; $("l-next").textContent=p.next;
+  $("m-fdebt").closest("div").classList.toggle("hidden",!num(y.debt));
+  $("m-quote").textContent="“"+C.month.quotes[m-1]+"” · Lukas";
+  $("m-fresh").textContent=C.month.freshStart+" "+C.month.freshStartSource;
+}
+function fundsFor(m, cs){ if(!cs.length) return [];
+  var byDist=cs.map(function(c){ return {c:c,dist:(c.m-m+12)%12}; }).sort(function(a,b){ return a.dist-b.dist; }), out=[];
+  byDist.slice(0,3).forEach(function(x,i){ var r=ready(x.c,m);
+    out.push({c:x.c,label:x.dist===0?"Due now":(out.every(function(o){ return o.due; })?"Next":"Later")+" · "+MONTHS[x.c.m-1].slice(0,3),due:x.dist===0,note:x.dist===0?"Paid from the pot ✓":money(r)+" ready"}); });
+  return out; }
+document.querySelectorAll("#v-month input[data-k]").forEach(function(el){ el.addEventListener("input",function(){ var m=selMonth(); S.months[m]=S.months[m]||{}; S.months[m][el.dataset.k]=el.value; save(); }); });
+$("m-save").addEventListener("click",function(){ var m=selMonth(), r=S.months[m]=S.months[m]||{}; if(!num(r.in)&&!num(r.out)&&!r.worked&&!r.leaked) return toast("Add at least the numbers or one sentence.");
+  r.done=true; r.at=new Date().toISOString(); if(fundTotal()>0) S.y._transferSet=true; save(); renderMonth(); toast(m===12?"That's the whole year. Look at you.":"Saved. See you next month."); });
+$("m-print").addEventListener("click",function(){ printSheet(monthHTML(selMonth())); });
+
+// ================= PRINT =================
+function lic(){ return "Licensed to "+(S.auth.name||S.y.name||"")+" · "+(S.auth.email||""); }
+function wm(){ return '<div class="wm"><span>LICENSED TO '+esc(String(S.auth.name||S.auth.email||"").toUpperCase())+'</span></div>'; }
+function printSheet(html){ $("print").innerHTML=html; var go=function(){ window.print(); }; if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ setTimeout(go,60); }); else go(); }
+function posterHTML(){ var y=S.y, cs=costs();
+  var areas=areaCards().map(function(a){ var ar=C.areas[a.k]; return '<div class="q"><h2><i style="background:'+({money:"#2A9D8F",time:"#3E5F7A",focus:"#E07A5F",rich:"#C9A43F"}[a.k])+'">'+a.ic+'</i>'+esc(ar.title)+'</h2><p class="big">'+esc(a.big)+'</p>'+
+    (a.bar!=null?'<div class="sbar"><b style="width:'+a.bar+'%;background:#2A9D8F"></b></div><div class="smeta"><span>'+esc(a.meta[0])+'</span><span>'+esc(a.meta[1])+'</span></div>':'')+
+    '<ul style="margin-top:2mm">'+a.li.map(function(l){ return '<li><span>'+esc(l[0])+'</span>'+esc(l[1])+'</li>'; }).join("")+'</ul></div>'; }).join("");
+  var months=MONTHS.map(function(n,i){ var m=i+1, d=S.months[m]&&S.months[m].done, due=cs.filter(function(c){ return c.m===m; });
+    return '<div class="mm"><div class="c'+(d?" done":"")+'">'+(d?"✓":m)+'</div><div class="n">'+n.slice(0,3)+'</div><div class="f">'+due.map(function(c){ return '<b>'+esc(c.n.length>11?c.n.slice(0,10)+"…":c.n)+'<br>'+esc(money(c.a))+'</b>'; }).join("<br>")+'</div></div>'; }).join("");
+  return '<div class="sheet">'+wm()+'<div class="pg"><div class="top"><div><span class="d"></span>The Systemized Year</div><div>Lukas · The Systemized Life</div></div>'+
+    '<h1 style="font-size:52pt;line-height:.95;margin-top:7mm">'+esc(y.y)+',<br><em>on one page.</em></h1>'+
+    '<p class="sub"><b>'+esc(y.name?y.name+"'s year.":"My year.")+'</b> Set on '+esc(new Date(y.setAt||Date.now()).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}))+'. Checked once a month, fifteen minutes.</p>'+
+    (y.theme?'<div class="th"><small>This year<br>is about</small><p>'+esc(y.theme)+'</p></div>':'')+
+    '<div class="grid">'+areas+'</div>'+
+    '<div class="box"><h2>Twelve check-ins <em>'+(cs.length?'Big yearly costs, split so they never surprise you · '+esc(money(fundTotal()))+' / year = '+esc(money(monthly()))+' / month':'')+'</em></h2><div class="mrow">'+months+'</div></div>'+
+    '<div class="foot"><div class="one"><small>One thing today</small>'+esc(oneToday())+'</div><div class="lic">'+esc(lic())+'<br>The Systemized Year · beacons.ai/lukas.systemized</div></div></div></div>'; }
+function monthHTML(m){ var y=S.y, rec=S.months[m]||{}, inn=num(rec.in), out=num(rec.out), saved=inn-out, prev=lastCheck(m-1);
+  var buf=rec.buffer!==""&&rec.buffer!=null?num(rec.buffer):bufferNow(m-1), prevBuf=prev?num(prev.buffer):num(y.buffer), d=bufMonths(buf)-bufMonths(prevBuf);
+  var bt=bufTarget(), g=[]; if(bt) g.push([(+y.bufMonths||6)+"-month buffer",pct(buf,bt),bufMonths(buf).toFixed(1)+" / "+(+y.bufMonths||6)+" mo","#2A9D8F"]);
+  var debt0=num(y.debt), dl=rec.debt!=null&&rec.debt!==""?num(rec.debt):debtNow(m-1); if(debt0) g.push(["Debt to zero",pct(debt0-dl,debt0),dl?money(dl)+" left":"Gone ✓","#3E5F7A"]);
+  costs().filter(function(c){ return c.rich; }).forEach(function(c){ g.push([c.n,pct(ready(c,m),c.a),money(ready(c,m))+" / "+fmt(c.a),"#E9C46A"]); });
+  var f=fundsFor(m,costs()); var w=function(v){ return v?'<p class="write">'+esc(v)+'</p>':'<div class="ln"></div><div class="ln"></div>'; };
+  return '<div class="sheet">'+wm()+'<div class="pg"><div class="top"><span>The Systemized Year · Check-in '+m+' of 12</span><span>Lukas · The Systemized Life</span></div>'+
+    '<h1 style="font-size:40pt;line-height:1;margin-top:7mm">'+esc(MONTHS[m-1])+' <em>'+esc(y.y)+'</em></h1>'+
+    '<div class="st"><div><small>In</small><b>'+(inn?esc(money(inn)):"&nbsp;")+'</b><span>&nbsp;</span></div><div><small>Out</small><b>'+(out?esc(money(out)):"&nbsp;")+'</b><span>&nbsp;</span></div><div><small>Saved</small><b>'+(inn?esc(money(saved)):"&nbsp;")+'</b><span class="'+(saved<0?"bad":"")+'">'+(inn?Math.round(saved/inn*100)+"% of income":"&nbsp;")+'</span></div><div><small>Buffer</small><b>'+(num(y.essentials)?bufMonths(buf).toFixed(1)+" mo":esc(money(buf)))+'</b><span class="'+(d<0?"bad":"")+'">'+(num(y.essentials)?(d>=0?"+":"")+d.toFixed(1)+" this month":"&nbsp;")+'</span></div></div>'+
+    (g.length?'<div class="box"><h2>Goals <em>Where the year stands</em></h2>'+g.map(function(x){ return '<div class="goal"><span>'+esc(x[0])+'</span><div class="sbar"><b style="width:'+x[1]+'%;background:'+x[3]+'"></b></div><span class="v">'+esc(x[2])+'</span></div>'; }).join("")+'</div>':'')+
+    (f.length?'<div class="box"><h2>Big yearly costs <em>'+esc(money(monthly()))+' in every month · nothing here is a surprise</em></h2><div class="funds">'+f.map(function(x){ return '<div class="fund"><small>'+esc(x.label)+'</small><b>'+esc(x.c.n)+' '+esc(money(x.c.a))+'</b>'+esc(x.note)+'</div>'; }).join("")+'</div></div>':'')+
+    '<div class="two"><div class="box"><h2>What worked</h2>'+w(rec.worked)+'</div><div class="box"><h2>What leaked</h2>'+w(rec.leaked)+'</div></div>'+
+    '<div class="box"><h2>One fix for '+esc(MONTHS[m%12])+'</h2>'+w(rec.fix)+'</div>'+
+    '<div class="nx"><div><small>Next action · do it before you close this page</small><p>'+(rec.next?esc(rec.next):"&nbsp;")+'</p></div><div class="ck"></div></div>'+
+    '<p class="lq">“'+esc(C.month.quotes[m-1])+'” · Lukas</p>'+
+    '<div class="foot"><div class="lic" style="text-align:left">'+esc(lic())+'</div><div class="lic">The Systemized Year · beacons.ai/lukas.systemized</div></div></div></div>'; }
+
+// ================= MORE =================
+function renderMore(){
+  if(!C) return; $("o-who").textContent=(S.auth.name||"")+" · "+(S.auth.email||"");
+  var devs=S.auth.devices||[]; $("o-devices").innerHTML=devs.map(function(d){ return "<li><div><b>"+esc(d.name)+"</b>"+(d.this?' <span class="pill">this device</span>':"")+'<br><span class="small muted">added '+new Date(d.created*1000).toLocaleDateString()+"</span></div>"+(d.this?"":'<button class="btn sm ghost" data-rm="'+esc(d.id)+'">Remove</button>')+"</li>"; }).join("")+'<li class="muted small">'+devs.length+" of "+(S.auth.max||3)+" slots used</li>";
+  $("o-devices").querySelectorAll("[data-rm]").forEach(function(b){ b.addEventListener("click",function(){ if(!confirm("Remove this device? It will need a new code to get back in.")) return;
+    api("/me/remove-device",{body:{deviceId:b.dataset.rm}}).then(function(r){ if(r.ok){ S.auth.devices=r.devices; save(); renderMore(); toast("Removed."); } else toast(r.error||"Couldn't remove."); }); }); });
+  $("o-lessons").innerHTML=["money","time","focus","rich"].map(function(k){ var a=C.areas[k]; return '<div class="card"><div class="kicker">'+esc(a.title)+'</div><p class="serif" style="font-size:20px;margin:6px 0 8px;line-height:1.2">'+esc(a.tagline)+'</p><p class="small">'+esc(a.lesson)+'</p><ol class="rules">'+a.rules.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol><div class="seller"><b>The seller\'s side of the table</b>'+esc(a.sellerSide)+'</div><p class="source">'+esc(a.source)+'</p></div>'; }).join("");
+  $("o-disc").textContent=C.disclaimer;
+}
+$("o-backup").addEventListener("click",function(){ var d={y:S.y,months:S.months,exported:new Date().toISOString(),app:"the-systemized-year"}; download("systemized-year-"+(S.y.y||"backup")+".json",JSON.stringify(d,null,1),"application/json"); });
+$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d.y||!d.months) throw 0; S.y=d.y; S.months=d.months; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't a Systemized Year backup."); } }; rd.readAsText(f); });
+$("o-wipe").addEventListener("click",function(){ if(!confirm("Erase your year and all check-ins on this device? Your license stays.")) return; S.y={}; S.months={}; save(); location.reload(); });
+$("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
+
+// ---------- PWA ----------
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+})();
+</script>
+</body>
+</html>

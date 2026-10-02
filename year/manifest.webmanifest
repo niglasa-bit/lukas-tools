@@ -1,0 +1,14 @@
+{
+  "name": "The Systemized Year",
+  "short_name": "Year",
+  "description": "Your whole year on one page, and twelve fifteen-minute check-ins. By Lukas · The Systemized Life.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF8F2",
+  "theme_color": "#12303A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

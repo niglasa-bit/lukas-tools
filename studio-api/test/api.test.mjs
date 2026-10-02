@@ -103,7 +103,7 @@ assert.equal((await env.STUDIO.get("pending:s@x.com", "json")).product, "year");
 
 // the hidden upgrade syncs → the same device opens Year with no new code
 await sale("s@x.com", "upgrade-order-1", "The Systemized Year Upgrade");
-r = await get(sTok, "year"); assert.equal(r.status, 200); assert.equal(r.j.content.version, 0); assert.deepEqual(r.j.products.sort(), ["studio", "year"]);
+r = await get(sTok, "year"); assert.equal(r.status, 200); assert.equal(r.j.content.version, 1); assert.equal(r.j.content.areas.money.title, "Money"); assert.deepEqual(r.j.products.sort(), ["studio", "year"]);
 r = await call("/activate", { method: "POST", body: { email: "s@x.com", order: "upgrade-order-1", deviceId: "s1", product: "year" } });
 assert.equal(r.j.status, "already_active");
 
