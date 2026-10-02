@@ -332,7 +332,8 @@ $("theme").addEventListener("click",function(){ var root=document.documentElemen
   var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
 var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2200); }
 function fmt(n,d){ n=+n||0; return n.toLocaleString("en-US",{maximumFractionDigits:d||0}); }
-function cur(){ return (S.plan.cur||"$"); }
+var CURS={eur:"€",euro:"€",euros:"€",usd:"$",dollar:"$",dollars:"$",gbp:"£",pound:"£",pounds:"£",jpy:"¥",yen:"¥",sek:"kr ",nok:"kr ",dkk:"kr ",kr:"kr ",chf:"CHF ",pln:"zł ",czk:"Kč ",inr:"₹",krw:"₩",brl:"R$",cad:"C$",aud:"A$"};
+function cur(){ var c=String(S.plan.cur||"$").trim(); if(!c) return "$"; var k=c.toLowerCase().replace(/[^a-z$€£¥]/g,""); if(CURS[k]) return CURS[k]; return c.length>1&&/[a-z]/i.test(c)?c+" ":c; }
 function money(n){ return cur()+fmt(n); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
 function deviceId(){ if(!S.auth.deviceId){ S.auth.deviceId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); save(); } return S.auth.deviceId; }
@@ -393,7 +394,7 @@ function renderAll(){ renderPlan(); renderSunday(); renderBuy(); renderMore(); }
 // ================= PLAN BUILDER =================
 var STEPS=[
   {k:"intro", t:"Thirty minutes to one page", render:function(){ return '<p class="ink2">'+esc(C.plan.intro)+'</p><p class="small muted">Answer with honest, rough numbers. Rough and honest beats precise and imaginary. You can edit everything later.</p>'+
-    f("cur","Currency symbol","text",{maxlength:4,placeholder:"$"})+f("name","Plan for","text",{placeholder:"Your first name"}); }},
+    f("cur","Currency symbol or code","text",{maxlength:5,placeholder:"$, €, EUR…"})+f("name","Plan for","text",{placeholder:"Your first name"}); }},
   {k:"income", t:"What comes in", render:function(){ return f("income","Net monthly income (after tax)","number",{placeholder:"e.g. 3200"})+f("hours","Hours you work per month","number",{placeholder:"160"})+'<p class="hint">Hours let us read every price tag in hours of your life.</p>'; }},
   {k:"essentials", t:"What must go out", render:function(){ return '<p class="small ink2">Essentials only: the bills you\'d still pay if you lost your job tomorrow.</p>'+f("housing","Housing (rent / mortgage)","number")+f("food","Food & groceries","number")+f("bills","Utilities, phone, insurance, transport","number")+f("minpay","Minimum debt payments","number")+'<p class="hint">Essentials total: <b id="p-ess">'+money(ess())+'</b> / month</p>'; }},
   {k:"spend", t:"What actually goes out", render:function(){ return f("spend","Total monthly spending, everything included","number",{placeholder:"e.g. 2900"})+'<p class="hint">Essentials + wants + the stuff you forget. If unsure, look at last month\'s bank statement. The gap between this and your income is your raw material.</p>'; }},
@@ -477,7 +478,8 @@ function renderSunday(){
   var r=calc(), target=r.stage==="secure"?r.secureT:r.comfT, b=r.buffer, pct=target>0?Math.min(100,b/target*100):0;
   $("su-pct").textContent=target>0?Math.round(pct)+"%":"—"; $("su-bar").style.width=pct+"%";
   $("su-streak").textContent=streak(list);
-  $("su-nudge").textContent=C.sunday.nudges[list.length%C.sunday.nudges.length];
+  $("su-nudge").textContent= (!list.length && num("income")===0) ? "Build your plan first. Then come back here every Sunday: it takes two minutes." : C.sunday.nudges[list.length%C.sunday.nudges.length];
+  if(!list.length && nw===0) $("su-nw").textContent="—";
   spark(list.slice(0,26).reverse().map(function(e){ return +e.buffer+ +e.invested; }));
   $("su-list").innerHTML= list.length? list.slice(0,30).map(function(e){ return "<li><div><b>"+esc(e.d)+"</b> · "+money(+e.buffer+ +e.invested)+(e.wants?' · <span class="muted">wants '+money(e.wants)+"</span>":"")+(e.win?'<br><span class="small muted">🏆 '+esc(e.win)+"</span>":"")+(e.next?'<br><span class="small muted">→ '+esc(e.next)+"</span>":"")+'</div><button class="btn sm ghost" data-del="'+esc(e.d)+'" aria-label="Delete">×</button></li>'; }).join("") : '<li class="muted">No check-ins yet. The first one is the hardest. It takes two minutes.</li>';
   $("su-list").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ S.sunday=S.sunday.filter(function(e){ return e.d!==b.dataset.del; }); save(); renderSunday(); }); });
