@@ -1,0 +1,23 @@
+name = "lukas-studio-api"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Create the namespace once:  npx wrangler kv namespace create STUDIO
+# then paste the id it prints below.
+[[kv_namespaces]]
+binding = "STUDIO"
+id = "92f802a9b9a246ddb3a8f4ab17dc22bb"
+
+[vars]
+# Only orders whose Beacons product name contains this text unlock the app (case-insensitive).
+PRODUCT_MATCH = "Money Plan Studio"
+MAX_DEVICES = "3"
+# Comma-separated. Leave empty while testing locally.
+ALLOWED_ORIGINS = "https://niglasa-bit.github.io"
+
+# Secrets (set with: npx wrangler secret put NAME):
+#   SIGNING_SECRET    long random string, signs device tokens
+#   SYNC_SECRET       shared with the Gmail Apps Script (sync + mail webhook)
+#   ADMIN_TOKEN       opens /admin?token=...
+#   MAIL_WEBHOOK_URL  the Apps Script web-app URL (sends codes from your Gmail). Optional:
+#   RESEND_API_KEY + MAIL_FROM   if you later get a domain and prefer Resend
