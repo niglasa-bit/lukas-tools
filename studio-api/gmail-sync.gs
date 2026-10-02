@@ -130,8 +130,11 @@ function sendMail(to, subject, html) {
   if (from && GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(from) >= 0) {
     GmailApp.sendEmail(to, subject, "", { from: from, name: CONFIG.SENDER_NAME, htmlBody: html, replyTo: from });
   } else {
-    if (from) Logger.log("SENDER_EMAIL " + from + " is not a verified Gmail alias; sending from the account address.");
-    MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: CONFIG.SENDER_NAME });
+    // Not a verified alias yet: the mail still leaves from the account address, but replies go to SENDER_EMAIL.
+    if (from) Logger.log("SENDER_EMAIL " + from + " is not a verified Gmail alias; sending from the account address with it as reply-to.");
+    var mail = { to: to, subject: subject, htmlBody: html, name: CONFIG.SENDER_NAME };
+    if (from) mail.replyTo = from;
+    MailApp.sendEmail(mail);
   }
 }
 
