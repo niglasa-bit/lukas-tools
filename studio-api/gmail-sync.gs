@@ -20,6 +20,10 @@ var CONFIG = {
   API_URL: "https://lukas-studio-api.YOUR-SUBDOMAIN.workers.dev", // no trailing slash
   SYNC_SECRET: "PASTE_THE_SAME_SYNC_SECRET_AS_IN_WRANGLER",
   SENDER_NAME: "Lukas · The Systemized Life",
+  // Optional: send from a Gmail "Send mail as" alias instead of this account's own address.
+  // Add the alias in Gmail → Settings → Accounts and Import → "Send mail as", verify it, then
+  // paste it here. Leave "" to send from this account (the name above is still shown).
+  SENDER_EMAIL: "",
   LABEL: "lukas-studio-synced",
   // The seller notification Beacons sends you:
   SEARCH: 'from:(info.beacons.ai) subject:("You made a sale") newer_than:30d',
@@ -101,7 +105,7 @@ function doPost(e) {
   try {
     var b = JSON.parse(e.postData.contents || "{}");
     if (b.secret !== CONFIG.SYNC_SECRET) return out.setContent('{"error":"forbidden"}');
-    MailApp.sendEmail({ to: b.to, subject: b.subject, htmlBody: b.html, name: CONFIG.SENDER_NAME });
+    sendMail(b.to, b.subject, b.html);
     return out.setContent('{"ok":true}');
   } catch (err) {
     return out.setContent(JSON.stringify({ error: String(err) }));
@@ -114,10 +118,21 @@ function sendOutbox() {
   if (!res || !res.mails || !res.mails.length) return;
   var done = [];
   res.mails.forEach(function (m) {
-    try { MailApp.sendEmail({ to: m.to, subject: m.subject, htmlBody: m.html, name: CONFIG.SENDER_NAME }); done.push(m.id); }
+    try { sendMail(m.to, m.subject, m.html); done.push(m.id); }
     catch (err) { Logger.log("mail failed: " + err); }
   });
   if (done.length) api("/outbox/ack", { ids: done });
+}
+
+// Sends from the alias in CONFIG.SENDER_EMAIL when it is set up in Gmail, otherwise from this account.
+function sendMail(to, subject, html) {
+  var from = String(CONFIG.SENDER_EMAIL || "").trim().toLowerCase();
+  if (from && GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(from) >= 0) {
+    GmailApp.sendEmail(to, subject, "", { from: from, name: CONFIG.SENDER_NAME, htmlBody: html, replyTo: from });
+  } else {
+    if (from) Logger.log("SENDER_EMAIL " + from + " is not a verified Gmail alias; sending from the account address.");
+    MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: CONFIG.SENDER_NAME });
+  }
 }
 
 function api(path, payload, method) {
