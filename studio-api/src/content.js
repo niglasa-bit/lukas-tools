@@ -89,6 +89,6 @@ export const CONTENT = {
   plan: {
     intro: "Thirty minutes, honestly answered, and you'll have the one page most people never write.",
     autoNote: "Pay yourself first means the transfer happens before you see the money. Set it up once. Then it's not a decision anymore.",
-    disclaimer: "Illustration based on your inputs and long-run averages. Returns are not guaranteed. Not financial advice. Lukas is an AI-made character.",
+    disclaimer: "Illustration based on your inputs and long-run averages. Returns are not guaranteed. Not financial advice.",
   },
 };
