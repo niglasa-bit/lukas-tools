@@ -416,7 +416,7 @@ function calc(){
   var monthsSecure = auto>0 ? Math.max(0,Math.ceil((secureT-buffer)/auto)) : null;
   var monthsComf = auto>0 ? Math.max(0,Math.ceil((comfT-buffer)/auto)) : null;
   var yearsFI = yearsTo(inv, auto, fi, 0.07);
-  var hourly = income>0 && num("hours")>0 ? income/num("hours") : 0;
+  var hourly = income>0 ? income/(num("hours")||160) : 0;
   return {income:income,E:E,spend:spend,debt:debt,buffer:buffer,inv:inv,leftover:leftover,suggested:suggested,auto:auto,secureT:secureT,comfT:comfT,fi:fi,stage:stage,monthsDebt:monthsDebt,monthsSecure:monthsSecure,monthsComf:monthsComf,yearsFI:yearsFI,hourly:hourly};
 }
 function yearsTo(start,monthly,target,r){ if(target<=0) return 0; if(start>=target) return 0; if(monthly<=0) return null; var v=start, m=0, rm=r/12; while(v<target && m<1200){ v=v*(1+rm)+monthly; m++; } return m>=1200?null:m/12; }
@@ -522,7 +522,7 @@ function buyCalc(){ var p=Math.max(0,parseFloat($("b-price").value)||0), y=+$("b
 function buyNums(){ if(!C) return; var c=buyCalc(), r=calc();
   $("b-yearsOut").textContent=c.y+" yrs"; $("b-rateOut").textContent=(c.r*100).toFixed(1).replace(".0","")+"%";
   $("b-fv").textContent=money(c.fv); $("b-fvLine").textContent="is what this becomes in "+c.y+" years at "+(c.r*100).toFixed(1).replace(".0","")+"% if you keep it.";
-  $("b-paid").textContent=money(c.paid); $("b-hours").textContent= r.hourly>0 ? fmt(c.paid/r.hourly,1)+" h" : "add income in Plan";
+  $("b-paid").textContent=money(c.paid); $("b-hours").textContent= r.hourly>0 ? fmt(c.paid/r.hourly,1)+" h" : "add income in Plan first";
   var kept=S.buy.hist.filter(function(h){ return h.what==="skipped"; }).reduce(function(a,h){ return a+(+h.fv||0); },0); $("b-kept").textContent=money(kept);
   var yes=C.beforeYouBuy.checklist.filter(function(_,i){ var e=$("b-q"+i); return e&&e.checked; }).length;
   $("b-verdict").textContent= yes>=2 ? "Verdict: probably an asset" : "Verdict: liability"; $("b-verdictSub").textContent= yes>=2 ? "— it may pay you back." : "— fine if it's worth "+money(c.fv)+" to you. Decide on purpose."; }
