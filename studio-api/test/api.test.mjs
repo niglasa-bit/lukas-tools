@@ -143,4 +143,42 @@ assert.equal(r.j.status, "code_sent", "approvals made before this change still o
 r = await call("/admin", { headers: { "X-Admin-Token": "admin", Accept: "application/json" } });
 assert.deepEqual(r.j.buyers.find((b) => b.email === "s@x.com").products.sort(), ["studio", "year"]);
 
+// The Autopilot Workbook: its own Beacons product, its own content, shares the buyer's devices
+await sale("a@x.com", "auto-order-1", "The Autopilot Workbook");
+r = await call("/activate", { method: "POST", body: { email: "a@x.com", order: "auto-order-1", deviceId: "a1", product: "year" } });
+assert.equal(r.j.status, "pending", "Autopilot order does not open Year");
+r = await unlock("a@x.com", "auto-order-1", "a1", "autopilot"); assert.equal(r.status, "ok"); const aTok = r.token;
+ym = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((x) => x.to === "a@x.com").pop();
+assert.match(ym.subject, /The Autopilot Workbook code/); assert.match(ym.html, /Lukas/);
+r = await get(aTok, "autopilot"); assert.equal(r.status, 200); assert.equal(r.j.team, ""); assert.ok(r.j.content.recipes.length >= 20); assert.ok(r.j.content.prompts.length >= 30);
+assert.deepEqual(r.j.products, ["autopilot"]);
+assert.equal((await get(aTok)).status, 403, "Studio stays locked");
+// Studio buyer adds the workbook later: same device opens it without a new code
+await sale("s@x.com", "auto-order-2", "The Autopilot Workbook");
+assert.equal((await get(sTok, "autopilot")).status, 200);
+
+// B2B team: seats added by the owner, each person unlocks with their own email + contract number
+const A = { "X-Admin-Token": "admin" };
+r = await call("/admin/team", { method: "POST", headers: A, body: { team: "Acme Oy", order: "AP-2026-001", emails: "anna@acme.fi\nMikko@Acme.fi, bad-email", products: ["autopilot"] } });
+assert.equal(r.j.seats, 2); assert.equal(r.j.added, 2);
+r = await call("/activate", { method: "POST", body: { email: "anna@acme.fi", order: "wrong-contract", deviceId: "t1", product: "autopilot" } });
+assert.equal(r.j.status, "pending", "a seat needs the contract number");
+r = await unlock("anna@acme.fi", "ap-2026-001", "t1", "autopilot"); assert.equal(r.status, "ok"); const tTok = r.token;
+ym = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((x) => x.to === "anna@acme.fi").pop();
+assert.match(ym.html, /licensed to Acme Oy/); assert.doesNotMatch(ym.html, /Lukas/);
+r = await get(tTok, "autopilot"); assert.equal(r.status, 200); assert.equal(r.j.team, "Acme Oy");
+assert.equal((await get(tTok, "year")).status, 403, "a seat opens only the licensed product");
+// licence end date in the past: access stops, nobody is deleted
+await call("/admin/team", { method: "POST", headers: A, body: { team: "Acme Oy", order: "AP-2026-001", emails: "anna@acme.fi", until: "2020-01-01" } });
+r = await get(tTok, "autopilot"); assert.equal(r.status, 403);
+await call("/admin/team", { method: "POST", headers: A, body: { team: "Acme Oy", order: "AP-2026-001", emails: "anna@acme.fi", until: "2099-12-31" } });
+assert.equal((await get(tTok, "autopilot")).status, 200);
+// a seat holder who also bought something personally keeps it when the team ends
+await sale("mikko@acme.fi", "mikko-studio-1", "Money Plan Studio");
+r = await call("/admin/team-remove", { method: "POST", headers: A, body: { team: "Acme Oy" } });
+assert.equal(r.j.removed, 2);
+assert.equal(await env.STUDIO.get("buyer:anna@acme.fi"), null);
+r = await call("/admin", { headers: { ...A, Accept: "application/json" } });
+assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, ["studio"]);
+
 console.log("ok · all API checks passed");

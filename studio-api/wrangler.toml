@@ -10,7 +10,7 @@ id = "92f802a9b9a246ddb3a8f4ab17dc22bb"
 
 [vars]
 # Which Beacons product names unlock which products: see DEFAULT_PRODUCTS in src/index.js
-# (Money Plan Studio, The Systemized Year, the hidden Year upgrade, Systemized Life Pass).
+# (Money Plan Studio, The Systemized Year, the hidden Year upgrade, Systemized Life Pass, The Autopilot Workbook).
 # To change them without a code edit, set PRODUCTS to the same JSON shape, e.g.
 # PRODUCTS = '[{"match":"money plan studio","grants":["studio"]}]'
 MAX_DEVICES = "3"
