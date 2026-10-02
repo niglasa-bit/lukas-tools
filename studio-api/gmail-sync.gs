@@ -35,32 +35,49 @@ function setup() {
 
 function syncSales() {
   var label = GmailApp.getUserLabelByName(CONFIG.LABEL) || GmailApp.createLabel(CONFIG.LABEL);
-  var threads = GmailApp.search(CONFIG.SEARCH + " -label:" + CONFIG.LABEL, 0, 50);
-  var sales = [];
+  // Beacons reuses the subject ("You made a sale — $19.00"), so Gmail stacks new sales into a
+  // thread that is already labelled. Track by time instead: read every message newer than the
+  // last successful sync, with an hour of overlap (the API ignores orders it already has).
+  var props = PropertiesService.getScriptProperties();
+  var last = parseInt(props.getProperty("lastSync") || "0", 10);
+  var started = Date.now();
+  var since = last ? last - 3600 * 1000 : 0;
+  var threads = GmailApp.search(CONFIG.SEARCH + (since ? " after:" + Math.floor(since / 1000) : ""), 0, 50);
+  var sales = [], unreadable = 0;
   threads.forEach(function (th) {
     th.getMessages().forEach(function (msg) {
-      var s = parseSale(msg.getPlainBody(), msg.getDate());
+      if (since && msg.getDate().getTime() < since) return;
+      var s = parseSale(htmlToText(msg.getBody()), msg.getDate()) || parseSale(msg.getPlainBody(), msg.getDate());
       if (s) sales.push(s);
+      else { unreadable++; Logger.log("could not read sale mail " + msg.getId() + ": " + msg.getSubject()); }
     });
   });
   if (sales.length) {
     var res = api("/sync", { sales: sales });
     Logger.log("sync: " + JSON.stringify(res));
-    if (!res || res.error) return; // keep unlabeled, retry next run
+    if (!res || res.error) return; // lastSync stays put, retry next run
   }
+  if (!unreadable) props.setProperty("lastSync", String(started)); // an unreadable mail is retried, not skipped
   threads.forEach(function (th) { th.addLabel(label); });
 }
 
-// Beacons' table reads, in plain text, roughly:
-//   PRODUCT  The 1-Page Money Plan (Free)
-//   TYPE     digital-products
-//   AMOUNT   $0.00
-//   CUSTOMER Niko
-//   CUSTOMER EMAIL niglasa@gmail.com
-//   ORDER #  c47d3f10-8a6d-4f86-9376-4fc5c5624a69
+// The seller notification carries the order table in its HTML part only; the plain-text part
+// stops at "Order details". Flattened, the table reads one cell per line:
+//   Product / Money Plan Studio / Type / digital-products / Amount / $19.00 /
+//   Customer / Niko / Customer email / niko@example.com / Order # / c47d3f10-8a6d-...
+function htmlToText(html) {
+  return String(html || "")
+    .replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<\/(td|tr|p|div|h1|h2|table)>|<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/[ \t]*\r?\n[ \t]*/g, "\n").replace(/\n{2,}/g, "\n");
+}
+
 function parseSale(text, date) {
   function grab(label) {
-    var re = new RegExp(label + "\\s*[:\\n\\r\\t ]+\\s*([^\\n\\r]+)", "i");
+    var re = new RegExp("(?:^|\\n)[ \\t]*" + label + "[ \\t]*[:\\n\\r\\t ]+\\s*([^\\n\\r]+)", "i");
     var m = text.match(re);
     return m ? m[1].trim() : "";
   }
