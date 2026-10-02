@@ -384,6 +384,7 @@ if(S.auth.token) enter();
 
 // ---------- tabs ----------
 function show(v){ S.ui=v; save(); document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
+  if(v==="sunday") renderSunday(); // the plan may have changed since the last render
   document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===v); }); window.scrollTo(0,0); }
 document.querySelectorAll("nav.tabs button").forEach(function(b){ b.addEventListener("click",function(){ show(b.dataset.v); }); });
 
@@ -466,12 +467,14 @@ function renderSunday(){
   if(!C) return; var p=C.sunday.prompts; $("su-intro").textContent=C.sunday.intro;
   $("l-buffer").textContent=p.buffer; $("l-invested").textContent=p.invested; $("l-wants").textContent=p.wants; $("l-win").textContent=p.win; $("l-next").textContent=p.next;
   var list=S.sunday.slice().sort(function(a,b){ return a.d<b.d?1:-1; }); var last=list[0], prev=list[1];
-  if(last && !$("su-buffer").value){ $("su-buffer").value=last.buffer; $("su-invested").value=last.invested; }
-  var nw=last?(+last.buffer+ +last.invested):(num("buffer")+num("invested"));
+  // The plan holds the current numbers (a check-in writes them back there), so a rebuilt plan resets this view.
+  prefill("su-buffer",num("buffer")); prefill("su-invested",num("invested"));
+  var nw=num("buffer")+num("invested");
   $("su-nw").textContent=money(nw);
-  $("su-delta").textContent= last&&prev ? ((nw-(+prev.buffer+ +prev.invested))>=0?"+":"−")+money(Math.abs(nw-(+prev.buffer+ +prev.invested))) : "—";
-  $("su-delta").className= last&&prev&&nw<(+prev.buffer+ +prev.invested) ? "bad":"good";
-  var r=calc(), target=r.stage==="secure"?r.secureT:r.comfT, b=last?+last.buffer:r.buffer, pct=target>0?Math.min(100,b/target*100):0;
+  var same=last && +last.buffer===num("buffer") && +last.invested===num("invested"), base=same?prev:last, bnw=base?(+base.buffer+ +base.invested):null;
+  $("su-delta").textContent= bnw!=null ? ((nw-bnw)>=0?"+":"−")+money(Math.abs(nw-bnw)) : "—";
+  $("su-delta").className= bnw!=null&&nw<bnw ? "bad":"good";
+  var r=calc(), target=r.stage==="secure"?r.secureT:r.comfT, b=r.buffer, pct=target>0?Math.min(100,b/target*100):0;
   $("su-pct").textContent=target>0?Math.round(pct)+"%":"—"; $("su-bar").style.width=pct+"%";
   $("su-streak").textContent=streak(list);
   $("su-nudge").textContent=C.sunday.nudges[list.length%C.sunday.nudges.length];
@@ -483,6 +486,8 @@ function weekKey(d){ d=new Date(d); var day=(d.getDay()+6)%7; d.setDate(d.getDat
 function streak(list){ if(!list.length) return 0; var wk=weekKey(new Date()), s=0, keys={}; list.forEach(function(e){ keys[weekKey(e.d)]=1; });
   var d=new Date(wk); if(!keys[wk]){ d.setDate(d.getDate()-7); if(!keys[d.toISOString().slice(0,10)]) return 0; }
   while(keys[d.toISOString().slice(0,10)]){ s++; d.setDate(d.getDate()-7); } return s; }
+// Fill an input from the plan unless the user has typed something else since the last fill.
+function prefill(id,v){ var el=$(id); v=v>0?String(v):""; if(el.value===""||el.value===el.dataset.pre) el.value=v; el.dataset.pre=v; }
 function spark(vals){ var svg=$("su-spark"); if(vals.length<2){ svg.innerHTML=""; return; } var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), rg=(mx-mn)||1;
   var pts=vals.map(function(v,i){ return [i/(vals.length-1)*320, 60-(v-mn)/rg*52+2]; });
   svg.innerHTML='<polyline fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ")+'"/>'; }
