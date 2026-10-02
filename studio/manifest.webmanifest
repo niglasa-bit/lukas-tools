@@ -1,0 +1,14 @@
+{
+  "name": "Money Plan Studio",
+  "short_name": "Money Plan",
+  "description": "Your whole money plan on one page, a 10-minute Sunday check-in, and a price-tag reader. By Lukas · The Systemized Life.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3FAF8",
+  "theme_color": "#2A9D8F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
