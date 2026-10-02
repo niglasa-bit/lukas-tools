@@ -7,23 +7,26 @@
 // Premium content is only served to a device that holds a valid signed token.
 //
 // Several products share this lock (Money Plan Studio, The Systemized Year, the
-// bundle). One buyer = one email = one device list; what a buyer may open is
+// bundle, The Autopilot Workbook). One buyer = one email = one device list; what a buyer may open is
 // worked out from their orders on every request (see entitlements()), so a new
 // purchase, an upgrade or a refund applies at the next launch without new codes.
 //
 // KV layout (binding STUDIO):
-//   buyer:<email>   {name,email,orders:[{order,product,amount,date}],devices:[{id,name,created}],approved,approvedProducts,created}
+//   buyer:<email>   {name,email,orders:[{order,product,amount,date}],devices:[{id,name,created}],approved,approvedProducts,team,created}
+//                   team = {id,name,order,until} for B2B seats added under /admin (see addTeam)
 //   pending:<email> {email,order,product,deviceName,created,attempts}   (activation tried before the sale synced)
 //   code:<email>    {code,deviceId,deviceName,exp,tries}          (TTL 15 min)
 //   mail:<id>       {to,subject,html,created}                     (outbox, only when no MAIL_WEBHOOK_URL)
 
 import { CONTENT } from "./content.js";
 import { CONTENT_YEAR } from "./content-year.js";
+import { CONTENT_AUTOPILOT } from "./content-autopilot.js";
 
 // Product keys an app can ask for, the name used in emails, and the content it gets.
 const PRODUCT_INFO = {
   studio: { name: "Money Plan Studio", content: CONTENT },
   year: { name: "The Systemized Year", content: CONTENT_YEAR },
+  autopilot: { name: "The Autopilot Workbook", content: CONTENT_AUTOPILOT },
 };
 
 // Which Beacons product names unlock which product keys. First matching rule wins,
@@ -33,6 +36,7 @@ const PRODUCT_INFO = {
 // Override with the PRODUCTS var (same JSON shape). Without it, the old single
 // PRODUCT_MATCH keeps working and unlocks the Studio only.
 const DEFAULT_PRODUCTS = [
+  { match: "autopilot workbook", grants: ["autopilot"] },
   { match: "systemized year upgrade", grants: ["year"], requires: "studio" },
   { match: "systemized life pass", grants: ["studio", "year"] },
   { match: "systemized year", grants: ["year"] },
@@ -117,7 +121,7 @@ async function activate(request, env) {
   await sendMail(env, {
     to: email,
     subject: `${code} is your ${PRODUCT_INFO[product].name} code`,
-    html: codeMail(buyer.name, code, deviceName, PRODUCT_INFO[product].name),
+    html: codeMail(buyer.name, code, deviceName, PRODUCT_INFO[product].name, teamActive(buyer) ? buyer.team.name : ""),
   });
   return json({ status: "code_sent", message: "Check your email for a 6-digit code (valid 15 minutes)." });
 }
@@ -168,6 +172,7 @@ async function content(request, env, url) {
     devices: (buyer.devices || []).map((d) => ({ id: d.id, name: d.name, created: d.created, this: d.id === payload.d })),
     maxDevices: parseInt(env.MAX_DEVICES || "3", 10),
     products,
+    team: teamActive(buyer) ? buyer.team.name : "",
     content: PRODUCT_INFO[product].content,
   };
   // Refresh token quietly when it is getting old.
@@ -277,8 +282,62 @@ async function admin(request, env, url, p) {
     // Refund or chargeback: remove the buyer entirely. Their devices stop at the next launch.
     await env.STUDIO.delete("buyer:" + email); await env.STUDIO.delete("pending:" + email); return json({ ok: true });
   }
+  if (p === "/admin/team") return addTeam(env, b);
+  if (p === "/admin/team-remove") return removeTeam(env, b);
   if (p === "/admin/dismiss-pending") { await env.STUDIO.delete("pending:" + email); return json({ ok: true }); }
   return json({ error: "not_found" }, 404);
+}
+
+// ---------- B2B team licences ----------
+// A company buys N seats by invoice (not through Beacons). The owner pastes the seat emails here with the
+// contract number; each person then unlocks with their own email + that contract number + an emailed code,
+// on up to MAX_DEVICES devices of their own. `until` (YYYY-MM-DD) ends the licence without deleting anyone.
+
+function teamId(s) { return String(s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40); }
+function teamActive(buyer) { return !!(buyer && buyer.team && (!buyer.team.until || now() <= buyer.team.until)); }
+
+async function addTeam(env, b) {
+  const name = String(b.team || "").trim().slice(0, 80);
+  const order = normOrder(b.order);
+  const id = teamId(name);
+  if (!id) return json({ error: "bad_team" }, 400);
+  if (order.length < 4) return json({ error: "bad_order" }, 400);
+  const grants = (Array.isArray(b.products) ? b.products : ["autopilot"]).filter((k) => PRODUCT_INFO[k]);
+  const until = b.until ? Math.floor(Date.parse(String(b.until) + "T23:59:59Z") / 1000) || 0 : 0;
+  const emails = [...new Set(String(Array.isArray(b.emails) ? b.emails.join("\n") : b.emails || "").split(/[\s,;]+/).map(normEmail).filter(isEmail))];
+  if (!emails.length) return json({ error: "no_emails" }, 400);
+  let added = 0, updated = 0;
+  for (const email of emails) {
+    const prev = await getBuyer(env, email);
+    const buyer = prev || { email, name: "", orders: [], devices: [], created: now() };
+    buyer.approved = true;
+    buyer.approvedProducts = [...new Set([...(buyer.approvedProducts || []), ...grants])];
+    buyer.team = { id, name, order, until, products: grants };
+    await putBuyer(env, buyer);
+    prev ? updated++ : added++;
+  }
+  return json({ ok: true, team: id, added, updated, seats: emails.length });
+}
+
+// Ends a team: members lose the team's products. People who also bought something themselves keep that.
+async function removeTeam(env, b) {
+  const id = teamId(b.team);
+  if (!id) return json({ error: "bad_team" }, 400);
+  let removed = 0;
+  for (const k of (await env.STUDIO.list({ prefix: "buyer:" })).keys) {
+    const buyer = await env.STUDIO.get(k.name, "json");
+    if (!buyer || !buyer.team || buyer.team.id !== id) continue;
+    const ownOrders = (buyer.orders || []).some((o) => o.product !== "manual");
+    if (!ownOrders && !(buyer.approvedProducts || []).some((x) => !(buyer.team.products || []).includes(x))) await env.STUDIO.delete(k.name);
+    else {
+      buyer.approvedProducts = (buyer.approvedProducts || []).filter((x) => !(buyer.team.products || []).includes(x));
+      if (!buyer.approvedProducts.length) buyer.approved = false;
+      delete buyer.team;
+      await putBuyer(env, buyer);
+    }
+    removed++;
+  }
+  return json({ ok: true, removed });
 }
 
 // ---------- helpers ----------
@@ -313,7 +372,8 @@ function orderRule(o, rules) {
 // Every product key this buyer may open.
 function entitlements(buyer, env) {
   const rules = productRules(env);
-  const owned = new Set(buyer.approved ? (buyer.approvedProducts || ["studio"]) : []);
+  const teamOnly = buyer.team && !teamActive(buyer) ? buyer.team.products || [] : [];
+  const owned = new Set(buyer.approved ? (buyer.approvedProducts || ["studio"]).filter((k) => !teamOnly.includes(k)) : []);
   const later = [];
   for (const o of buyer.orders || []) {
     const r = orderRule(o, rules);
@@ -329,6 +389,7 @@ function entitlements(buyer, env) {
 function orderUnlocks(buyer, order, product, env) {
   const owned = entitlements(buyer, env);
   if (!owned.includes(product)) return false;
+  if (teamActive(buyer) && (buyer.team.products || []).includes(product)) return order === buyer.team.order;
   if (buyer.approved && (buyer.approvedProducts || ["studio"]).includes(product)) return true;
   const rules = productRules(env);
   return (buyer.orders || []).some((o) => o.order === order && orderRule(o, rules));
@@ -394,14 +455,14 @@ async function sendMail(env, mail) {
   await env.STUDIO.put("mail:" + crypto.randomUUID(), JSON.stringify({ ...mail, created: now() }), { expirationTtl: CODE_TTL });
 }
 
-function codeMail(name, code, deviceName, productName) {
+function codeMail(name, code, deviceName, productName, team) {
   const hi = name ? `Hi ${escapeHtml(name.split(" ")[0])},` : "Hi,";
   return `<div style="font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1F3A5F;max-width:480px">
   <p>${hi}</p>
   <p>Your ${escapeHtml(productName || "Money Plan Studio")} code for <b>${escapeHtml(deviceName || "your device")}</b>:</p>
   <p style="font-size:34px;font-weight:800;letter-spacing:.12em;margin:8px 0 16px">${code}</p>
   <p>It works for 15 minutes. If you didn't request this, just ignore the email.</p>
-  <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life</p>
+  <p style="color:#5F8A99;font-size:13px">${team ? `${escapeHtml(productName)} · licensed to ${escapeHtml(team)}` : "One small system at a time. ☕<br>Lukas · The Systemized Life"}</p>
 </div>`;
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -414,7 +475,9 @@ button{font:inherit;border:1px solid #CFE6E1;background:#E6F3F0;border-radius:8p
 <h1>Lukas products · buyers</h1><p class="muted" id="meta"></p>
 <h2>Waiting for approval</h2><table id="pending"><tr><th>Email</th><th>Order # they typed</th><th>For</th><th>Tries</th><th></th></tr></table>
 <h2>Buyers</h2><table id="buyers"><tr><th>Buyer</th><th>Owns</th><th>Orders</th><th>Devices</th><th></th></tr></table>
-<h2>Add a buyer by hand</h2><p><input id="aEmail" placeholder="email"> <input id="aName" placeholder="name"> <input id="aOrder" placeholder="order # (optional)"> <select id="aProd"><option value="studio">Money Plan Studio</option><option value="year">The Systemized Year</option><option value="studio,year">Both</option></select> <button class="p" onclick="approve()">Approve</button></p>
+<h2>Add a buyer by hand</h2><p><input id="aEmail" placeholder="email"> <input id="aName" placeholder="name"> <input id="aOrder" placeholder="order # (optional)"> <select id="aProd"><option value="studio">Money Plan Studio</option><option value="year">The Systemized Year</option><option value="studio,year">Studio + Year</option><option value="autopilot">The Autopilot Workbook</option></select> <button class="p" onclick="approve()">Approve</button></p>
+<h2>Add a team (B2B licence)</h2><p class="muted">Company name, the contract or invoice number people type as their Order #, the end date, and one email per line. Re-adding the same team adds seats and updates the end date.</p>
+<p><input id="tName" placeholder="company, e.g. Acme Oy"> <input id="tOrder" placeholder="contract #, e.g. AP-2026-001"> <input id="tUntil" type="date" title="licence ends"> <select id="tProd"><option value="autopilot">The Autopilot Workbook</option></select><br><textarea id="tEmails" rows="5" style="width:100%;margin-top:6px;font:inherit" placeholder="anna@acme.fi&#10;mikko@acme.fi"></textarea><br><button class="p" onclick="team()">Add seats</button> <button onclick="if(confirm('End this team licence? Members lose access at their next launch.'))teamRemove()">End team licence</button> <span id="tMsg" class="muted"></span></p>
 <script>
 const T=new URLSearchParams(location.search).get("token"); const H={"content-type":"application/json","X-Admin-Token":T};
 async function load(){const r=await fetch("/admin",{headers:{"X-Admin-Token":T,"Accept":"application/json"}}); const d=await r.json(); if(d.error){document.body.innerHTML="<p>Forbidden</p>";return;}
@@ -423,10 +486,12 @@ const P=document.getElementById("pending"); P.querySelectorAll("tr+tr").forEach(
 for(const p of d.pending){const tr=P.insertRow(); tr.innerHTML="<td>"+esc(p.email)+"</td><td><code>"+esc(p.order)+"</code></td><td>"+esc(p.product||"studio")+"</td><td>"+(p.attempts||1)+"</td><td><button class=p onclick=\\"act('approve','"+esc(p.email)+"','"+esc(p.order)+"',null,'"+esc(p.product||"studio")+"')\\">Approve</button> <button onclick=\\"act('dismiss-pending','"+esc(p.email)+"')\\">Dismiss</button></td>";}
 if(!d.pending.length){P.insertRow().innerHTML="<td colspan=5 class=muted>Nothing waiting.</td>";}
 const B=document.getElementById("buyers"); B.querySelectorAll("tr+tr").forEach(e=>e.remove());
-for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,8))+"…</code> "+esc(o.product||"")+" "+esc(o.amount||"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
+for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,8))+"…</code> "+esc(o.product||"")+" "+esc(o.amount||"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
 if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=5 class=muted>No buyers yet.</td>";}}
 async function act(a,email,order,deviceId,product){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify({email,order,deviceId,products:product?[product]:undefined})}); load();}
 async function approve(){await fetch("/admin/approve",{method:"POST",headers:H,body:JSON.stringify({email:aEmail.value,name:aName.value,order:aOrder.value,products:aProd.value.split(",")})}); aEmail.value=aName.value=aOrder.value=""; load();}
+async function team(){const r=await fetch("/admin/team",{method:"POST",headers:H,body:JSON.stringify({team:tName.value,order:tOrder.value,until:tUntil.value,products:[tProd.value],emails:tEmails.value})}); const j=await r.json(); tMsg.textContent=j.ok?(j.seats+" seats ("+j.added+" new)"):(j.error||"error"); if(j.ok) tEmails.value=""; load();}
+async function teamRemove(){const r=await fetch("/admin/team-remove",{method:"POST",headers:H,body:JSON.stringify({team:tName.value})}); const j=await r.json(); tMsg.textContent=j.ok?(j.removed+" members removed"):(j.error||"error"); load();}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 load();
 </script>`;

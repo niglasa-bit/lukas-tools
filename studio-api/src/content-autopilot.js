@@ -1,0 +1,616 @@
+// Premium content for The Autopilot Workbook. Served only to an activated device that owns it
+// (GET /content?product=autopilot). Voice: Lukas · The Systemized Life. Calm, short, one action at a time.
+//
+// Updating the product = editing this file and deploying the Worker (npm run deploy). Bump `version`
+// and add a line to `changelog`; buyers see it under More → What's new on their next launch.
+// A lesson video goes live by putting its unlisted YouTube id in `video`. Until then the lesson shows its text.
+// Menu paths change when Microsoft, Apple or Google redesign things: fix them here, nowhere else.
+// Sources: only well-known ones (Microsoft, Apple and Google's own help pages, big studies, famous books).
+
+export const CONTENT_AUTOPILOT = {
+  version: 1,
+  updated: "2026-10-02",
+  changelog: [
+    { version: 1, date: "2026-10-02", notes: ["First edition: the routine audit, 26 autopilot recipes on five tracks, 40 fill-in prompts and 10 lessons."] },
+  ],
+
+  intro: {
+    title: "Find the boring tasks that eat your week. Hand them to a system.",
+    lead: "No code. No new subscription. You'll list what you repeat, see what it costs you in hours, and build the first autopilot tonight. Most people find two to four hours a week.",
+    promise: "Two hours a week is about ninety hours a year. That's two full work weeks you get back, every year, from things you set up once.",
+  },
+
+  // The five ways to automate. A buyer picks the ones they actually have.
+  tracks: {
+    rules: { title: "Built-in rules", icon: "⚙︎", short: "Email filters, calendar, your bank", needs: "Nothing new. Gmail, Outlook, your calendar and your online bank already do this.", who: "Everyone. Start here." },
+    ai: { title: "AI assistant", icon: "✦", short: "ChatGPT, Copilot, Claude or Gemini", needs: "Any AI assistant. The free version of each is enough for every recipe here.", who: "Everyone. The fastest wins." },
+    phone: { title: "Phone", icon: "▢", short: "iPhone Shortcuts, Android routines", needs: "iPhone: the Shortcuts app (built in). Android: Modes and Routines on Samsung, or your phone's routines app. Names vary by phone.", who: "Everyone with a smartphone." },
+    windows: { title: "Windows PC", icon: "▣", short: "Power Automate for desktop", needs: "Windows 10 or 11. Power Automate for desktop is a free Microsoft app; on Windows 11 it's usually already installed. In the free version you start flows yourself with one click.", who: "Anyone with a Windows computer." },
+    work: { title: "Work account", icon: "◆", short: "Power Automate in Microsoft 365", needs: "A work or school Microsoft 365 account. Personal Outlook.com accounts can't create cloud flows since 2025. Standard connectors (Outlook, Teams, OneDrive, Excel, Forms, Planner) come with most Microsoft 365 work plans.", who: "Office and knowledge work. Check your company's IT and AI rules first." },
+  },
+
+  areas: { work: "Work", home: "Home", money: "Money", learning: "Learning" },
+
+  // Starting list for the audit. People tick what they recognise and fix the numbers.
+  presets: [
+    { id: "inbox", name: "Sorting and clearing email", area: "work", perWeek: 5, minutes: 25, recipes: ["r-news", "r-flag", "a-reply"] },
+    { id: "replies", name: "Writing routine replies", area: "work", perWeek: 10, minutes: 6, recipes: ["a-reply", "r-news"] },
+    { id: "attach", name: "Saving email attachments to folders", area: "work", perWeek: 6, minutes: 3, recipes: ["w-attach"] },
+    { id: "notes", name: "Turning meeting notes into to-dos", area: "work", perWeek: 4, minutes: 12, recipes: ["a-notes"] },
+    { id: "report", name: "A weekly status update or report", area: "work", perWeek: 1, minutes: 40, recipes: ["a-weekly", "w-friday"] },
+    { id: "forms", name: "Copying form answers into a spreadsheet", area: "work", perWeek: 3, minutes: 15, recipes: ["w-forms"] },
+    { id: "requests", name: "Chasing approvals and requests", area: "work", perWeek: 3, minutes: 10, recipes: ["w-approve"] },
+    { id: "files", name: "Finding, renaming and moving files", area: "work", perWeek: 5, minutes: 8, recipes: ["d-tidy", "d-rename"] },
+    { id: "startup", name: "Opening the same apps and sites every morning", area: "work", perWeek: 5, minutes: 4, recipes: ["d-morning"] },
+    { id: "clicks", name: "The same clicks in the same system, again", area: "work", perWeek: 5, minutes: 10, recipes: ["d-record", "a-build"] },
+    { id: "bills", name: "Paying bills and remembering due dates", area: "money", perWeek: 1, minutes: 20, recipes: ["r-payday", "r-bills"] },
+    { id: "subs", name: "Checking subscriptions and statements", area: "money", perWeek: 0.25, minutes: 45, recipes: ["a-subs"] },
+    { id: "spend", name: "Tracking what I spend", area: "money", perWeek: 3, minutes: 5, recipes: ["p-spend", "r-billmail"] },
+    { id: "contract", name: "Reading bills, contracts and fine print", area: "money", perWeek: 0.5, minutes: 30, recipes: ["a-fine"] },
+    { id: "meals", name: "Planning meals and the shopping list", area: "home", perWeek: 1, minutes: 35, recipes: ["a-meals"] },
+    { id: "phone", name: "Getting pulled into the phone", area: "home", perWeek: 7, minutes: 15, recipes: ["p-app", "p-sleep"] },
+    { id: "focus", name: "Switching the phone to work or quiet mode", area: "home", perWeek: 10, minutes: 1, recipes: ["p-arrive", "p-sleep"] },
+    { id: "leave", name: "Forgetting things when leaving home", area: "home", perWeek: 1, minutes: 15, recipes: ["p-leave"] },
+    { id: "plan", name: "Planning my week", area: "home", perWeek: 1, minutes: 30, recipes: ["a-weekly", "r-blocks"] },
+    { id: "learn", name: "Learning from articles, videos and courses", area: "learning", perWeek: 2, minutes: 20, recipes: ["a-learn"] },
+  ],
+
+  // Recipes. build = minutes to set up the first time, saves = typical minutes saved per week (the buyer edits it).
+  recipes: [
+    // ---------- built-in rules ----------
+    {
+      id: "r-news", track: "rules", area: "work", build: 10, saves: 30,
+      title: "Newsletters skip the inbox",
+      outcome: "Promotions and newsletters go straight to a 'Read later' folder. Your inbox only shows mail from people.",
+      steps: [
+        "Gmail: type unsubscribe in the search bar, open the search options (the sliders icon), choose Create filter, tick Skip the Inbox and Apply the label 'Read later'. Tick Also apply filter to matching conversations.",
+        "Outlook: right-click a newsletter → Rules → Create rule (or Always move messages from this sender) → move to a folder called Read later. Repeat for your top five senders.",
+        "Put one 15-minute block in your calendar on Friday called 'Read later'. That's the only time you open the folder.",
+      ],
+      test: "Wait a day. Did a newsletter land in Read later on its own?",
+      breaks: "A real email got filtered? Open it, and in Gmail mark it Important or edit the filter to exclude that sender. One fix, done forever.",
+      prompt: null,
+    },
+    {
+      id: "r-flag", track: "rules", area: "work", build: 5, saves: 15,
+      title: "Flagged email becomes a to-do",
+      outcome: "Every email you flag shows up in your task list automatically. No copying, no forgetting.",
+      steps: [
+        "Outlook + Microsoft To Do: open To Do, Settings, turn on Flagged email. A list called Flagged email appears and fills itself.",
+        "Gmail + Google Tasks: open the email, click Add to Tasks in the top bar. The task links back to the email.",
+        "Rule for yourself: if a reply takes under two minutes, answer now. If it takes longer, flag it and close it.",
+      ],
+      test: "Flag one email now. Is it in your task list within a minute?",
+      breaks: "Not showing? In To Do, check that the Flagged email list is switched on under Settings → Connected apps.",
+    },
+    {
+      id: "r-billmail", track: "rules", area: "money", build: 10, saves: 10,
+      title: "Every receipt and invoice in one place",
+      outcome: "Receipts, invoices and order confirmations land under one label. Tax time, returns and warranty claims take seconds.",
+      steps: [
+        "Gmail: search  receipt OR invoice OR \"order confirmation\" OR kuitti OR lasku  then Create filter → Apply the label 'Money' (keep Skip the Inbox off if you want to see them).",
+        "Outlook: Rules → New rule → subject or body includes receipt / invoice → move to folder Money.",
+        "Once a month, during your money check-in, open the label and glance. That's your spending log, built for free.",
+      ],
+      test: "Search your Money label. Do last month's receipts show?",
+      breaks: "Missing a shop? Add its sender address to the filter.",
+    },
+    {
+      id: "r-payday", track: "rules", area: "money", build: 20, saves: 20,
+      title: "Payday autopilot",
+      outcome: "On payday your bank moves money for savings, bills and big yearly costs before you can spend it. You stop deciding every month.",
+      steps: [
+        "Open your online bank and find Standing orders, Scheduled transfers or Recurring payments.",
+        "Create transfer 1 on payday (or the day after): to savings. Start with an amount you won't notice, even 5% of pay.",
+        "Create transfer 2: to a separate bills account, the total of your monthly bills. Pay the bills from there.",
+        "Optional transfer 3: to a 'yearly costs' account, your yearly bills divided by 12 (The Systemized Year does this math).",
+      ],
+      test: "Next payday, check that all transfers left on their own.",
+      breaks: "Overdraft? Lower transfer 1 for one month, never cancel it. The habit matters more than the amount.",
+      source: "Saving by default works because it removes the monthly decision: Richard Thaler and Shlomo Benartzi's 'Save More Tomorrow' study (Journal of Political Economy, 2004).",
+    },
+    {
+      id: "r-bills", track: "rules", area: "money", build: 15, saves: 10,
+      title: "Bills that can't surprise you",
+      outcome: "Every yearly and quarterly bill sits in your calendar with a reminder a week before. No late fees.",
+      steps: [
+        "Make a calendar called 'Money' (Google Calendar or Outlook) so these events have their own color.",
+        "Add each yearly bill as a yearly repeating event on its due date: insurance, car, licences, memberships.",
+        "Set the reminder to one week before. Write the amount in the title: 'Car insurance 420'.",
+      ],
+      test: "Look at next month in the Money calendar. Is there anything you'd forgotten?",
+      breaks: "Amount changed? Edit the series, not one event.",
+    },
+    {
+      id: "r-blocks", track: "rules", area: "home", build: 10, saves: 30,
+      title: "Three blocks that plan your week for you",
+      outcome: "The important things happen because they're already in the calendar, every week, without planning.",
+      steps: [
+        "Pick three things that matter weekly: e.g. deep work, training, family evening.",
+        "Create each as a weekly repeating event with a day and a time. Add the place.",
+        "Add one 20-minute block on Sunday called 'Plan the week' and use the weekly plan prompt in it.",
+      ],
+      test: "Next week: did at least two of the three happen?",
+      breaks: "Keep missing one? Move it, don't delete it. Rule: never miss twice in a row.",
+      source: "Deciding when and where in advance roughly doubles follow-through in many studies: Peter Gollwitzer on implementation intentions (American Psychologist, 1999).",
+    },
+
+    // ---------- AI assistant ----------
+    {
+      id: "a-reply", track: "ai", area: "work", build: 10, saves: 40,
+      title: "Replies in your voice, drafted for you",
+      outcome: "You paste an email, get a reply that sounds like you, fix one line and send. Routine replies drop from six minutes to one.",
+      steps: [
+        "Do this once: paste three of your own sent emails into the 'Learn my writing voice' prompt. Save the voice description it writes into a note.",
+        "From now on: copy the email you need to answer, remove names, numbers and anything private, and use the 'Reply in my voice' prompt with your saved voice description.",
+        "Read it like a stranger, fix the one thing that's off, send.",
+      ],
+      test: "Would the recipient notice? If not, it works.",
+      breaks: "Too formal or too long? Add to your voice note: 'max 5 sentences, no greetings like I hope this finds you well'.",
+      prompt: "p-reply",
+    },
+    {
+      id: "a-notes", track: "ai", area: "work", build: 5, saves: 30,
+      title: "Meeting notes into actions",
+      outcome: "Messy notes become a clean list: who does what by when, plus a two-line summary to send.",
+      steps: [
+        "Right after the meeting, paste your notes (or the transcript if your meeting tool makes one) into the 'Notes to actions' prompt.",
+        "Check owners and dates. The assistant can't know what wasn't said.",
+        "Send the summary to the group and put your own actions straight into your task list.",
+      ],
+      test: "Did everyone get the summary the same day?",
+      breaks: "Invented dates? Add 'If a date wasn't said, write TBD' (it's already in the prompt).",
+      prompt: "p-actions",
+    },
+    {
+      id: "a-weekly", track: "ai", area: "home", build: 5, saves: 25,
+      title: "Brain dump to a weekly plan",
+      outcome: "Five minutes of typing everything in your head becomes a realistic plan for the week, with three priorities.",
+      steps: [
+        "On Sunday (or Monday morning), type everything on your mind into one message. Don't sort it.",
+        "Use the 'Weekly plan from a brain dump' prompt and give it your fixed blocks.",
+        "Copy the three priorities to the top of your task list. Ignore the rest until they're done.",
+      ],
+      test: "Friday: were the three priorities done?",
+      breaks: "Plans too full? Tell it: 'Assume only 60% of my time is free.'",
+      prompt: "p-week",
+    },
+    {
+      id: "a-fine", track: "ai", area: "money", build: 5, saves: 20,
+      title: "Read the fine print in two minutes",
+      outcome: "Contracts, terms and bills explained: what you pay, when, how to cancel, and what's unusual.",
+      steps: [
+        "Copy the text of the contract or terms. Remove your name, address, account and ID numbers.",
+        "Use the 'Explain the fine print' prompt.",
+        "Put the cancellation date in your Money calendar right away.",
+      ],
+      test: "Can you say in one sentence what this costs per year? Then it worked.",
+      breaks: "For anything large or legal, use this to prepare your questions, then ask a real professional.",
+      prompt: "p-fine",
+    },
+    {
+      id: "a-subs", track: "ai", area: "money", build: 15, saves: 15,
+      title: "The subscription sweep",
+      outcome: "A list of every recurring charge with a yearly total. Most people find at least one they forgot.",
+      steps: [
+        "Download or copy three months of card or bank transactions. Delete account numbers, card numbers and your name.",
+        "Use the 'Find my subscriptions' prompt.",
+        "For each one: keep, cancel or downgrade. Cancel the first one today, while you're annoyed.",
+      ],
+      test: "Do the yearly totals look right next to your statement?",
+      breaks: "Long statements? Do one month at a time and ask for the combined list at the end.",
+      prompt: "p-subs",
+    },
+    {
+      id: "a-meals", track: "ai", area: "home", build: 10, saves: 30,
+      title: "Meal plan and shopping list in one go",
+      outcome: "A week of dinners your household actually eats, and a shopping list sorted by store aisle.",
+      steps: [
+        "List what your household likes, dislikes and how much time you have on weekdays.",
+        "Use the 'Meal plan and shopping list' prompt.",
+        "Save the best weeks. After a month you have a rotation and never plan from zero again.",
+      ],
+      test: "Did you make one trip to the store instead of three?",
+      breaks: "Too fancy? Add 'max 6 ingredients, 30 minutes on weekdays'.",
+      prompt: "p-meals",
+    },
+    {
+      id: "a-learn", track: "ai", area: "learning", build: 5, saves: 20,
+      title: "Turn anything you read into something you remember",
+      outcome: "Articles, reports and course notes become a short summary and five questions to test yourself.",
+      steps: [
+        "Paste the text (or a transcript) into the 'Make it stick' prompt.",
+        "Answer the questions without looking. Wrong ones are the only ones worth rereading.",
+        "Save the questions in a note and redo them in a week.",
+      ],
+      test: "A week later, can you answer four of five?",
+      breaks: "Summary too vague? Ask for 'the three ideas I could use at work tomorrow'.",
+      prompt: "p-learn",
+      source: "Testing yourself beats rereading: Roediger and Karpicke, 'Test-enhanced learning' (Psychological Science, 2006).",
+    },
+    {
+      id: "a-build", track: "ai", area: "work", build: 15, saves: 30,
+      title: "Let the assistant design your automation",
+      outcome: "Describe a boring task in plain words. Get step-by-step instructions for the tool you have, with the exact buttons to press.",
+      steps: [
+        "Write what you do now, step by step, like explaining it to a new colleague.",
+        "Use the 'Design my automation' prompt and say which tools you have (e.g. Outlook at work, iPhone at home).",
+        "Build it one step at a time. When a button isn't where it says, paste the screen's text back and ask 'where is it now?'.",
+      ],
+      test: "Run it three times on real work before trusting it.",
+      breaks: "Menus moved? Assistants sometimes describe older versions. Ask it to give you the search term to use inside the app instead.",
+      prompt: "p-design",
+    },
+
+    // ---------- phone ----------
+    {
+      id: "p-arrive", track: "phone", area: "home", build: 10, saves: 10,
+      title: "Work mode turns on when you arrive",
+      outcome: "Your phone goes quiet at work and loud at home on its own. No more forgetting.",
+      steps: [
+        "iPhone: Shortcuts app → Automation → New Automation → Arrive. Choose your work address. Action: Set Focus → Work → On. Choose Run Immediately if it's offered.",
+        "Add a second automation: Leave work → Set Focus → Work → Off.",
+        "Android (Samsung): Settings → Modes and Routines → add a Mode 'Work', set it to start at your work location. Other Android phones: search 'routines' or 'bedtime mode' in Settings.",
+      ],
+      test: "Tomorrow at the door: did Work Focus turn on by itself?",
+      breaks: "Not triggering? Location permission for Shortcuts must be on. Bigger radius helps.",
+    },
+    {
+      id: "p-sleep", track: "phone", area: "home", build: 10, saves: 60,
+      title: "The phone goes to bed before you do",
+      outcome: "At a set time your phone dims, silences and opens something calm. The scroll ends without willpower.",
+      steps: [
+        "iPhone: Shortcuts → Automation → New → Time of Day, e.g. 22:30, daily. Actions: Set Focus → Sleep → On, Set Brightness 20%, Open App → your book, notes or podcast app.",
+        "Android: Digital Wellbeing → Bedtime mode with a schedule (grayscale + do not disturb). Samsung: Modes and Routines → Sleep.",
+        "Charge the phone outside the bedroom if you can. That one change does most of the work.",
+      ],
+      test: "Three nights in a row: what time did you actually put it down?",
+      breaks: "You switch it off every night? Move the time 15 minutes later, keep the automation.",
+    },
+    {
+      id: "p-app", track: "phone", area: "home", build: 5, saves: 45,
+      title: "A speed bump on your scroll apps",
+      outcome: "When you open the app that eats your evenings, your phone asks one question first. Half the time, you close it.",
+      steps: [
+        "iPhone: Shortcuts → Automation → New → App → choose the app → Is Opened. Action: Show Notification 'Is this the plan or the habit?' (or Wait 10 seconds, then continue). Run Immediately.",
+        "Android: Digital Wellbeing → Dashboard → choose the app → App timer, e.g. 20 minutes a day.",
+        "Optional: move the app off your home screen into a folder on the last page.",
+      ],
+      test: "Check Screen Time or Digital Wellbeing after a week. Lower?",
+      breaks: "Annoying in a good way is the goal. If you just tap through, make the timer stricter.",
+    },
+    {
+      id: "p-spend", track: "phone", area: "money", build: 10, saves: 10,
+      title: "Log a spend in five seconds",
+      outcome: "One tap asks 'how much, on what' and saves it with the date. Your spending log builds itself in the background.",
+      steps: [
+        "iPhone: Shortcuts → + → Add Action: Ask for Input (Number) 'How much?' → Ask for Input (Text) 'On what?' → Append to Note (Notes app, a note called 'Spending') with Current Date, the number and the text.",
+        "Name it 'Spent', then share → Add to Home Screen. Or ask Siri: 'Spent'.",
+        "Android: use your notes app's widget with a note called Spending, or a Google Form saved to your home screen that writes to a sheet.",
+      ],
+      test: "Log your next coffee. Did it land in the note?",
+      breaks: "You forget to log? Only log the categories you're working on this month (e.g. food out).",
+    },
+    {
+      id: "p-leave", track: "phone", area: "home", build: 5, saves: 15,
+      title: "The 'did you forget' reminder",
+      outcome: "When you leave home on gym or office days, your phone reminds you what to take.",
+      steps: [
+        "iPhone: Reminders app → new reminder 'Keys, badge, lunch, charger' → tap the (i) → When I'm leaving → choose Home. Or Shortcuts: Automation → Leave → Show Notification.",
+        "Android: Google Keep or Google Tasks → reminder → location-based where your phone supports it, or a time-based one on weekday mornings.",
+      ],
+      test: "Did it fire on your next exit?",
+      breaks: "Fires too late on the bus? Use a time-based reminder five minutes before you usually leave.",
+    },
+
+    // ---------- Windows PC (Power Automate for desktop) ----------
+    {
+      id: "d-morning", track: "windows", area: "work", build: 15, saves: 15,
+      title: "One click opens your whole morning",
+      outcome: "One button opens your apps, folders and websites in the right order. Your day starts in 30 seconds.",
+      steps: [
+        "Open Power Automate (search it in the Start menu; on Windows 10 install 'Power Automate' from Microsoft Store). New flow → name it 'Morning'.",
+        "Search the actions panel for Run application: add one for each app you open daily (e.g. Outlook, Teams, Excel file you use).",
+        "Search Launch new Microsoft Edge: add your daily web pages, one action per page, or one window with tabs.",
+        "Save, then press Run. Pin Power Automate to the taskbar so the flow is two clicks away.",
+      ],
+      test: "Run it tomorrow morning. Everything open?",
+      breaks: "An app opens behind others? Add a Wait action of 3 seconds between steps.",
+    },
+    {
+      id: "d-tidy", track: "windows", area: "work", build: 20, saves: 15,
+      title: "The Downloads folder cleans itself",
+      outcome: "PDFs, images and spreadsheets move from Downloads to their own folders with one click.",
+      steps: [
+        "New flow 'Tidy downloads'. Action: Get files in folder → folder: your Downloads, file filter: *.pdf",
+        "Action: Move file(s) → files to move: the %Files% variable from the step above → destination: Documents\\PDFs.",
+        "Copy both actions and change the filter for *.xlsx;*.csv (to Documents\\Sheets) and *.jpg;*.png (to Pictures\\Downloads).",
+        "Run it on Friday afternoon, or whenever the folder annoys you.",
+      ],
+      test: "Downloads should hold only the files you're working on today.",
+      breaks: "'File already exists' error? In Move file(s), set 'If file exists' to Do not move, or Overwrite.",
+    },
+    {
+      id: "d-rename", track: "windows", area: "work", build: 20, saves: 15,
+      title: "Rename a batch of files with today's date",
+      outcome: "Scans, photos and reports get consistent names like 2026-10-02_invoice.pdf in one run.",
+      steps: [
+        "New flow 'Date names'. Action: Get files in folder → choose the folder you drop scans into.",
+        "Action: Rename file(s) → files: %Files% → Rename scheme: Add datetime → add the date before the name, format yyyy-MM-dd and separator _ .",
+        "Run it after each batch of scans. Dates first means files sort in time order in every folder.",
+      ],
+      test: "Sort the folder by name. Is it now in date order?",
+      breaks: "Renamed files you didn't mean to? Use a separate 'Inbox scans' folder, and only that one.",
+    },
+    {
+      id: "d-record", track: "windows", area: "work", build: 30, saves: 45,
+      title: "Record the clicks you repeat",
+      outcome: "A task you do by clicking through the same screens gets recorded once and replayed on demand.",
+      steps: [
+        "Pick one task you do the same way every time, with no judgment calls: e.g. downloading the same report and saving it to the same folder.",
+        "In a new flow, press Recorder. Do the task once, slowly. Press Done.",
+        "Replace anything that changes (dates, names) with a variable: ask the 'Design my automation' prompt how, and paste the flow's steps into it.",
+        "Run it while you watch three times before you trust it.",
+      ],
+      test: "Does it work after a reboot, with the windows in different places?",
+      breaks: "Recorded flows break when a website changes its layout. That's normal; re-record the step that broke. Never record anything that types a password.",
+    },
+
+    // ---------- Work account (Power Automate cloud flows) ----------
+    {
+      id: "w-attach", track: "work", area: "work", build: 15, saves: 20,
+      title: "Email attachments save themselves",
+      outcome: "Attachments from chosen senders land in a OneDrive folder automatically. You stop downloading and dragging.",
+      steps: [
+        "Go to make.powerautomate.com and sign in with your work account. Templates → search 'Save Office 365 email attachments to OneDrive for Business'. Starting from a template is faster and breaks less.",
+        "In the trigger 'When a new email arrives (V3)', open advanced options: Only with Attachments = Yes, Include Attachments = Yes, and add From = the senders you care about (e.g. invoices@supplier.com).",
+        "In 'Create file', choose the folder. Save. Send yourself a test email with an attachment from one of those senders, or wait for the next real one.",
+      ],
+      test: "Open the flow's run history. Green check, file in the folder?",
+      breaks: "Signatures and logos saved too? Add a condition: only save when the file name ends with .pdf.",
+      prompt: "p-design",
+    },
+    {
+      id: "w-friday", track: "work", area: "work", build: 15, saves: 20,
+      title: "The Friday nudge",
+      outcome: "Every Friday at 14:00 Teams asks you for this week's wins and next week's top three. Your weekly report writes itself from your answers.",
+      steps: [
+        "make.powerautomate.com → Create → Scheduled cloud flow. Repeat every 1 week, on Friday, at 14:00 in your time zone.",
+        "Add the action Post message in a chat or channel (Microsoft Teams). Post as Flow bot, Post in Chat with Flow bot, Recipient = you.",
+        "Message: 'Three wins this week? Top three for next week? Reply in your notes, then use the weekly report prompt.'",
+      ],
+      test: "Use Test → Manually to see the message arrive now.",
+      breaks: "No message? Teams may need you to allow the Power Automate app once (it asks in the chat).",
+      prompt: "p-report",
+    },
+    {
+      id: "w-forms", track: "work", area: "work", build: 25, saves: 30,
+      title: "Form answers fill your spreadsheet",
+      outcome: "Every Microsoft Forms response is added as a row in an Excel table and you get a short email. No more copying.",
+      steps: [
+        "Create the Excel file in OneDrive or SharePoint. Select the header row and data → Insert → Table. Cloud flows can only write into a formatted table.",
+        "make.powerautomate.com → Create → Automated cloud flow → trigger 'When a new response is submitted' (Microsoft Forms) → choose the form.",
+        "Add 'Get response details' (same form, Response Id from the trigger). Add 'Add a row into a table' (Excel Online (Business)) and map each answer to a column.",
+        "Optional: 'Send an email (V2)' to yourself with the two answers that matter most.",
+      ],
+      test: "Submit the form once yourself. New row in the table?",
+      breaks: "'Table not found'? The file was renamed or moved, or it isn't formatted as a table. Re-select it in the action.",
+    },
+    {
+      id: "w-approve", track: "work", area: "work", build: 30, saves: 30,
+      title: "Requests that approve themselves into a trail",
+      outcome: "A request (purchase, time off, document review) goes to the approver with Approve / Reject buttons, and everyone gets the answer by email. No chasing.",
+      steps: [
+        "Create → Instant cloud flow → 'Manually trigger a flow'. Add inputs: Title (text), Details (text), Amount (number) if needed.",
+        "Add 'Start and wait for an approval' → Approve/Reject - First to respond → Assigned to = the approver's email, Title and Details from the inputs.",
+        "Add a Condition: Outcome is equal to Approve. In Yes: 'Send an email (V2)' to you 'Approved'. In No: the same with 'Rejected' and the approver's comments.",
+        "Run it from the Power Automate mobile app's Buttons tab, or from the flow page.",
+      ],
+      test: "Send a test request to yourself as approver. Buttons arrive in Outlook and Teams?",
+      breaks: "Your company may already have an approval process. Ask before replacing it; often you can add this to theirs instead.",
+    },
+    {
+      id: "w-copilot", track: "work", area: "work", build: 15, saves: 20,
+      title: "Describe a flow, let Copilot draft it",
+      outcome: "Type what you want in one sentence. Power Automate drafts the flow and asks you to confirm the connections.",
+      steps: [
+        "make.powerautomate.com → on the home page, if your organisation has Copilot turned on, type e.g. 'When I get an email with Invoice in the subject from a supplier, save the attachment to OneDrive folder Invoices and post a message to me in Teams'.",
+        "Check every step it made: trigger, conditions, folders. Fix names. Then sign in to the connections it asks for.",
+        "Test with real data before turning it on for good.",
+      ],
+      test: "Run history: green on three real emails?",
+      breaks: "No Copilot box? Your organisation hasn't enabled it. Use the 'Design my automation' prompt with any assistant instead; it gets you to the same flow.",
+    },
+  ],
+
+  // Prompts. {Words in braces} become fill-in boxes in the app.
+  promptCats: { inbox: "Email & writing", plan: "Plans & meetings", money: "Money", home: "Home & life", learn: "Learning", build: "Build automations", check: "Check the answer" },
+  prompts: [
+    { id: "p-voice", cat: "inbox", title: "Learn my writing voice", text: "Here are three emails I wrote. Describe my writing voice in 5 short rules (length, tone, greetings, how I ask for things, words I use or avoid) so another writer could copy it. Then show one example sentence in my voice.\n\nEmail 1:\n{email 1}\n\nEmail 2:\n{email 2}\n\nEmail 3:\n{email 3}" },
+    { id: "p-reply", cat: "inbox", title: "Reply in my voice", text: "Write a reply to the email below. Follow my voice rules exactly: {my voice rules}\nWhat I want to say: {the answer in a few words}\nKeep it under {number} sentences. No filler openers.\n\nEmail:\n{paste the email, private details removed}" },
+    { id: "p-no", cat: "inbox", title: "Say no, kindly", text: "Help me decline this request politely and firmly. Give one short reason, offer {an alternative, or nothing}, and keep the relationship warm. Max 5 sentences.\n\nRequest:\n{paste the request}" },
+    { id: "p-shorten", cat: "inbox", title: "Make it half as long", text: "Rewrite this to half the length. Keep every fact, date and number. Put the one thing I need from the reader in the first sentence.\n\n{paste your text}" },
+    { id: "p-tone", cat: "inbox", title: "Check the tone before sending", text: "Read this message as {the recipient, e.g. my manager}. Could anything sound rude, passive-aggressive or unclear? Quote the exact phrases and suggest a calmer version of each. Don't rewrite the rest.\n\n{paste your message}" },
+    { id: "p-followup", cat: "inbox", title: "The gentle follow-up", text: "Write a short, friendly follow-up to {who} about {what I'm waiting for}, which I asked for on {date}. Make it easy to answer with one line. Max 4 sentences." },
+    { id: "p-actions", cat: "plan", title: "Notes to actions", text: "Turn these meeting notes into:\n1) a 2-line summary,\n2) a table of actions with owner and due date (if a date or owner wasn't said, write TBD; never invent one),\n3) open questions.\n\nNotes:\n{paste notes or transcript}" },
+    { id: "p-week", cat: "plan", title: "Weekly plan from a brain dump", text: "Here is everything on my mind this week. My fixed blocks are: {e.g. Mon-Fri 8-16 work, Tue/Thu 18 gym}. Assume only 60% of my free time is really free.\nGive me: the 3 priorities that matter most, a day-by-day plan, and a list of things to drop or postpone, with a reason for each.\n\nBrain dump:\n{type everything}" },
+    { id: "p-agenda", cat: "plan", title: "A meeting agenda that ends on time", text: "Create a {minutes}-minute agenda for a meeting about {topic} with {who}. Goal: {the decision we need}. Give each item a time box and an owner, and end with 5 minutes for decisions and next steps." },
+    { id: "p-report", cat: "plan", title: "Weekly status report", text: "Write my weekly status update for {audience}. Format: Done (3 bullets), Next (3 bullets), Blocked / need help (max 2). Plain language, no hype, under 120 words.\n\nMy raw notes:\n{wins, next, problems}" },
+    { id: "p-decide", cat: "plan", title: "Help me decide", text: "I need to decide {the decision}. Options: {option A}, {option B}. What matters to me: {criteria}. Make a short pros/cons table, tell me which option fits my criteria best and why, and name the one thing I should check before deciding." },
+    { id: "p-sop", cat: "plan", title: "Turn what I do into a checklist", text: "I do this task regularly: {describe it, step by step, roughly}. Turn it into a numbered checklist a new colleague could follow. Mark the steps that could be automated with [AUTO] and the ones that need a human judgment with [ME]." },
+    { id: "p-subs", cat: "money", title: "Find my subscriptions", text: "Below are my card and bank transactions for the last three months (account numbers removed). Find every recurring charge. Table: name, amount, how often, yearly total, and 'keep / check / likely forgot'. Total all yearly costs at the bottom. Don't guess: if something might be recurring, mark it 'check'.\n\n{paste transactions}" },
+    { id: "p-fine", cat: "money", title: "Explain the fine print", text: "Explain these terms in plain language. List: total cost per month and per year, all fees, price increases, the minimum contract length, how and when I can cancel, and anything unusual or unfavourable compared with a typical {type of contract}. Quote the sentence for each point.\n\n{paste terms, personal details removed}" },
+    { id: "p-bill", cat: "money", title: "Why is this bill higher?", text: "Compare these two bills from {company}. What changed, by how much, and why (quote the line)? Is there anything I could call them about?\n\nOld bill:\n{paste}\n\nNew bill:\n{paste}" },
+    { id: "p-sinking", cat: "money", title: "My yearly costs, split monthly", text: "Here are costs I pay once or a few times a year: {list with amounts and months}. Make a table with each cost, its month and the monthly amount to set aside. Total the monthly transfer. Then show which month is the heaviest." },
+    { id: "p-negotiate", cat: "money", title: "Script for a cheaper price", text: "I want to lower my {internet / phone / insurance} bill with {company}. I pay {price}. A competitor offers {offer}. Write a short, friendly phone script and an email version. Include what to say if they refuse, and when to ask for a supervisor or a retention offer." },
+    { id: "p-buy", cat: "money", title: "Should I buy this?", text: "I'm thinking of buying {item} for {price}. I earn about {hourly pay after tax} per hour. Tell me how many work hours it costs, three questions to ask myself before buying, and a cheaper way to get 80% of the benefit." },
+    { id: "p-meals", cat: "home", title: "Meal plan and shopping list", text: "Plan {number} dinners for {number of people}. We like: {likes}. We don't eat: {dislikes or allergies}. Weekdays max {minutes} minutes. Reuse ingredients across meals to cut waste. Then give one shopping list grouped by store section, with amounts." },
+    { id: "p-clean", cat: "home", title: "A cleaning rota that's fair", text: "Make a weekly home rota for {who lives here, with ages}. Tasks: {list}. Balance it by time, not by number of tasks, and rotate the worst jobs. Show it as a table I can print." },
+    { id: "p-trip", cat: "home", title: "Trip plan and packing list", text: "Plan {number} days in {place} for {who}, budget {budget}. Mornings busy, afternoons slow. Give a day plan, 3 cheap or free things locals like, and a packing list by bag." },
+    { id: "p-gift", cat: "home", title: "Gift ideas that aren't stuff", text: "Give me 10 gift ideas for {person, age, interests} under {budget}. At least half should be experiences or time together. One line each on why they'd like it." },
+    { id: "p-letter", cat: "home", title: "Write the official letter", text: "Write a clear, polite letter to {organisation} about {issue}. Include the facts: {dates, reference numbers}. Ask for {what I want} by {date}. Keep it to one page." },
+    { id: "p-learn", cat: "learn", title: "Make it stick", text: "Summarise this in 5 bullet points, then write 5 questions that test whether I understood it (not just remembered words). Put the answers at the very end, after a line of dashes.\n\n{paste text or transcript}" },
+    { id: "p-explain", cat: "learn", title: "Explain it like I'm new", text: "Explain {topic} to someone who is smart but new to it. Use one everyday analogy, then the real explanation, then the 3 terms I'll hear most and what they mean. Under 250 words." },
+    { id: "p-plan30", cat: "learn", title: "A 30-day learning plan", text: "Make a 30-day plan to learn {skill} in {minutes} minutes a day. Each week ends with a small thing I build or do to prove it. Use free resources from well-known sources only." },
+    { id: "p-excel", cat: "learn", title: "Write the Excel formula for me", text: "In Excel, column {A} has {what}, column {B} has {what}. I want {result}. Give the formula, explain each part in one line, and show what to do if my Excel is in {language} (function names differ)." },
+    { id: "p-design", cat: "build", title: "Design my automation", text: "Help me automate a task. I'm not a programmer.\nWhat I do now, step by step: {describe the task}\nHow often: {how often}\nTools I have: {e.g. Outlook and Teams at work with Power Automate, Windows 11, iPhone, Gmail}\nGive me: (1) the simplest tool from my list for this, (2) exact step-by-step instructions with the names of the buttons and actions, (3) how to test it safely, (4) what will most likely break. If a step depends on my version, tell me what to search for inside the app instead." },
+    { id: "p-flowfix", cat: "build", title: "Fix my broken flow", text: "My {Power Automate / Shortcuts / routine} automation fails. What it should do: {goal}. The steps are: {list the steps}. The error says: {paste the error text}. Explain the error in plain words and give me the smallest fix first." },
+    { id: "p-expr", cat: "build", title: "Power Automate expression helper", text: "In a Power Automate cloud flow I need an expression that {e.g. formats today's date as 2026-10-02 / gets the file extension / checks if the subject contains Invoice}. Give the expression, where to paste it (the Expression tab in the dynamic content box), and one example of the result." },
+    { id: "p-shortcut", cat: "build", title: "Build my iPhone shortcut", text: "I want an iPhone Shortcut that {goal}. Give me the exact actions in order, as they're named in the Shortcuts app, which inputs to choose, and whether it can run as an automation without asking me." },
+    { id: "p-rule", cat: "build", title: "Write my email rule", text: "In {Gmail / Outlook}, I want emails that {condition, e.g. are from my bank and contain 'statement'} to {action, e.g. skip the inbox and get the label Money}. Give the exact search or rule conditions to type and where to click." },
+    { id: "p-audit", cat: "build", title: "What should I automate first?", text: "Here are tasks I repeat with how often and how long they take: {list}. Rank them by hours saved per year versus effort to automate for a non-programmer. For the top 3, say which simple tool fits (email rules, phone automations, Power Automate, or an AI assistant prompt)." },
+    { id: "p-check", cat: "check", title: "Check your own answer", text: "Look at your previous answer again. List anything that could be wrong, outdated or guessed, and say how sure you are about each part (high / medium / low). If something should be checked from an official source, name the source." },
+    { id: "p-sources", cat: "check", title: "Show me where that comes from", text: "For each fact in your answer, tell me if it's general knowledge, from a named well-known source, or your own reasoning. Don't invent links. If you're not sure, say so." },
+    { id: "p-private", cat: "check", title: "Remove private details first", text: "Before I share this text, replace every name, email, phone number, address, account number, ID number and customer detail with placeholders like [NAME] or [ACCOUNT]. Return only the cleaned text.\n\n{paste text}" },
+    { id: "p-steps", cat: "check", title: "Make it doable today", text: "Turn your answer into a checklist I can finish today in under {minutes} minutes. Mark the first step I should do in the next 2 minutes." },
+    { id: "p-simple", cat: "check", title: "Simpler, please", text: "That's too complicated. Give me the simplest version that solves 80% of the problem, with the fewest steps, even if it's less elegant." },
+    { id: "p-role", cat: "check", title: "The prompt formula", text: "Act as {role, e.g. an experienced office manager}. Task: {what you want}. Context: {who it's for, why, what you've tried}. Format: {table / bullet list / email / max N words}. Before answering, ask me up to 3 questions if something important is missing." },
+    { id: "p-compare", cat: "check", title: "Compare two options fairly", text: "Compare {option A} and {option B} for {my situation}. Same criteria for both: cost per year, time to set up, what could go wrong, who it's best for. End with which one you'd pick for me and why, in one sentence." },
+  ],
+
+  // The course. `video` = unlisted YouTube id (empty = not published yet, the lesson shows its text).
+  lessons: [
+    {
+      id: "l1", n: 1, minutes: 4, video: "",
+      title: "Automate the boring, not the important",
+      summary: "Automation isn't about robots. It's about never making the same small decision twice.",
+      points: [
+        "The best automations are boring: sorting, copying, reminding, moving.",
+        "Three rules: it repeats, it's the same every time, and a mistake is cheap.",
+        "Never automate a mess. Simplify the task first, then automate what's left.",
+      ],
+      exercise: "Write down three things you did today that you also did last week, the same way.",
+      script: "You do the same forty little things every week. Sort the email. Save the attachment. Remind yourself about the bill. Each one takes two minutes, so it never feels worth fixing. But forty times two minutes is over an hour a week. That's a long weekend every year, spent copying and pasting. So here's the deal. We automate the boring, never the important. Three rules. One: it repeats. Two: it's the same every time. Three: if it goes wrong, nobody gets hurt. Sorting newsletters? Perfect. Firing someone? No. And one warning. Never automate a mess. If a task has eleven steps, first ask which six you can delete. Then automate what's left. Your homework is tiny. Write down three things you did today that you also did last week, exactly the same way. That's your first list. Next lesson, we put a price on it.",
+    },
+    {
+      id: "l2", n: 2, minutes: 5, video: "",
+      title: "Put a price on your routines",
+      summary: "The audit turns 'it's only two minutes' into hours per year. Then the right first target becomes obvious.",
+      points: [
+        "Hours per year = times per week × minutes × 48 ÷ 60.",
+        "Rank by hours saved, then by how easy the fix is. Start with easy.",
+        "If building it takes longer than it saves in two months, park it.",
+      ],
+      exercise: "Do the Audit tab. Pick your top three.",
+      script: "Here's a sentence that costs people hundreds of hours: it's only two minutes. Let's do the math. Two minutes, ten times a week, forty-eight weeks a year. That's sixteen hours. Two full work days, for one tiny habit. So open the Audit tab and be honest. How often do you do it, and how long does it really take? Not the dream number, the real one. The app turns it into hours per year and ranks everything. Then you pick by two questions. How many hours does it give back, and how hard is the fix? Start with the easy ones, even if they're smaller. An easy win this week beats a perfect system you never finish. And one simple check. If building it takes longer than it saves in two months, park it for now. Go do your audit. Pick three. That's your plan.",
+    },
+    {
+      id: "l3", n: 3, minutes: 5, video: "",
+      title: "Talk to an AI assistant like a manager",
+      summary: "Vague question, vague answer. The prompt formula gets useful answers on the first try.",
+      points: [
+        "Role, task, context, format. Then let it ask you questions.",
+        "Paste examples of what good looks like. It copies them.",
+        "Always finish with a check: what could be wrong here?",
+      ],
+      exercise: "Use 'The prompt formula' on one real task today.",
+      script: "Most people use AI assistants like a search engine. Two words in, a mushy answer out. Then they say it doesn't work. Try talking to it like a good manager briefs a new hire. Four parts. Role: act as an experienced office manager. Task: write a reply declining this meeting. Context: it's my boss, I'm overloaded, I want to offer next week. Format: four sentences, friendly, no fluff. Then add one magic line: ask me up to three questions if anything is missing. That's it. And if you have an example of what good looks like, paste it. These tools are brilliant copycats. Last thing. Before you use the answer, ask it to check itself. What here could be wrong or guessed? You'll be surprised how honest it gets. The prompt formula is in your library with fill-in boxes. Use it once today, on something real.",
+    },
+    {
+      id: "l4", n: 4, minutes: 4, video: "",
+      title: "The rules you already own",
+      summary: "Email filters, calendar repeats and bank transfers are automation you already pay for. Most people never set them up.",
+      points: [
+        "Newsletters skip the inbox; receipts get one label.",
+        "Flagged email becomes a task by itself.",
+        "Payday transfers decide your savings before you can spend it.",
+      ],
+      exercise: "Set up 'Newsletters skip the inbox' and 'Payday autopilot'.",
+      script: "Before we touch any new tool, let's use the ones you already have. Your email can sort itself. One filter, and every newsletter skips the inbox and waits in a folder called Read later. Another one, and every receipt and invoice gets the same label. Hello, tax season in five minutes. Your task list can fill itself. Flag an email in Outlook, and it shows up in To Do. In Gmail, one click adds it to Tasks. And the biggest one isn't even on your computer. It's your bank. A standing order on payday moves savings and bills money before you can see it. You stop deciding every month, and the habit runs while you sleep. None of this costs a cent. It just needs fifteen minutes. Pick two recipes from the Built-in rules track and do them tonight.",
+    },
+    {
+      id: "l5", n: 5, minutes: 5, video: "",
+      title: "Your phone, on autopilot",
+      summary: "Your phone already knows where you are and what time it is. Let it switch modes for you.",
+      points: [
+        "Arrive at work, focus turns on. Leave, it turns off.",
+        "At bedtime, the phone dims, silences and opens something calm.",
+        "A speed bump before your scroll app beats willpower.",
+      ],
+      exercise: "Build the bedtime automation tonight.",
+      script: "Your phone knows where you are, what time it is, and which app you just opened. That's everything you need for automation. On iPhone it lives in the Shortcuts app, under Automation. On Android, look for Modes and Routines, or Digital Wellbeing. Three to start with. One: arrive at work, work focus turns on. Leave, it turns off. You never forget again. Two: at ten thirty, your phone goes to bed before you do. Brightness down, notifications off, and it opens your book app instead of the feed. Three: a speed bump. When you open the app that eats your evenings, your phone asks one question. Is this the plan, or the habit? Half the time, you close it. That's not willpower. That's a system. Build the bedtime one tonight. Tomorrow morning, check what time you actually put the phone down.",
+    },
+    {
+      id: "l6", n: 6, minutes: 6, video: "",
+      title: "Power Automate on your Windows PC",
+      summary: "Power Automate for desktop is free on Windows. It clicks, opens, moves and renames for you.",
+      points: [
+        "Flows are lists of actions, read top to bottom.",
+        "Start with 'one click opens your morning'.",
+        "Record repeated clicks only when the task is always the same.",
+      ],
+      exercise: "Build the morning flow and run it tomorrow.",
+      script: "If you're on Windows, you have a free robot you've never met. It's called Power Automate for desktop. On Windows 11 it's usually already there; search for it in the Start menu. A flow is just a list of actions, read from top to bottom. Open this app. Open this website. Move these files. That's it. Start with the easiest win. One flow called Morning. Add Run application for every app you open each day, and Launch new Microsoft Edge for your daily pages. Save. Press run. Your whole morning opens in thirty seconds. Next, the Downloads folder that cleans itself, and files that rename themselves with today's date. And when you're ready, the recorder. You do a task once, it watches, and it replays it. Rule: only for tasks that are always the same, and never anything with a password. Build Morning today.",
+    },
+    {
+      id: "l7", n: 7, minutes: 6, video: "",
+      title: "Cloud flows at work: trigger, action, done",
+      summary: "With a Microsoft 365 work account, flows run in the cloud even when your computer is off.",
+      points: [
+        "Every flow = a trigger (when) + actions (then).",
+        "Start from a template. Templates break less.",
+        "Check the run history: green means it worked.",
+      ],
+      exercise: "Build 'Email attachments save themselves' with a template.",
+      script: "At work, the same idea lives in the cloud. If your company uses Microsoft 365, you probably already have Power Automate at make dot powerautomate dot com. Every cloud flow is two things. A trigger: when an email arrives, when a form is submitted, every Friday at two. And actions: save the file, add a row, send a message. When, then. That's the whole language. Start from a template. Search save email attachments to OneDrive, pick the one from Microsoft, and change two things: which senders, and which folder. Templates are tested, so they break less than anything you build from scratch. Then the most important habit. Open the run history. Green check means it worked. Red means read the message, and if it makes no sense, paste it into your assistant with the fix my flow prompt. One thing before you start: check your company's rules. Some teams need IT to approve new flows.",
+    },
+    {
+      id: "l8", n: 8, minutes: 5, video: "",
+      title: "Let AI design the automation for you",
+      summary: "You don't need to know the tool. Describe the task in plain words; the assistant writes the steps.",
+      points: [
+        "Explain the task like you would to a new colleague.",
+        "Name your tools so the answer fits what you have.",
+        "If Copilot is on in your Power Automate, describe the flow in one sentence.",
+      ],
+      exercise: "Use 'Design my automation' on your number one audit task.",
+      script: "Here's the shortcut most courses don't tell you. You don't have to learn the tool first. Take your number one task from the audit. Describe it like you'd explain it to a new colleague. First I open this, then I copy that, then I send it here. Tell the assistant which tools you have: Outlook at work, Windows, an iPhone. And ask for exact steps, with the names of the buttons. That's the design my automation prompt, already in your library. Build it one step at a time. When a button isn't where it says, paste what you see on the screen and ask where it is now. Menus move; this keeps you moving. And if your workplace has Copilot turned on in Power Automate, it's even faster. Type the flow as one sentence, and it drafts it for you. Your job is just to check every step before you switch it on.",
+    },
+    {
+      id: "l9", n: 9, minutes: 4, video: "",
+      title: "Safe by design",
+      summary: "Automation multiplies mistakes as fast as it multiplies time. Five rules keep you safe.",
+      points: [
+        "Never paste passwords, ID numbers, customer or health data into a public AI tool.",
+        "Your employer's AI and IT rules always win.",
+        "Test with fake data, watch the first runs, keep a human on anything that sends money or messages to customers.",
+      ],
+      exercise: "Read your company's AI policy, or find out who owns it.",
+      script: "Automation is a multiplier. It multiplies time saved, and it multiplies mistakes just as fast. So five rules. One: never paste passwords, ID numbers, customer data or health data into a public AI tool. Use the remove private details prompt first, every time. Two: at work, your company's AI and IT rules always win. If you don't know them, find out who owns them. That's a two-minute email that can save your job. Three: test with fake data first. Four: watch the first runs. Read the run history. Don't trust anything you haven't seen work three times. Five: anything that sends money, or messages customers, keeps a human click at the end. The robot drafts, you press send. Boring? Yes. That's the point. Safe systems are boring systems.",
+    },
+    {
+      id: "l10", n: 10, minutes: 4, video: "",
+      title: "Keep the autopilots flying",
+      summary: "Ten minutes a month keeps every automation working, and shows the hours you got back.",
+      points: [
+        "Once a month: what broke, what's annoying, what's next.",
+        "Count the hours back. Seeing it keeps you going.",
+        "One new autopilot a month is plenty. In a year that's twelve.",
+      ],
+      exercise: "Put a monthly 10-minute 'Autopilot check' in your calendar.",
+      script: "Here's the part that separates people who save two hours a week from people who saved two hours once. A ten-minute monthly check. Same day each month. Four questions. What broke? Fix it or delete it. What's still annoying? That's next month's candidate. What did I stop using? Turn it off. And what's the one new autopilot for this month? Just one. One a month is twelve a year, and by then your week looks different. Then open the Hours back counter in the app. Seeing the number go up matters more than you'd think. It's proof. And proof keeps you going when the novelty wears off. Put the monthly check in your calendar right now, as a repeating event. That's the last automation in this course, and it's the one that keeps all the others alive.",
+    },
+  ],
+
+  monthly: {
+    title: "The 10-minute autopilot check",
+    questions: ["What broke? Fix it or switch it off.", "What's still annoying? That's next month's candidate.", "What did I stop using? Turn it off.", "Which one new autopilot this month?"],
+  },
+
+  safety: [
+    "Never paste passwords, ID numbers, account numbers, customer data or health data into a public AI assistant.",
+    "At work, your employer's AI, data and IT rules come first. Ask before connecting work accounts to anything new.",
+    "Test with fake data, and read the run history of the first three real runs.",
+    "Anything that sends money or messages customers keeps a human click at the end.",
+    "Never record or store a password in a flow or a shortcut.",
+  ],
+
+  sources: [
+    "Microsoft: Power Automate documentation and the 'Get started with Power Automate' path on Microsoft Learn.",
+    "Apple Support: Shortcuts User Guide (personal automations). Google: Gmail Help (create rules to filter your emails), Android Digital Wellbeing.",
+    "McKinsey Global Institute, 'The social economy' (2012): knowledge workers spend about 28% of the workweek on email.",
+    "Gollwitzer, 'Implementation intentions' (American Psychologist, 1999). Thaler and Benartzi, 'Save More Tomorrow' (2004). Roediger and Karpicke, 'Test-enhanced learning' (2006).",
+  ],
+
+  disclaimer: "Product and app names (Microsoft, Power Automate, Copilot, Outlook, Teams, Gmail, Apple, Shortcuts, Android, ChatGPT, Claude, Gemini) belong to their owners and are used only to describe what this workbook teaches. Menus change; the steps here are updated as they do. Not affiliated with any of them.",
+};

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Autopilot Workbook</title>
+<meta name="description" content="Find the boring tasks that eat your week and hand them to a system. No code. Recipes, fill-in prompts and short lessons. By Lukas · The Systemized Life.">
+<meta name="theme-color" content="#12303A">
+<meta name="studio-api" content="https://lukas-studio-api.lukas-systemized.workers.dev">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" href="fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:Fraunces;font-weight:600;font-display:swap;src:url(fonts/fraunces-600.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(fonts/inter-400.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(fonts/inter-600.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:700;font-display:swap;src:url(fonts/inter-700.woff2) format("woff2")}
+:root{
+  --bg:#FBF8F2; --surface:#FFFFFF; --surface2:#F3EEE4; --line:#E4DED2;
+  --ink:#12303A; --ink2:#3E5F7A; --muted:#6F8A92;
+  --accent:#2A9D8F; --accent-ink:#FFFFFF; --accent-soft:#DCEFEA;
+  --sand:#E9C46A; --sand-soft:#F6EBCB; --sand-ink:#7A5C14; --coral:#E07A5F; --coral-soft:#F8E0D8;
+  --hero:#12303A; --hero-ink:#EAF6F4; --hero-muted:#8FB5BB;
+  --radius:18px; --shadow:0 1px 2px rgba(18,48,58,.05),0 8px 24px rgba(18,48,58,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F2A33; --surface:#16363F; --surface2:#1C434D; --line:#2A5561;
+    --ink:#EAF6F4; --ink2:#B9D7DA; --muted:#8FB5BB;
+    --accent:#5CC8B8; --accent-ink:#0F2A33; --accent-soft:#1F4B52;
+    --sand-soft:#4A3F22; --sand-ink:#F2D28C; --coral-soft:#4D2E27; --hero:#0B222A; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F2A33; --surface:#16363F; --surface2:#1C434D; --line:#2A5561;
+  --ink:#EAF6F4; --ink2:#B9D7DA; --muted:#8FB5BB;
+  --accent:#5CC8B8; --accent-ink:#0F2A33; --accent-soft:#1F4B52;
+  --sand-soft:#4A3F22; --sand-ink:#F2D28C; --coral-soft:#4D2E27; --hero:#0B222A; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.02em}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 24px}
+header{padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none}
+.brand b{display:block;font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+.brand span{font-size:12px;color:var(--muted)}
+h2{font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin:26px 0 10px;color:var(--ink2)}
+h3{font-size:15px;margin:0 0 6px}
+p{margin:0 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card+.card{margin-top:12px}
+.muted{color:var(--muted)} .ink2{color:var(--ink2)} .small{font-size:13px}
+.kicker{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:14px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.chip:focus-visible,.rhead:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[type=number],input[type=text],input[type=email],input[type=search],select,textarea{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:46px;width:100%}
+textarea{min-height:84px;resize:vertical}
+.field{margin-top:14px}.field:first-child{margin-top:0}
+.field label{font-size:14px;font-weight:600;color:var(--ink2);display:block;margin-bottom:4px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:4px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.hidden{display:none!important}
+.view{display:none}.view.on{display:block}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6}
+footer a{color:var(--accent)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav.tabs button{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:11px;font-weight:600;padding:6px 4px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:58px;flex:1;max-width:96px;cursor:pointer}
+nav.tabs button i{font-style:normal;font-size:19px;line-height:1}
+nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
+
+.hero{background:var(--hero);color:var(--hero-ink);border:0;border-radius:22px;padding:22px}
+.hero .kicker{color:#5CC8B8}
+.hero p{color:var(--hero-muted)}
+.big{font-size:36px;line-height:1.05;margin:8px 0 10px}
+.lead{font-size:15.5px;line-height:1.55;color:var(--ink2)}
+
+/* chips */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chip{appearance:none;flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:99px;padding:7px 12px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;min-height:36px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip small{font-weight:400;opacity:.75}
+
+/* audit */
+.task{display:grid;grid-template-columns:30px 1fr 74px 70px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.task:first-of-type{border-top:0}
+.task input[type=number]{min-height:40px;padding:6px 8px;text-align:right}
+.task .nm{font-size:14.5px;line-height:1.25}
+.task .nm small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.task.off .nm{color:var(--muted)}
+.task.off input[type=number]{opacity:.45}
+.tick{width:24px;height:24px;accent-color:var(--accent)}
+.thead{display:grid;grid-template-columns:30px 1fr 74px 70px;gap:8px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.thead span:nth-child(n+3){text-align:right}
+.area-h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:18px 0 2px}
+.sum{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--sand);color:#12303A;position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5}
+.sum small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;display:block}
+.sum b{font-family:Fraunces,Georgia,serif;font-size:26px;font-weight:600}
+
+/* dashboard */
+.meter{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.meter div{border-radius:18px;padding:16px;background:var(--surface);border:1px solid var(--line)}
+.meter div.back{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.meter small{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;opacity:.85}
+.meter b{display:block;font-family:Fraunces,Georgia,serif;font-size:38px;line-height:1.05;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+.meter span{font-size:12.5px;opacity:.85}
+.top{list-style:none;margin:0;padding:0;counter-reset:t}
+.top li{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line);counter-increment:t}
+.top li:first-child{border-top:0}
+.top li::before{content:counter(t);width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:13px}
+.top li.run::before{content:"✓";background:var(--accent);color:var(--accent-ink)}
+.top .t1{font-weight:600;font-size:14.5px;line-height:1.25}
+.top .t2{font-size:12.5px;color:var(--muted);margin-top:2px}
+.top .hrs{font-family:Fraunces,Georgia,serif;font-size:18px;text-align:right;white-space:nowrap}
+.top .hrs small{display:block;font-family:Inter,sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.next{margin-top:12px;border-radius:18px;background:var(--hero);color:var(--hero-ink);padding:16px 18px;display:flex;gap:14px;align-items:center;cursor:pointer;border:0;width:100%;text-align:left;font:inherit}
+.next small{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--hero-muted)}
+.next p{font-family:Fraunces,Georgia,serif;font-size:19px;margin:3px 0 0;line-height:1.2}
+.next i{font-style:normal;margin-left:auto;font-size:22px;color:#5CC8B8}
+
+/* recipes */
+.recipe{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:10px;overflow:hidden}
+.rhead{appearance:none;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;width:100%;padding:14px 16px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.ricon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:17px;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.ricon.work{background:#DDE6F3;color:#2F5D8A}.ricon.windows{background:#E3E0F2;color:#5A4E9A}.ricon.phone{background:var(--coral-soft);color:var(--coral)}.ricon.ai{background:var(--sand-soft);color:var(--sand-ink)}
+:root[data-theme="dark"] .ricon.work,:root[data-theme="dark"] .ricon.windows{background:var(--surface2);color:var(--ink2)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ricon.work,:root:not([data-theme="light"]) .ricon.windows{background:var(--surface2);color:var(--ink2)}}
+.rt{font-weight:600;font-size:15px;line-height:1.25}
+.rm{font-size:12.5px;color:var(--muted);margin-top:3px}
+.status{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.status.build{background:var(--sand-soft);color:var(--sand-ink)}.status.run{background:var(--accent);color:var(--accent-ink)}
+.rbody{padding:0 16px 16px;border-top:1px solid var(--line)}
+.rbody .out{font-family:Fraunces,Georgia,serif;font-size:18px;line-height:1.3;margin:14px 0 10px}
+.rbody ol{padding-left:20px;margin:6px 0 0}.rbody ol li{margin:8px 0;font-size:14.5px}
+.box{border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;background:var(--surface2)}
+.box b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.box.warn b{color:var(--coral)}
+.source{font-size:12.5px;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px;margin-top:12px}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:14px}
+.seg button{appearance:none;flex:1;border:0;background:var(--surface);color:var(--ink2);font:inherit;font-size:13.5px;font-weight:600;padding:10px 6px;cursor:pointer;min-height:42px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.savesrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px}
+.savesrow input{width:90px!important;min-height:40px;text-align:right}
+
+/* prompts */
+.ptext{white-space:pre-wrap;font-size:14px;line-height:1.5;background:var(--surface2);border-radius:12px;padding:12px;margin-top:12px;max-height:280px;overflow:auto}
+.ptext mark{background:var(--sand-soft);color:var(--sand-ink);border-radius:4px;padding:0 2px}
+.ptext mark.filled{background:var(--accent-soft);color:var(--ink)}
+
+/* course */
+.lesson{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;font:inherit;color:inherit}
+.lesson:first-child{border-top:0}
+.lesson .n{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--ink2)}
+.lesson.done .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.lesson .lt{font-weight:600;font-size:14.5px;line-height:1.25}
+.lesson .lm{font-size:12.5px;color:var(--muted);margin-top:2px}
+.video{position:relative;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000;margin-top:12px}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.points{list-style:none;padding:0;margin:10px 0 0}
+.points li{padding:8px 0 8px 26px;position:relative;font-size:14.5px;border-top:1px solid var(--line)}
+.points li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.read{font-size:15.5px;line-height:1.65;color:var(--ink2);margin-top:12px}
+.list{list-style:none;margin:0;padding:0}
+.list li{padding:10px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:14px}
+.list li:first-child{border-top:0}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--surface2);font-size:12px;color:var(--ink2)}
+.code{letter-spacing:.3em;font-size:24px;text-align:center;font-weight:800}
+.rules{margin:8px 0 0;padding-left:18px}.rules li{margin:6px 0;font-size:14px}
+@media (max-width:420px){.big{font-size:30px}.meter b{font-size:32px}.task,.thead{grid-template-columns:28px 1fr 64px 60px;gap:6px}}
+
+/* print */
+#print{display:none}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#FBF8F2!important;padding:0!important}
+  body>*:not(#print){display:none!important}
+  #print{display:block}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.sheet{width:210mm;height:296mm;position:relative;overflow:hidden;background:#FBF8F2;color:#12303A;font-family:Inter,Arial,sans-serif}
+.sheet .pg{position:absolute;inset:13mm 14mm 11mm}
+.sheet .tp{display:flex;justify-content:space-between;font-size:7.5pt;letter-spacing:.22em;text-transform:uppercase;color:#3E5F7A;font-weight:600}
+.sheet h1{font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.035em;margin:7mm 0 0;font-size:44pt;line-height:.98}
+.sheet h1 em{font-style:normal;color:#2A9D8F}
+.sheet .sub{font-size:10pt;color:#3E5F7A;margin-top:3mm}
+.sheet .mt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm;margin-top:6mm}
+.sheet .mt div{border-radius:5mm;padding:4.5mm 5mm;background:#fff;border:.35mm solid #E4DED2}
+.sheet .mt div.a{background:#2A9D8F;border-color:#2A9D8F;color:#fff}
+.sheet .mt small{font-size:6.5pt;letter-spacing:.2em;text-transform:uppercase;font-weight:700;opacity:.8}
+.sheet .mt b{display:block;font-family:Fraunces,Georgia,serif;font-size:24pt;font-weight:600;margin-top:1mm}
+.sheet .bx{border:.35mm solid #E4DED2;border-radius:5mm;padding:4.5mm 5mm;background:#fff;margin-top:4mm}
+.sheet .bx h2{margin:0 0 2mm;font-size:7pt;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:#12303A;display:flex;justify-content:space-between}
+.sheet .bx h2 em{font-style:normal;color:#7A949C;letter-spacing:.02em;text-transform:none;font-weight:600}
+.sheet table{width:100%;border-collapse:collapse;font-size:9pt}
+.sheet td{padding:2mm 0;border-top:.25mm solid #EFEAE0;vertical-align:top}
+.sheet tr:first-child td{border-top:0}
+.sheet td.n{width:7mm;font-weight:700;color:#2A9D8F}
+.sheet td.h{text-align:right;white-space:nowrap;font-weight:700;width:22mm}
+.sheet td.s{width:24mm;text-align:right;font-size:7.5pt;text-transform:uppercase;letter-spacing:.08em;color:#7A949C;font-weight:700}
+.sheet td small{display:block;color:#7A949C;font-size:7.5pt}
+.sheet .q{display:grid;grid-template-columns:1fr 1fr;gap:3mm 6mm;font-size:9pt}
+.sheet .q div{border-bottom:.3mm dashed #E4DED2;padding-bottom:6mm}
+.sheet .ft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:7pt;color:#7A949C}
+.sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
+.sheet .wm span{transform:rotate(-28deg);font-size:22pt;font-weight:800;letter-spacing:.12em;color:rgba(18,48,58,.035);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="dot"></span><div><b>The Autopilot Workbook</b><span id="byline">by Lukas · The Systemized Life</span></div></div>
+    <button class="btn sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
+  </header>
+
+  <!-- ===================== GATE ===================== -->
+  <section id="gate" class="view on">
+    <div class="card hero">
+      <div class="kicker">Unlock your copy</div>
+      <h3 class="serif" style="font-size:26px;margin:6px 0 8px;line-height:1.1">Hand the boring tasks to a system.</h3>
+      <p class="small">Use the email you bought with and the <b>Order #</b> from your Beacons receipt (“Your purchase from lukas.systemized…”). We'll email you a 6-digit code. One purchase works on up to 3 devices.</p>
+      <p class="small" style="margin:0">Got it through your company? Use your work email and the contract number you were given as the Order #.</p>
+    </div>
+    <div class="card hidden" id="g-owned">
+      <p class="ink2" id="g-owned-msg"></p>
+      <div class="actions"><a class="btn primary" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">See it on Beacons</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
+    </div>
+    <div class="card" id="g-step1">
+      <div class="field"><label for="g-email">Purchase or work email</label><input type="email" id="g-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
+      <div class="field"><label for="g-order">Order # or contract number</label><input type="text" id="g-order" autocomplete="off" placeholder="c47d3f10-8a6d-4f86-…" spellcheck="false"><div class="hint">It's in the receipt email under “Order Summary”. Paste the whole thing.</div></div>
+      <div class="field"><label for="g-device">Name this device</label><input type="text" id="g-device" maxlength="40" placeholder="e.g. Work laptop"></div>
+      <div class="actions"><button class="btn primary" id="g-send">Send my code</button></div>
+      <p class="small muted" id="g-msg" role="status" style="margin-top:10px"></p>
+    </div>
+    <div class="card hidden" id="g-step2">
+      <p class="ink2">Enter the 6-digit code we just emailed to <b id="g-email-echo"></b>.</p>
+      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" aria-label="6-digit code"></div>
+      <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
+      <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
+    </div>
+    <footer>What you type stays on this device; only your email and order number are checked.<br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+  </section>
+
+  <!-- ===================== START ===================== -->
+  <section id="v-start" class="view">
+    <div id="s-intro">
+      <div class="card hero">
+        <div class="kicker">Start here · 20 minutes</div>
+        <h1 class="serif big" id="s-title"></h1>
+        <p id="s-lead"></p>
+        <div class="actions"><button class="btn primary" id="s-go">Start the audit →</button></div>
+      </div>
+    </div>
+
+    <div id="audit" class="hidden">
+      <div class="kicker">Step 1 of 2</div>
+      <h1 class="serif big">What do you have?</h1>
+      <p class="lead">Pick every tool you can use. Recipes only suggest what you actually have.</p>
+      <div class="chips" id="a-tracks"></div>
+      <p class="hint" id="a-trackHint"></p>
+      <div class="kicker" style="margin-top:26px">Step 2 of 2</div>
+      <h1 class="serif big">What do you repeat?</h1>
+      <p class="lead">Tick what sounds like your week and fix the numbers. Be honest: the real minutes, not the dream ones.</p>
+      <div class="card" style="padding-top:12px">
+        <div class="thead"><span></span><span>Task</span><span>Times / wk</span><span>Minutes</span></div>
+        <div id="a-list"></div>
+        <div class="field" style="margin-top:16px"><label for="a-own">Add your own</label>
+          <div style="display:flex;gap:8px"><input type="text" id="a-own" maxlength="70" placeholder="e.g. Updating the weekly sales sheet"><button class="btn sm" id="a-add" style="min-height:46px">Add</button></div>
+        </div>
+      </div>
+      <div class="sum"><div><small>These cost you</small><b id="a-total">0 h</b> <span class="small">a year</span></div><button class="btn primary sm" id="a-done">Show my top 5 →</button></div>
+    </div>
+
+    <div id="dash" class="hidden">
+      <div class="kicker" id="d-kicker">Your autopilot plan</div>
+      <h1 class="serif big" id="d-head"></h1>
+      <div class="meter">
+        <div><small>Repeating work</small><b id="d-cost">0</b><span>hours a year</span></div>
+        <div class="back"><small>Hours back</small><b id="d-back">0</b><span id="d-backNote">hours a year so far</span></div>
+      </div>
+      <h2>Your top 5 · start with number 1</h2>
+      <div class="card"><ol class="top" id="d-top"></ol></div>
+      <button class="next" id="d-next"><div><small>Next lesson</small><p id="d-nextT"></p></div><i>→</i></button>
+      <h2 id="d-monthlyH"></h2>
+      <div class="card"><ol class="rules" id="d-monthly"></ol></div>
+      <div class="actions">
+        <button class="btn primary" id="d-print">🖨️ Print my Autopilot Map</button>
+        <button class="btn" id="d-edit">✏️ Edit the audit</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RECIPES ===================== -->
+  <section id="v-recipes" class="view">
+    <div class="kicker">Recipes</div>
+    <h1 class="serif big">Pick one. Build it tonight.</h1>
+    <div class="chips scroll" id="r-tracks"></div>
+    <div class="chips scroll" id="r-areas" style="margin-top:8px"></div>
+    <div id="r-list"></div>
+  </section>
+
+  <!-- ===================== PROMPTS ===================== -->
+  <section id="v-prompts" class="view">
+    <div class="kicker">Prompt library</div>
+    <h1 class="serif big">Fill the gaps. Copy. Paste.</h1>
+    <p class="small muted">Works in ChatGPT, Copilot, Claude or Gemini. Short fields are remembered on this device; pasted text is never saved.</p>
+    <input type="search" id="p-q" placeholder="Search prompts" aria-label="Search prompts">
+    <div class="chips scroll" id="p-cats" style="margin-top:10px"></div>
+    <div id="p-list"></div>
+  </section>
+
+  <!-- ===================== COURSE ===================== -->
+  <section id="v-course" class="view">
+    <div id="c-index">
+      <div class="kicker">The course</div>
+      <h1 class="serif big">Ten short lessons.</h1>
+      <p class="small muted" id="c-progress"></p>
+      <div class="card"><div id="c-list"></div></div>
+    </div>
+    <div id="c-lesson" class="hidden">
+      <button class="btn sm ghost" id="c-back">← All lessons</button>
+      <div class="kicker" style="margin-top:12px" id="c-k"></div>
+      <h1 class="serif big" id="c-title"></h1>
+      <div id="c-video"></div>
+      <p class="lead" style="margin-top:12px" id="c-sum"></p>
+      <ul class="points" id="c-points"></ul>
+      <div class="box"><b>Do this</b><span id="c-ex"></span></div>
+      <h2 id="c-readH">Read it in two minutes</h2>
+      <p class="read" id="c-read"></p>
+      <div class="actions"><button class="btn primary" id="c-done">✓ Mark done</button><button class="btn" id="c-nextL">Next lesson →</button></div>
+    </div>
+  </section>
+
+  <!-- ===================== MORE ===================== -->
+  <section id="v-more" class="view">
+    <div class="card">
+      <h3>Licensed to</h3>
+      <p id="o-who" class="ink2"></p>
+      <h3 style="margin-top:14px">Devices</h3>
+      <ul class="list" id="o-devices"></ul>
+      <p class="hint" id="o-devHint">One purchase, up to 3 devices, shared with other Lukas tools. Remove one here to free a slot.</p>
+    </div>
+    <h2>What's new</h2>
+    <div class="card" id="o-news"></div>
+    <h2>Five safety rules</h2>
+    <div class="card"><ol class="rules" id="o-safety"></ol></div>
+    <div class="card" style="margin-top:12px">
+      <h3>Your data</h3>
+      <p class="small ink2">Your audit, recipe progress and saved fields stay in this browser. Back them up before clearing the browser or switching devices.</p>
+      <div class="actions"><button class="btn sm" id="o-backup">⬇︎ Backup</button><label class="btn sm" for="o-restore">⬆︎ Restore<input type="file" id="o-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="o-wipe">Erase my data</button></div>
+    </div>
+    <h2>Sources</h2>
+    <div class="card"><ul class="rules" id="o-sources"></ul></div>
+    <div class="card" style="margin-top:12px">
+      <div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div>
+    </div>
+    <footer><span id="o-sign">One small system at a time. ☕</span><br><span id="o-disc"></span><br><a id="o-link" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+  </section>
+</div>
+
+<nav class="tabs hidden" id="tabs">
+  <button data-v="start"><i>◎</i>Plan</button>
+  <button data-v="recipes"><i>⚙︎</i>Recipes</button>
+  <button data-v="prompts"><i>✦</i>Prompts</button>
+  <button data-v="course"><i>▶︎</i>Course</button>
+  <button data-v="more"><i>⋯</i>More</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<div id="print"></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i);};
+var KEY="lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
+var API=(function(){ try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o) return o; }catch(e){}
+  var q=new URLSearchParams(location.search).get("api"); if(q){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
+  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+
+// ---------- state ----------
+var S=load(), C=null; // C = premium content from /content?product=autopilot
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+  d.auth=d.auth||{}; d.tasks=d.tasks||null; d.tracks=d.tracks||null; d.rec=d.rec||{}; d.lessons=d.lessons||{}; d.fills=d.fills||{}; d.f=d.f||{}; return d; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+// The other Lukas apps live on the same site. Sharing their device id keeps one phone = one device slot,
+// and an existing token lets a buyer who owns several products in without a new code.
+function other(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
+function deviceId(){
+  if(!S.auth.deviceId){ var o=[other(STUDIO_KEY),other(YEAR_KEY)].filter(function(x){ return x&&x.auth&&x.auth.deviceId; })[0];
+    S.auth.deviceId=(o&&o.auth.deviceId)||(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); save(); }
+  try{ var st=other(STUDIO_KEY)||{plan:{},sunday:[],buy:{cool:[],hist:[]},auth:{}}; st.auth=st.auth||{}; if(!st.auth.deviceId){ st.auth.deviceId=S.auth.deviceId; localStorage.setItem(STUDIO_KEY,JSON.stringify(st)); } }catch(e){}
+  return S.auth.deviceId; }
+try{ var t=localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
+$("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
+  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
+var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2400); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function num(v){ v=parseFloat(v); return isFinite(v)&&v>0?v:0; }
+function hrs(n){ return n>=10?String(Math.round(n)):n>=1?n.toFixed(1).replace(/\.0$/,""):n>0?n.toFixed(1):"0"; }
+function download(name,text,type){ var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:type||"text/plain"})); a.download=name; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);},500); }
+
+// ---------- API ----------
+function api(path,opts,token){ opts=opts||{}; var h={"content-type":"application/json"}; var tk=token||S.auth.token; if(tk) h["Authorization"]="Bearer "+tk;
+  return fetch(API+path,{method:opts.method||(opts.body?"POST":"GET"),headers:h,body:opts.body?JSON.stringify(opts.body):undefined})
+    .then(function(r){ return r.json().then(function(j){ j._status=r.status; return j; }); }); }
+
+// ---------- gate ----------
+function msg(id,m){ $(id).textContent=m; }
+function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"Android":/Mac/.test(u)?"Mac":/Windows/.test(u)?"PC":"Device"; }
+(function(){ var o=[other(STUDIO_KEY),other(YEAR_KEY)].filter(function(x){ return x&&x.auth; })[0]; $("g-email").value=S.auth.email||(o&&o.auth.email)||""; $("g-device").value=S.auth.deviceName||(o&&o.auth.deviceName)||""; })();
+$("g-send").addEventListener("click",function(){
+  var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
+  if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
+  if(order.length<4) return msg("g-msg","Paste the full Order # from your receipt.");
+  $("g-send").disabled=true; msg("g-msg","Checking your order…");
+  api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
+    $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
+    if(r.status==="code_sent"){ $("g-step1").classList.add("hidden"); $("g-step2").classList.remove("hidden"); $("g-email-echo").textContent=email; $("g-code").focus(); msg("g-msg2",r.message||""); }
+    else if(r.status==="already_active"){ S.auth.token=r.token; S.auth.name=r.name; save(); enter(); }
+    else msg("g-msg", r.message||r.error||"Something went wrong. Try again.");
+  }).catch(function(){ $("g-send").disabled=false; msg("g-msg","Can't reach the server. Check your connection and try again."); });
+});
+$("g-back").addEventListener("click",function(){ $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); });
+$("g-verify").addEventListener("click",function(){
+  var code=$("g-code").value.replace(/\D/g,""); if(code.length!==6) return msg("g-msg2","Enter the 6 digits.");
+  $("g-verify").disabled=true;
+  api("/verify",{body:{email:S.auth.email,code:code,deviceId:deviceId()}}).then(function(r){
+    $("g-verify").disabled=false;
+    if(r.status==="ok"){ S.auth.token=r.token; S.auth.name=r.name; save(); enter(); } else msg("g-msg2",r.message||r.error||"That didn't work.");
+  }).catch(function(){ $("g-verify").disabled=false; msg("g-msg2","Can't reach the server."); });
+});
+$("g-code").addEventListener("keydown",function(e){ if(e.key==="Enter") $("g-verify").click(); });
+$("g-other").addEventListener("click",function(){ $("g-owned").classList.add("hidden"); $("g-step1").classList.remove("hidden"); });
+
+function enter(token){
+  api("/content?product="+PRODUCT,null,token).then(function(r){
+    if(r.error==="not_owned"){ // signed in through another Lukas tool, but this one isn't bought (yet)
+      showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
+      $("g-owned-msg").textContent="This device already has another Lukas tool. The Autopilot Workbook is its own purchase. If you just bought it, give it a few minutes and reopen this page.";
+      return; }
+    if(r.error){ if(!token){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
+    C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
+    S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; S.auth.team=r.team||""; save();
+    $("gate").classList.remove("on"); $("tabs").classList.remove("hidden");
+    brand(); renderAll(); show(S.ui||"start");
+    if(S.seen&&S.seen<C.version) toast("New in the workbook: see More → What's new"); S.seen=C.version; save();
+  }).catch(function(){ if(C) return; showGate("Can't reach the server. You need a connection the first time each session."); });
+}
+function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
+(function(){ if(S.auth.token) return enter(); if(S.auth.signedOut) return;
+  var o=[other(STUDIO_KEY),other(YEAR_KEY)].filter(function(x){ return x&&x.auth&&x.auth.token; })[0]; if(o){ deviceId(); enter(o.auth.token); } })();
+
+// Team licences (B2B) show the company instead of the Lukas byline.
+function brand(){ var tm=S.auth.team;
+  $("byline").textContent=tm?"for "+tm:"by Lukas · The Systemized Life";
+  $("o-sign").textContent=tm?"Licensed to "+tm+".":"One small system at a time. ☕";
+  $("o-link").classList.toggle("hidden",!!tm);
+  $("o-devHint").textContent=tm?"Your seat works on up to "+(S.auth.max||3)+" of your own devices. Remove one here to free a slot.":"One purchase, up to "+(S.auth.max||3)+" devices, shared with other Lukas tools. Remove one here to free a slot."; }
+
+// ---------- tabs ----------
+function show(v){ S.ui=v; save(); document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
+  if(v==="start") renderStart(); if(v==="recipes") renderRecipes(); if(v==="prompts") renderPrompts(); if(v==="course") renderCourse();
+  document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===v); }); window.scrollTo(0,0); }
+document.querySelectorAll("nav.tabs button").forEach(function(b){ b.addEventListener("click",function(){ show(b.dataset.v); }); });
+function renderAll(){ renderStart(); renderRecipes(); renderPrompts(); renderCourse(); renderMore(); }
+
+// ================= MODEL =================
+function recipe(id){ return C.recipes.filter(function(r){ return r.id===id; })[0]; }
+function prompt(id){ return C.prompts.filter(function(p){ return p.id===id; })[0]; }
+function myTracks(){ return S.tracks||["rules","ai","phone"]; }
+function taskHours(t){ return num(t.perWeek)*num(t.minutes)*WEEKS/60; }
+function activeTasks(){ return (S.tasks||[]).filter(function(t){ return t.on&&taskHours(t)>0; }); }
+// The best recipe for a task among the tools this buyer has. Own tasks get "design my automation".
+function bestRecipe(t){ var ids=(t.recipes&&t.recipes.length?t.recipes:["a-build"]), mine=myTracks();
+  var ok=ids.map(recipe).filter(function(r){ return r&&mine.indexOf(r.track)>=0; });
+  return ok.filter(function(r){ return st(r.id)!=="run"; })[0]||ok[0]||recipe("a-build"); }
+function topTasks(){ return activeTasks().slice().sort(function(a,b){ return taskHours(b)-taskHours(a); }).slice(0,5); }
+function st(id){ return (S.rec[id]&&S.rec[id].s)||"todo"; }
+function saves(id){ var r=S.rec[id]; if(r&&r.saves!=null&&r.saves!=="") return num(r.saves); var x=recipe(id); return x?x.saves:0; }
+function hoursBack(){ return Object.keys(S.rec).filter(function(id){ return st(id)==="run"&&recipe(id); }).reduce(function(s,id){ return s+saves(id)*WEEKS/60; },0); }
+function setStatus(id,s){ S.rec[id]=S.rec[id]||{}; S.rec[id].s=s; if(s==="run") S.rec[id].at=new Date().toISOString(); save(); }
+
+// ================= START (audit + plan) =================
+$("s-go").addEventListener("click",function(){ startAudit(); });
+$("d-edit").addEventListener("click",function(){ S.auditOpen=true; save(); renderStart(); window.scrollTo(0,0); });
+function startAudit(){ if(!S.tasks) S.tasks=C.presets.map(function(p){ return {id:p.id,name:p.name,area:p.area,perWeek:p.perWeek,minutes:p.minutes,recipes:p.recipes,on:false}; });
+  if(!S.tracks) S.tracks=["rules","ai","phone"]; S.auditOpen=true; save(); renderStart(); window.scrollTo(0,0); }
+function renderStart(){ if(!C) return;
+  var hasPlan=S.tasks&&S.planned&&!S.auditOpen;
+  $("s-intro").classList.toggle("hidden",!!(S.tasks));
+  $("audit").classList.toggle("hidden",!(S.tasks&&!hasPlan));
+  $("dash").classList.toggle("hidden",!hasPlan);
+  $("s-title").textContent=C.intro.title; $("s-lead").textContent=C.intro.lead+" "+C.intro.promise;
+  if(S.tasks&&!hasPlan) renderAudit(); if(hasPlan) renderDash(); }
+function renderAudit(){
+  $("a-tracks").innerHTML=Object.keys(C.tracks).map(function(k){ var t=C.tracks[k]; return '<button class="chip'+(myTracks().indexOf(k)>=0?" on":"")+'" data-t="'+k+'" aria-pressed="'+(myTracks().indexOf(k)>=0)+'">'+esc(t.icon)+' '+esc(t.title)+' <small>'+esc(t.short)+'</small></button>'; }).join("");
+  $("a-tracks").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ var k=b.dataset.t, m=myTracks().slice(), i=m.indexOf(k); if(i>=0) m.splice(i,1); else m.push(k); S.tracks=m; save(); renderAudit(); }); });
+  $("a-trackHint").textContent=myTracks().indexOf("work")>=0?C.tracks.work.needs:"Work account = Power Automate with a Microsoft 365 work or school account. Add it if you have one.";
+  var html="", last="";
+  ["work","money","home","learning"].forEach(function(area){ var ts=S.tasks.filter(function(t){ return (t.area||"work")===area; }); if(!ts.length) return;
+    html+='<div class="area-h">'+esc(C.areas[area])+'</div>';
+    ts.forEach(function(t){ var i=S.tasks.indexOf(t);
+      html+='<div class="task'+(t.on?"":" off")+'"><input type="checkbox" class="tick" data-i="'+i+'"'+(t.on?" checked":"")+' aria-label="'+esc(t.name)+'"><div class="nm">'+esc(t.name)+'<small>'+(t.on&&taskHours(t)?hrs(taskHours(t))+" h a year":"&nbsp;")+'</small></div><input type="number" inputmode="decimal" min="0" step="0.25" data-i="'+i+'" data-k="perWeek" value="'+esc(t.perWeek)+'" aria-label="times per week"><input type="number" inputmode="decimal" min="0" data-i="'+i+'" data-k="minutes" value="'+esc(t.minutes)+'" aria-label="minutes each"></div>'; }); });
+  $("a-list").innerHTML=html;
+  $("a-list").querySelectorAll(".tick").forEach(function(c){ c.addEventListener("change",function(){ S.tasks[+c.dataset.i].on=c.checked; save(); renderAudit(); }); });
+  $("a-list").querySelectorAll("input[type=number]").forEach(function(n){ n.addEventListener("input",function(){ var t=S.tasks[+n.dataset.i]; t[n.dataset.k]=n.value; if(num(n.value)) t.on=true; save(); auditSum(); n.closest(".task").classList.toggle("off",!t.on); n.closest(".task").querySelector(".tick").checked=t.on; n.closest(".task").querySelector("small").textContent=t.on&&taskHours(t)?hrs(taskHours(t))+" h a year":" "; }); });
+  auditSum(); }
+function auditSum(){ var h=activeTasks().reduce(function(s,t){ return s+taskHours(t); },0); $("a-total").textContent=hrs(h)+" h"; }
+$("a-add").addEventListener("click",function(){ var n=$("a-own").value.trim(); if(!n) return; S.tasks.push({id:"own-"+Date.now(),name:n,area:"work",perWeek:1,minutes:10,recipes:[],on:true,own:true}); $("a-own").value=""; save(); renderAudit(); toast("Added. Fix the numbers on the right."); });
+$("a-own").addEventListener("keydown",function(e){ if(e.key==="Enter") $("a-add").click(); });
+$("a-done").addEventListener("click",function(){ if(!activeTasks().length) return toast("Tick at least one task you repeat."); if(!myTracks().length) return toast("Pick at least one tool you have."); S.planned=true; S.auditOpen=false; save(); renderStart(); window.scrollTo(0,0); });
+function renderDash(){
+  var cost=activeTasks().reduce(function(s,t){ return s+taskHours(t); },0), back=hoursBack();
+  $("d-head").textContent=(S.auth.name?S.auth.name.split(" ")[0]+", y":"Y")+"our week, minus the boring bits.";
+  $("d-cost").textContent=hrs(cost); $("d-back").textContent=hrs(back);
+  $("d-backNote").textContent=back?"hours a year, from "+Object.keys(S.rec).filter(function(id){ return st(id)==="run"; }).length+" running autopilots":"Mark a recipe Running to start counting";
+  $("d-top").innerHTML=topTasks().map(function(t){ var r=bestRecipe(t); return '<li class="'+(st(r.id)==="run"?"run":"")+'" data-r="'+esc(r.id)+'" style="cursor:pointer"><div><div class="t1">'+esc(t.name)+'</div><div class="t2">'+esc(C.tracks[r.track].icon+" "+r.title)+' · '+r.build+' min to build</div></div><div class="hrs">'+hrs(taskHours(t))+'<small>h / year</small></div></li>'; }).join("");
+  $("d-top").querySelectorAll("li").forEach(function(li){ li.addEventListener("click",function(){ openRecipe(li.dataset.r); }); });
+  var nl=C.lessons.filter(function(l){ return !S.lessons[l.id]; })[0]; $("d-next").classList.toggle("hidden",!nl); if(nl){ $("d-nextT").textContent=nl.n+". "+nl.title; $("d-next").onclick=function(){ show("course"); openLesson(nl.id); }; }
+  $("d-monthlyH").textContent=C.monthly.title; $("d-monthly").innerHTML=C.monthly.questions.map(function(q){ return "<li>"+esc(q)+"</li>"; }).join("");
+}
+$("d-print").addEventListener("click",function(){ printSheet(mapHTML()); });
+
+// ================= RECIPES =================
+S.f.track=S.f.track||"mine"; S.f.area=S.f.area||"all";
+function renderRecipes(){ if(!C) return;
+  var tabs=[["mine","My tools"]].concat(Object.keys(C.tracks).map(function(k){ return [k,C.tracks[k].icon+" "+C.tracks[k].title]; }));
+  $("r-tracks").innerHTML=tabs.map(function(t){ return '<button class="chip'+(S.f.track===t[0]?" on":"")+'" data-k="'+t[0]+'">'+esc(t[1])+'</button>'; }).join("");
+  $("r-areas").innerHTML=[["all","All areas"],["running","Running"]].concat(Object.keys(C.areas).map(function(k){ return [k,C.areas[k]]; })).map(function(t){ return '<button class="chip'+(S.f.area===t[0]?" on":"")+'" data-k="'+t[0]+'">'+esc(t[1])+'</button>'; }).join("");
+  $("r-tracks").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ S.f.track=b.dataset.k; save(); renderRecipes(); }); });
+  $("r-areas").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ S.f.area=b.dataset.k; save(); renderRecipes(); }); });
+  var list=C.recipes.filter(function(r){ var tOk=S.f.track==="mine"?myTracks().indexOf(r.track)>=0:r.track===S.f.track; var aOk=S.f.area==="all"||(S.f.area==="running"?st(r.id)==="run":r.area===S.f.area); return tOk&&aOk; });
+  $("r-list").innerHTML=list.length?list.map(recipeHTML).join(""):'<p class="small muted" style="margin-top:16px">Nothing here yet. Try another filter'+(S.f.track==="mine"?", or add tools under Plan → Edit the audit":"")+'.</p>';
+  $("r-list").querySelectorAll(".rhead").forEach(function(h){ h.addEventListener("click",function(){ S.openR=S.openR===h.dataset.r?null:h.dataset.r; save(); renderRecipes(); }); });
+  $("r-list").querySelectorAll(".seg button").forEach(function(b){ b.addEventListener("click",function(){ setStatus(b.dataset.r,b.dataset.s); renderRecipes(); renderStart(); if(b.dataset.s==="run") toast("Running. "+hrs(saves(b.dataset.r)*WEEKS/60)+" hours a year back."); }); });
+  $("r-list").querySelectorAll("input[data-saves]").forEach(function(n){ n.addEventListener("input",function(){ var id=n.dataset.saves; S.rec[id]=S.rec[id]||{}; S.rec[id].saves=n.value; save(); }); });
+  $("r-list").querySelectorAll("[data-p]").forEach(function(b){ b.addEventListener("click",function(){ S.f.cat="all"; S.openP=b.dataset.p; save(); show("prompts"); var el=document.querySelector('[data-pc="'+b.dataset.p+'"]'); if(el) el.scrollIntoView({block:"start"}); }); });
+}
+var LABEL={todo:"Not started",build:"Building",run:"Running"};
+function recipeHTML(r){ var open=S.openR===r.id, s=st(r.id), tr=C.tracks[r.track];
+  var h='<div class="recipe" id="rc-'+esc(r.id)+'"><button class="rhead" data-r="'+esc(r.id)+'" aria-expanded="'+open+'"><span class="ricon '+esc(r.track)+'">'+esc(tr.icon)+'</span><span><span class="rt">'+esc(r.title)+'</span><span class="rm" style="display:block">'+esc(tr.title)+' · '+r.build+' min to build · saves ~'+saves(r.id)+' min/week</span></span><span class="status '+s+'">'+LABEL[s]+'</span></button>';
+  if(open){ h+='<div class="rbody"><p class="out">'+esc(r.outcome)+'</p><ol>'+r.steps.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("")+'</ol>'+
+    (r.prompt&&prompt(r.prompt)?'<div class="actions" style="margin-top:10px"><button class="btn sm" data-p="'+esc(r.prompt)+'">✦ Open the prompt: '+esc(prompt(r.prompt).title)+'</button></div>':'')+
+    '<div class="box"><b>Test it</b>'+esc(r.test)+'</div><div class="box warn"><b>When it breaks</b>'+esc(r.breaks)+'</div>'+
+    (r.source?'<p class="source">'+esc(r.source)+'</p>':'')+
+    '<div class="seg" role="group" aria-label="Status">'+["todo","build","run"].map(function(k){ return '<button data-r="'+esc(r.id)+'" data-s="'+k+'" class="'+(s===k?"on":"")+'">'+LABEL[k]+'</button>'; }).join("")+'</div>'+
+    '<div class="savesrow"><label for="sv-'+esc(r.id)+'">It saves me</label><input type="number" inputmode="decimal" min="0" id="sv-'+esc(r.id)+'" data-saves="'+esc(r.id)+'" value="'+esc(saves(r.id))+'"> <span class="muted">min / week</span></div>'+
+    '<p class="hint">Needs: '+esc(tr.needs)+'</p></div>'; }
+  return h+'</div>'; }
+function openRecipe(id){ var r=recipe(id); if(!r) return; S.openR=id; S.f.area="all"; S.f.track=myTracks().indexOf(r.track)>=0?"mine":r.track; save(); show("recipes"); var el=$("rc-"+id); if(el) el.scrollIntoView({block:"start"}); }
+
+// ================= PROMPTS =================
+S.f.cat=S.f.cat||"all";
+var LONG=/paste|type everything|list|email \d|describe|notes|wins/i;
+function fields(text){ var out=[], seen={}; text.replace(/\{([^}]+)\}/g,function(_,k){ if(!seen[k]){ seen[k]=1; out.push(k); } return _; }); return out; }
+function filled(p){ var f=(S.fills[p.id]||{}), tmp=TMP[p.id]||{}; return p.text.replace(/\{([^}]+)\}/g,function(_,k){ var v=tmp[k]!=null&&tmp[k]!==""?tmp[k]:f[k]; return v?v:"{"+k+"}"; }); }
+var TMP={}; // long pasted fields live only in memory, never saved
+function renderPrompts(){ if(!C) return;
+  var cats=[["all","All"]].concat(Object.keys(C.promptCats).map(function(k){ return [k,C.promptCats[k]]; }));
+  $("p-cats").innerHTML=cats.map(function(c){ return '<button class="chip'+(S.f.cat===c[0]?" on":"")+'" data-k="'+c[0]+'">'+esc(c[1])+'</button>'; }).join("");
+  $("p-cats").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ S.f.cat=b.dataset.k; save(); renderPrompts(); }); });
+  var q=$("p-q").value.trim().toLowerCase();
+  var list=C.prompts.filter(function(p){ return (S.f.cat==="all"||p.cat===S.f.cat)&&(!q||(p.title+" "+p.text).toLowerCase().indexOf(q)>=0); });
+  $("p-list").innerHTML=list.map(function(p){ var open=S.openP===p.id;
+    var h='<div class="recipe" data-pc="'+esc(p.id)+'"><button class="rhead" data-p2="'+esc(p.id)+'" aria-expanded="'+open+'"><span class="ricon ai">✦</span><span><span class="rt">'+esc(p.title)+'</span><span class="rm" style="display:block">'+esc(C.promptCats[p.cat])+' · '+(fields(p.text).length?fields(p.text).length+' gaps to fill':'Ready to copy')+'</span></span><span class="status">'+(open?"Close":"Open")+'</span></button>';
+    if(open){ var f=S.fills[p.id]||{}, tmp=TMP[p.id]||{};
+      h+='<div class="rbody">'+fields(p.text).map(function(k,i){ var long=LONG.test(k), id="pf-"+p.id+"-"+i;
+        return '<div class="field"><label for="'+id+'">'+esc(k.charAt(0).toUpperCase()+k.slice(1))+'</label>'+(long?'<textarea id="'+id+'" data-pid="'+esc(p.id)+'" data-k="'+esc(k)+'" data-long="1">'+esc(tmp[k]||"")+'</textarea>':'<input type="text" id="'+id+'" data-pid="'+esc(p.id)+'" data-k="'+esc(k)+'" value="'+esc(f[k]||"")+'">')+'</div>'; }).join("")+
+        '<div class="ptext" id="pt-'+esc(p.id)+'">'+preview(p)+'</div><div class="actions"><button class="btn primary" data-copy="'+esc(p.id)+'">Copy prompt</button><button class="btn ghost sm" data-clear="'+esc(p.id)+'">Clear</button></div>'+(p.cat!=="check"?'<p class="hint">Remove names, account numbers and anything private before pasting into an AI tool.</p>':'')+'</div>'; }
+    return h+'</div>'; }).join("")||'<p class="small muted" style="margin-top:16px">No prompt matches that.</p>';
+  $("p-list").querySelectorAll("[data-p2]").forEach(function(b){ b.addEventListener("click",function(){ S.openP=S.openP===b.dataset.p2?null:b.dataset.p2; save(); renderPrompts(); }); });
+  $("p-list").querySelectorAll("[data-pid]").forEach(function(el){ el.addEventListener("input",function(){ var id=el.dataset.pid;
+    if(el.dataset.long){ TMP[id]=TMP[id]||{}; TMP[id][el.dataset.k]=el.value; } else { S.fills[id]=S.fills[id]||{}; S.fills[id][el.dataset.k]=el.value; save(); }
+    $("pt-"+id).innerHTML=preview(prompt(id)); }); });
+  $("p-list").querySelectorAll("[data-copy]").forEach(function(b){ b.addEventListener("click",function(){ copy(filled(prompt(b.dataset.copy))); }); });
+  $("p-list").querySelectorAll("[data-clear]").forEach(function(b){ b.addEventListener("click",function(){ delete S.fills[b.dataset.clear]; delete TMP[b.dataset.clear]; save(); renderPrompts(); }); });
+}
+function preview(p){ var f=S.fills[p.id]||{}, tmp=TMP[p.id]||{};
+  return esc(p.text).replace(/\{([^}]+)\}/g,function(_,k){ k=k.replace(/&amp;/g,"&").replace(/&#39;/g,"'").replace(/&quot;/g,'"'); var v=tmp[k]!=null&&tmp[k]!==""?tmp[k]:f[k]; return v?'<mark class="filled">'+esc(v)+'</mark>':'<mark>{'+esc(k)+'}</mark>'; }); }
+$("p-q").addEventListener("input",function(){ renderPrompts(); });
+function copy(text){ var done=function(){ toast("Copied. Paste it into your AI assistant."); };
+  if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(text).then(done,fallback); else fallback();
+  function fallback(){ var ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(e){ toast("Select the text and copy it."); } ta.remove(); } }
+
+// ================= COURSE =================
+function renderCourse(){ if(!C) return;
+  var n=C.lessons.filter(function(l){ return S.lessons[l.id]; }).length;
+  $("c-progress").textContent=n+" of "+C.lessons.length+" done · about "+C.lessons.reduce(function(s,l){ return s+l.minutes; },0)+" minutes in total";
+  $("c-list").innerHTML=C.lessons.map(function(l){ return '<button class="lesson'+(S.lessons[l.id]?" done":"")+'" data-l="'+esc(l.id)+'"><span class="n">'+(S.lessons[l.id]?"✓":l.n)+'</span><span><span class="lt" style="display:block">'+esc(l.title)+'</span><span class="lm" style="display:block">'+(l.video?"▶︎ Video · ":"")+l.minutes+' min · '+esc(l.summary)+'</span></span><span class="muted">→</span></button>'; }).join("");
+  $("c-list").querySelectorAll("[data-l]").forEach(function(b){ b.addEventListener("click",function(){ openLesson(b.dataset.l); }); });
+  if(S.openL) openLesson(S.openL,true); else { $("c-index").classList.remove("hidden"); $("c-lesson").classList.add("hidden"); } }
+function openLesson(id,quiet){ var l=C.lessons.filter(function(x){ return x.id===id; })[0]; if(!l) return; S.openL=id; save();
+  $("c-index").classList.add("hidden"); $("c-lesson").classList.remove("hidden");
+  $("c-k").textContent="Lesson "+l.n+" of "+C.lessons.length+" · "+l.minutes+" min"; $("c-title").textContent=l.title;
+  $("c-video").innerHTML=/^[\w-]{6,20}$/.test(l.video||"")?'<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/'+esc(l.video)+'?rel=0" title="'+esc(l.title)+'" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>':"";
+  $("c-sum").textContent=l.summary; $("c-points").innerHTML=l.points.map(function(p){ return "<li>"+esc(p)+"</li>"; }).join("");
+  $("c-ex").textContent=l.exercise; $("c-readH").textContent=l.video?"Or read it":"Read it in two minutes"; $("c-read").textContent=l.script;
+  $("c-done").textContent=S.lessons[l.id]?"✓ Done":"✓ Mark done";
+  var nx=C.lessons[C.lessons.indexOf(l)+1]; $("c-nextL").classList.toggle("hidden",!nx);
+  if(!quiet) window.scrollTo(0,0); }
+$("c-back").addEventListener("click",function(){ S.openL=null; save(); renderCourse(); window.scrollTo(0,0); });
+$("c-done").addEventListener("click",function(){ S.lessons[S.openL]=new Date().toISOString(); save(); $("c-done").textContent="✓ Done"; renderStart(); toast("Nice. One lesson closer."); });
+$("c-nextL").addEventListener("click",function(){ var i=C.lessons.map(function(l){ return l.id; }).indexOf(S.openL), nx=C.lessons[i+1]; if(nx) openLesson(nx.id); });
+
+// ================= MORE =================
+function renderMore(){ if(!C) return;
+  $("o-who").textContent=(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"")+(S.auth.team?" · "+S.auth.team:"");
+  var devs=S.auth.devices||[]; $("o-devices").innerHTML=devs.map(function(d){ return "<li><div><b>"+esc(d.name)+"</b>"+(d.this?' <span class="pill">this device</span>':"")+'<br><span class="small muted">added '+new Date(d.created*1000).toLocaleDateString()+"</span></div>"+(d.this?"":'<button class="btn sm ghost" data-rm="'+esc(d.id)+'">Remove</button>')+"</li>"; }).join("")+'<li class="muted small">'+devs.length+" of "+(S.auth.max||3)+" slots used</li>";
+  $("o-devices").querySelectorAll("[data-rm]").forEach(function(b){ b.addEventListener("click",function(){ if(!confirm("Remove this device? It will need a new code to get back in.")) return;
+    api("/me/remove-device",{body:{deviceId:b.dataset.rm}}).then(function(r){ if(r.ok){ S.auth.devices=r.devices; save(); renderMore(); toast("Removed."); } else toast(r.error||"Couldn't remove."); }); }); });
+  $("o-news").innerHTML='<p class="small muted" style="margin:0 0 6px">Edition '+esc(C.version)+' · updated '+esc(C.updated)+'</p>'+C.changelog.slice().reverse().map(function(c){ return '<p class="small" style="margin:8px 0 0"><b>'+esc(c.date)+'</b> · '+c.notes.map(esc).join(" ")+'</p>'; }).join("");
+  $("o-safety").innerHTML=C.safety.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("");
+  $("o-sources").innerHTML=C.sources.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("");
+  $("o-disc").textContent=C.disclaimer;
+}
+$("o-backup").addEventListener("click",function(){ var d={tasks:S.tasks,tracks:S.tracks,rec:S.rec,lessons:S.lessons,fills:S.fills,planned:S.planned,exported:new Date().toISOString(),app:"the-autopilot-workbook"}; download("autopilot-workbook-backup.json",JSON.stringify(d,null,1),"application/json"); });
+$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.app!=="the-autopilot-workbook") throw 0; ["tasks","tracks","rec","lessons","fills","planned"].forEach(function(k){ if(d[k]!=null) S[k]=d[k]; }); save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't an Autopilot Workbook backup."); } }; rd.readAsText(f); });
+$("o-wipe").addEventListener("click",function(){ if(!confirm("Erase your audit, progress and saved fields on this device? Your licence stays.")) return; ["tasks","tracks","planned","auditOpen","openR","openP","openL"].forEach(function(k){ delete S[k]; }); S.rec={}; S.lessons={}; S.fills={}; S.f={}; save(); location.reload(); });
+$("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
+
+// ================= PRINT =================
+function printSheet(html){ $("print").innerHTML=html; var go=function(){ window.print(); }; if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ setTimeout(go,60); }); else go(); }
+function mapHTML(){ var who=S.auth.name||S.auth.email||"", cost=activeTasks().reduce(function(s,t){ return s+taskHours(t); },0), back=hoursBack();
+  var running=C.recipes.filter(function(r){ return st(r.id)==="run"; }), lic="Licensed to "+(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"")+(S.auth.team?" · "+S.auth.team:"");
+  var top=topTasks().map(function(t,i){ var r=bestRecipe(t); return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(t.name)+'<small>'+esc(C.tracks[r.track].title+" · "+r.title)+'</small></td><td class="s">'+esc(LABEL[st(r.id)])+'</td><td class="h">'+hrs(taskHours(t))+' h / yr</td></tr>'; }).join("");
+  var run=running.map(function(r){ return '<tr><td class="n">✓</td><td>'+esc(r.title)+'<small>'+esc(C.tracks[r.track].title)+'</small></td><td class="s"></td><td class="h">'+saves(r.id)+' min / wk</td></tr>'; }).join("")||'<tr><td></td><td style="color:#7A949C">Nothing running yet. Number 1 above is the place to start.</td><td></td><td></td></tr>';
+  return '<div class="sheet"><div class="wm"><span>LICENSED TO '+esc(String(who).toUpperCase())+'</span></div><div class="pg"><div class="tp"><span>The Autopilot Workbook</span><span>'+esc(S.auth.team?"for "+S.auth.team:"Lukas · The Systemized Life")+'</span></div>'+
+    '<h1>My autopilot<br><em>map.</em></h1><p class="sub">'+esc(who?who.split(" ")[0]+"'s":"My")+' boring tasks, priced and handed to systems. Printed '+esc(new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}))+'.</p>'+
+    '<div class="mt"><div><small>Repeating work</small><b>'+hrs(cost)+' h</b>a year</div><div class="a"><small>Hours back</small><b>'+hrs(back)+' h</b>a year so far</div><div><small>Running</small><b>'+running.length+'</b>autopilots</div></div>'+
+    '<div class="bx"><h2>Top 5 <em>start with number 1</em></h2><table>'+top+'</table></div>'+
+    '<div class="bx"><h2>Running <em>check once a month</em></h2><table>'+run+'</table></div>'+
+    '<div class="bx"><h2>'+esc(C.monthly.title)+' <em>same day every month</em></h2><div class="q">'+C.monthly.questions.map(function(q){ return '<div>'+esc(q)+'</div>'; }).join("")+'</div></div>'+
+    '<div class="ft"><span>'+esc(lic)+'</span><span>The Autopilot Workbook'+(S.auth.team?"":" · beacons.ai/lukas.systemized")+'</span></div></div></div>'; }
+
+// ---------- PWA ----------
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+})();
+</script>
+</body>
+</html>
