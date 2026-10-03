@@ -21,12 +21,14 @@
 import { CONTENT } from "./content.js";
 import { CONTENT_YEAR } from "./content-year.js";
 import { CONTENT_AUTOPILOT } from "./content-autopilot.js";
+import { CONTENT_ENOUGH } from "./content-enough.js";
 
 // Product keys an app can ask for, the name used in emails, and the content it gets.
 const PRODUCT_INFO = {
   studio: { name: "Money Plan Studio", content: CONTENT },
   year: { name: "The Systemized Year", content: CONTENT_YEAR },
   autopilot: { name: "The Autopilot Workbook", content: CONTENT_AUTOPILOT },
+  enough: { name: "The Enough Habit", content: CONTENT_ENOUGH },
 };
 
 // Which Beacons product names unlock which product keys. First matching rule wins,
@@ -37,6 +39,7 @@ const PRODUCT_INFO = {
 // PRODUCT_MATCH keeps working and unlocks the Studio only.
 const DEFAULT_PRODUCTS = [
   { match: "autopilot workbook", grants: ["autopilot"] },
+  { match: "enough habit", grants: ["enough"] },
   { match: "systemized year upgrade", grants: ["year"], requires: "studio" },
   { match: "systemized life pass", grants: ["studio", "year"] },
   { match: "systemized year", grants: ["year"] },
@@ -475,7 +478,7 @@ button{font:inherit;border:1px solid #CFE6E1;background:#E6F3F0;border-radius:8p
 <h1>Lukas products · buyers</h1><p class="muted" id="meta"></p>
 <h2>Waiting for approval</h2><table id="pending"><tr><th>Email</th><th>Order # they typed</th><th>For</th><th>Tries</th><th></th></tr></table>
 <h2>Buyers</h2><table id="buyers"><tr><th>Buyer</th><th>Owns</th><th>Orders</th><th>Devices</th><th></th></tr></table>
-<h2>Add a buyer by hand</h2><p><input id="aEmail" placeholder="email"> <input id="aName" placeholder="name"> <input id="aOrder" placeholder="order # (optional)"> <select id="aProd"><option value="studio">Money Plan Studio</option><option value="year">The Systemized Year</option><option value="studio,year">Studio + Year</option><option value="autopilot">The Autopilot Workbook</option></select> <button class="p" onclick="approve()">Approve</button></p>
+<h2>Add a buyer by hand</h2><p><input id="aEmail" placeholder="email"> <input id="aName" placeholder="name"> <input id="aOrder" placeholder="order # (optional)"> <select id="aProd"><option value="studio">Money Plan Studio</option><option value="year">The Systemized Year</option><option value="studio,year">Studio + Year</option><option value="autopilot">The Autopilot Workbook</option><option value="enough">The Enough Habit</option></select> <button class="p" onclick="approve()">Approve</button></p>
 <h2>Add a team (B2B licence)</h2><p class="muted">Company name, the contract or invoice number people type as their Order #, the end date, and one email per line. Re-adding the same team adds seats and updates the end date.</p>
 <p><input id="tName" placeholder="company, e.g. Acme Oy"> <input id="tOrder" placeholder="contract #, e.g. AP-2026-001"> <input id="tUntil" type="date" title="licence ends"> <select id="tProd"><option value="autopilot">The Autopilot Workbook</option></select><br><textarea id="tEmails" rows="5" style="width:100%;margin-top:6px;font:inherit" placeholder="anna@acme.fi&#10;mikko@acme.fi"></textarea><br><button class="p" onclick="team()">Add seats</button> <button onclick="if(confirm('End this team licence? Members lose access at their next launch.'))teamRemove()">End team licence</button> <span id="tMsg" class="muted"></span></p>
 <script>

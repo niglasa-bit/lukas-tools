@@ -1,0 +1,14 @@
+{
+  "name": "The Enough Habit",
+  "short_name": "Enough",
+  "description": "One small frugal goal a day for 66 days, inside a two-minute morning check. By Lukas · The Systemized Life.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2438E8",
+  "theme_color": "#2438E8",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

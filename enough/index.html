@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Enough Habit</title>
+<meta name="description" content="One small frugal goal a day for 66 days, inside a two-minute morning check. Every day prints a line on your receipt. By Lukas · The Systemized Life.">
+<meta name="theme-color" content="#2438E8">
+<meta name="studio-api" content="https://lukas-studio-api.lukas-systemized.workers.dev">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preload" href="fonts/anton-400.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:Anton;font-weight:400;font-display:swap;src:url(fonts/anton-400.woff2) format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:400;font-display:swap;src:url(fonts/plexmono-400.woff2) format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:500;font-display:swap;src:url(fonts/plexmono-500.woff2) format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:700;font-display:swap;src:url(fonts/plexmono-700.woff2) format("woff2")}
+/* Look: "The Receipt". Cobalt table, thermal-paper receipts, black mono ink, yellow print button, green KEPT stamp.
+   Its own identity: no other Lukas product uses these colours or fonts. */
+:root{
+  --table:#2438E8; --table2:#1A2BC4; --table-ink:#FFFFFF; --table-muted:#C9D0FF;
+  --paper:#FCFCF8; --paper2:#F1F1EA; --ink:#141414; --ink2:#3A3A36; --muted:#86867F; --rule:#141414; --faint:#C4C4BC;
+  --yellow:#FFD23F; --yellow-ink:#141414; --kept:#0E9F55; --red:#D8342B;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --table:#0E1766; --table2:#0A1150; --table-muted:#9AA6F2; --paper:#ECECE4; --paper2:#DCDCD2; }
+}
+:root[data-theme="dark"]{ --table:#0E1766; --table2:#0A1150; --table-muted:#9AA6F2; --paper:#ECECE4; --paper2:#DCDCD2; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--table);color:var(--table-ink);font:15px/1.5 "Plex Mono",ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased;padding-bottom:calc(80px + env(safe-area-inset-bottom));min-height:100vh;
+  background-image:repeating-linear-gradient(90deg,transparent 0 63px,rgba(255,255,255,.045) 63px 64px)}
+.disp{font-family:Anton,Impact,"Arial Narrow",sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em;line-height:.95}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 24px}
+header{padding:18px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:22px;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+.brand span{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--table-muted)}
+.view{display:none}.view.on{display:block}
+.hidden{display:none!important}
+p{margin:0 0 10px}
+h2{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;margin:26px 0 10px;color:var(--table-muted);font-weight:500}
+
+/* receipt paper with torn bottom edge */
+.rc{background:var(--paper);color:var(--ink);padding:22px 20px 24px;position:relative;margin-bottom:22px;box-shadow:0 18px 36px rgba(0,0,40,.28)}
+.rc::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;
+  background:linear-gradient(-45deg,transparent 10px,var(--paper) 0) 0 0/20px 10px,linear-gradient(45deg,transparent 10px,var(--paper) 0) 0 0/20px 10px}
+.rc.flat{margin-bottom:14px}.rc.flat::after{display:none}
+.c{text-align:center}
+.dash{border-top:1.5px dashed var(--rule);margin:14px 0}
+.row{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.row span:last-child{text-align:right}
+.muted{color:var(--muted)} .ink2{color:var(--ink2)} .small{font-size:12.5px}
+.up{text-transform:uppercase;letter-spacing:.06em}
+.tot{font-weight:700;font-size:16px}
+.title{font-size:44px;margin:8px 0 10px}
+.big{font-size:34px}
+.why{font-size:14px;line-height:1.6;color:var(--ink2);margin:0}
+.bar{height:42px;margin-top:14px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 7px,transparent 7px 9px,var(--ink) 9px 10px,transparent 10px 13px)}
+
+/* controls */
+.btn{appearance:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase;letter-spacing:.06em;font-size:13px}
+.btn.print{width:100%;min-height:68px;border:0;border-radius:14px;background:var(--yellow);color:var(--yellow-ink);font-family:Anton,Impact,sans-serif;font-weight:400;font-size:24px;letter-spacing:.06em}
+.btn.solid{background:var(--ink);color:var(--paper)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:12px}
+.btn.ghost{border-color:transparent}
+.btn.onblue{color:var(--table-ink);border-color:var(--table-ink)}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.line:focus-visible,nav.tabs button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+input[type=text],input[type=email],input[type=number],input[type=time],input[type=date],select{font:inherit;color:var(--ink);background:var(--paper2);border:0;border-bottom:1.5px solid var(--ink);border-radius:0;padding:10px 4px;min-height:46px;width:100%}
+.field{margin-top:14px}
+.field label{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:2px;color:var(--ink2)}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.inl{display:grid;grid-template-columns:1fr 118px;gap:12px;align-items:end}
+.inl input[type=number]{text-align:right}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.code{font-size:28px;letter-spacing:.4em;text-align:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{appearance:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--paper)}
+
+/* stamps */
+.stamp{display:inline-block;border:3px solid var(--kept);color:var(--kept);font-family:Anton,Impact,sans-serif;font-size:30px;letter-spacing:.06em;padding:0 12px;border-radius:7px;transform:rotate(-10deg);line-height:1.25}
+.stamp.big{position:absolute;right:26px;bottom:44px;font-size:40px;opacity:0;transform:rotate(-14deg) scale(1.8);transition:opacity .25s,transform .25s cubic-bezier(.2,1.6,.4,1)}
+.stamp.big.on{opacity:.92;transform:rotate(-14deg) scale(1)}
+.rest-tag{display:inline-block;background:var(--ink);color:var(--paper);padding:2px 8px;font-size:11px;letter-spacing:.14em}
+
+/* long receipt */
+.line{display:grid;grid-template-columns:34px 1fr auto;gap:8px;padding:5px 0;align-items:baseline;cursor:pointer;border-radius:4px;font-size:13px}
+.line .t{text-transform:uppercase;letter-spacing:.03em}
+.line.done{color:var(--ink)}
+.line.open{color:var(--red)}
+.line.future{color:var(--faint);cursor:default}
+.line.today{font-weight:700;background:var(--paper2)}
+.line.catch .t{font-weight:700}
+.stage-h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.stage-h:first-child{margin-top:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 18px}
+.stats div{border:1.5px solid var(--table-ink);border-radius:12px;padding:10px 12px;color:var(--table-ink)}
+.stats small{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--table-muted);display:block}
+.stats b{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:30px;line-height:1.1;display:block}
+.open-list{margin:0;padding:0;list-style:none}
+.open-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--faint)}
+.open-list li:first-child{border-top:0}
+ol.steps{margin:6px 0 0;padding-left:22px}ol.steps li{margin:6px 0}
+ul.src{margin:0;padding-left:18px}ul.src li{margin:8px 0;font-size:12.5px;line-height:1.55}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed var(--faint)}
+.list li:first-child{border-top:0}
+.pill{font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--ink);padding:1px 6px;border-radius:99px}
+.onboard h1{font-size:64px;color:var(--table-ink);margin:10px 0 6px}
+.onboard h1 span{color:var(--yellow)}
+.onboard p.lead{color:var(--table-muted);font-size:15px}
+footer{margin-top:26px;font-size:12px;color:var(--table-muted);text-align:center;line-height:1.7}
+footer a{color:var(--table-ink)}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--table2);border-top:1.5px solid rgba(255,255,255,.18);display:flex;justify-content:space-around;padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav.tabs button{appearance:none;background:none;border:0;color:var(--table-muted);font:inherit;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:6px 4px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:110px;cursor:pointer}
+nav.tabs button i{font-style:normal;font-size:18px;line-height:1}
+nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
+@media (prefers-reduced-motion: reduce){ .stamp.big{transition:none} }
+
+/* ---------- print: the 66-day wall sheet ---------- */
+#print{display:none}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#fff!important;padding:0!important}
+  body>*:not(#print){display:none!important}
+  #print{display:block}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.sheet{width:210mm;height:296mm;position:relative;overflow:hidden;background:#fff;color:#141414;font-family:"Plex Mono",Menlo,Consolas,monospace}
+.sheet .pg{position:absolute;inset:12mm 13mm 10mm}
+.sheet .hd{background:#2438E8;color:#fff;margin:-12mm -13mm 0;padding:10mm 13mm 7mm;display:flex;justify-content:space-between;align-items:flex-end}
+.sheet .hd h1{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:40pt;line-height:.9;margin:0}
+.sheet .hd h1 em{font-style:normal;color:#FFD23F}
+.sheet .hd .r{text-align:right;font-size:8pt;letter-spacing:.14em;text-transform:uppercase;line-height:1.6}
+.sheet .meta{display:flex;justify-content:space-between;font-size:8.5pt;margin:5mm 0 3mm;border-bottom:.4mm dashed #141414;padding-bottom:3mm}
+.sheet .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1.8mm}
+.sheet .cell{border:.4mm solid #141414;height:15mm;padding:1.4mm 1.6mm;position:relative;font-size:6.4pt;line-height:1.25}
+.sheet .cell b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:10pt;line-height:1}
+.sheet .cell.c{border-style:dashed;background:#F4F4EE}
+.sheet .cell.d::after{content:"✓";position:absolute;right:1.4mm;bottom:.6mm;font-size:12pt;color:#0E9F55;font-weight:700}
+.sheet .cell .k{position:absolute;left:1.6mm;bottom:1mm;font-size:6pt;color:#86867F}
+.sheet .foot{display:grid;grid-template-columns:1.4fr 1fr;gap:5mm;margin-top:4mm;font-size:8.5pt}
+.sheet .foot .bx{border:.4mm solid #141414;padding:3mm 4mm}
+.sheet .foot .bx div{border-bottom:.3mm dashed #141414;height:5.5mm}
+.sheet .foot .bx div.tot{font-family:Anton,Impact,sans-serif;font-size:30pt;line-height:1;margin:2mm 0 1mm;height:auto;border:0}
+.sheet .ft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:6.5pt;color:#86867F}
+.sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
+.sheet .wm span{transform:rotate(-30deg);font-size:22pt;font-weight:700;letter-spacing:.14em;color:rgba(20,20,20,.035);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><b>The Enough Habit</b><span>by Lukas · The Systemized Life</span></div>
+    <button class="btn sm onblue" id="theme" aria-label="Toggle light or dark theme"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 2a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+  </header>
+
+  <!-- ===================== GATE ===================== -->
+  <section id="gate" class="view on">
+    <div class="rc">
+      <div class="c disp big">Unlock your copy</div>
+      <div class="c small muted up">One small thing a day · 66 days</div>
+      <div class="dash"></div>
+      <p class="small">Use the email you bought with and the <b>Order #</b> from your Beacons receipt (“Your purchase from lukas.systemized…”). We'll email you a 6-digit code. One purchase works on up to 3 devices.</p>
+    </div>
+    <div class="rc flat hidden" id="g-owned">
+      <p class="ink2" id="g-owned-msg"></p>
+      <div class="actions"><a class="btn solid" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">See it on Beacons</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
+    </div>
+    <div class="rc flat" id="g-step1">
+      <div class="field" style="margin-top:0"><label for="g-email">Purchase email</label><input type="email" id="g-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
+      <div class="field"><label for="g-order">Order #</label><input type="text" id="g-order" autocomplete="off" placeholder="c47d3f10-8a6d-4f86-…" spellcheck="false"><div class="hint">It's in the receipt email under “Order Summary”. Paste the whole thing.</div></div>
+      <div class="field"><label for="g-device">Name this device</label><input type="text" id="g-device" maxlength="40" placeholder="e.g. My phone"></div>
+      <div class="actions"><button class="btn solid" id="g-send">Send my code</button></div>
+      <p class="small muted" id="g-msg" role="status" style="margin-top:10px"></p>
+    </div>
+    <div class="rc flat hidden" id="g-step2">
+      <p class="ink2">Enter the 6-digit code we just emailed to <b id="g-email-echo"></b>.</p>
+      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" aria-label="6-digit code"></div>
+      <div class="actions"><button class="btn solid" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
+      <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
+    </div>
+    <footer>What you type stays on this device; only your email and order number are checked.<br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+  </section>
+
+  <!-- ===================== SETUP (first run) ===================== -->
+  <section id="v-setup" class="view">
+    <div class="onboard">
+      <h1 class="disp">Want less.<br><span>Keep more.</span></h1>
+      <p class="lead" id="su-intro"></p>
+    </div>
+    <div class="rc">
+      <div class="disp" style="font-size:26px" id="su-ritualT"></div>
+      <div class="small muted up" id="su-ritualM"></div>
+      <div class="dash"></div>
+      <ol class="steps small" id="su-steps"></ol>
+      <div class="dash"></div>
+      <div class="field" style="margin-top:0"><label for="su-cue">My cue: after I…</label><input type="text" id="su-cue" maxlength="70" placeholder="pour my first coffee"></div>
+      <div class="chips" id="su-cues"></div>
+      <p class="hint" id="su-cueWhy"></p>
+      <div class="inl field"><div><label for="su-start">Day 1 is</label><input type="date" id="su-start"></div><div><label for="su-time">Usual time</label><input type="time" id="su-time" value="07:30"></div></div>
+      <div class="inl field"><div><label for="su-name">Name on my printout</label><input type="text" id="su-name" maxlength="40" placeholder="optional"></div><div><label for="su-cur">Currency</label><select id="su-cur"><option>$</option><option>€</option><option>£</option><option>kr</option><option>CHF</option><option>A$</option><option>C$</option><option>₹</option></select></div></div>
+      <div class="actions"><button class="btn print" id="su-go">Start my 66 days</button></div>
+      <p class="small muted" style="margin-top:12px" id="su-honest"></p>
+    </div>
+  </section>
+
+  <!-- ===================== TODAY ===================== -->
+  <section id="v-today" class="view">
+    <div class="rc" id="t-rc">
+      <div class="c disp big" id="t-head">Today</div>
+      <div class="c small muted up" id="t-sub"></div>
+      <div class="dash"></div>
+      <div class="row up small"><span>Day</span><span id="t-day"></span></div>
+      <div class="row up small"><span>Stage</span><span id="t-stage"></span></div>
+      <div class="dash"></div>
+      <div id="t-goal">
+        <div class="disp title" id="t-title"></div>
+        <p class="why" id="t-why"></p>
+        <div class="dash"></div>
+        <div class="row up small"><span>Time</span><span id="t-min"></span></div>
+        <div class="inl field"><div><label for="t-wont">What won't I buy today?</label><input type="text" id="t-wont" maxlength="60" placeholder="e.g. lunch out"></div><div><label for="t-kept">Kept today</label><input type="number" id="t-kept" inputmode="decimal" min="0" step="0.01" placeholder="0"></div></div>
+      </div>
+      <div id="t-catch" class="hidden">
+        <span class="rest-tag">Catch-up day</span>
+        <p class="why" style="margin-top:10px" id="t-catchBody"></p>
+        <div class="dash"></div>
+        <div class="small up muted">Still open</div>
+        <ul class="open-list" id="t-open"></ul>
+        <div class="field"><label for="t-wont2">What won't I buy today?</label><input type="text" id="t-wont2" maxlength="60" placeholder="e.g. a new phone case"></div>
+      </div>
+      <div id="t-end" class="hidden">
+        <div class="disp title" id="t-endT"></div>
+        <p class="why" id="t-endB"></p>
+      </div>
+      <div class="dash"></div>
+      <div class="row tot"><span>KEPT SO FAR</span><span id="t-total"></span></div>
+      <div class="bar"></div>
+      <div class="c small muted up" style="margin-top:6px">Thank you for not shopping</div>
+      <span class="stamp big" id="t-stamp" aria-hidden="true">KEPT</span>
+    </div>
+    <button class="btn print" id="t-print">Print today's line ✓</button>
+    <div class="hidden" id="t-pre">
+      <div class="rc flat" style="margin-top:14px"><p class="small ink2" style="margin:0" id="t-preMsg"></p></div>
+    </div>
+    <h2 id="t-earlierH" class="hidden">Open from earlier</h2>
+    <div class="rc flat hidden" id="t-earlier"><ul class="open-list" id="t-earlierList"></ul></div>
+  </section>
+
+  <!-- ===================== DAY (open any day) ===================== -->
+  <section id="v-day" class="view">
+    <button class="btn sm onblue" id="d-back">← Receipt</button>
+    <div class="rc" style="margin-top:12px">
+      <div class="small muted up" id="d-k"></div>
+      <div class="disp title" id="d-title"></div>
+      <p class="why" id="d-why"></p>
+      <div class="dash"></div>
+      <div class="inl field" id="d-fields"><div><label for="d-wont">What I didn't buy</label><input type="text" id="d-wont" maxlength="60"></div><div><label for="d-kept">Kept</label><input type="number" id="d-kept" inputmode="decimal" min="0" step="0.01" placeholder="0"></div></div>
+      <div class="actions"><button class="btn solid" id="d-done">✓ Done</button><button class="btn ghost" id="d-undo">Undo</button></div>
+    </div>
+  </section>
+
+  <!-- ===================== RECEIPT ===================== -->
+  <section id="v-receipt" class="view">
+    <div class="stats"><div><small>Kept</small><b id="r-kept">0</b></div><div><small>Streak</small><b id="r-streak">0</b></div><div><small>Done</small><b id="r-done">0</b></div></div>
+    <div class="rc">
+      <div class="c disp big">Enough Habit</div>
+      <div class="c small muted up" id="r-who"></div>
+      <div class="dash"></div>
+      <div id="r-lines"></div>
+      <div class="dash"></div>
+      <div class="row tot"><span>KEPT</span><span id="r-total"></span></div>
+      <div class="row small muted up"><span>Days left</span><span id="r-left"></span></div>
+      <div class="bar" style="height:34px"></div>
+    </div>
+    <div class="actions"><button class="btn print" id="r-printSheet">🖨 Print my wall sheet</button></div>
+  </section>
+
+  <!-- ===================== METHOD ===================== -->
+  <section id="v-method" class="view">
+    <div class="rc">
+      <div class="disp big" id="m-title"></div>
+      <div class="dash"></div>
+      <p class="why" id="m-body"></p>
+      <p class="why" style="margin-top:10px" id="m-honest"></p>
+    </div>
+    <div class="rc">
+      <div class="disp" style="font-size:24px" id="m-rT"></div>
+      <div class="small muted up" id="m-rM"></div>
+      <div class="dash"></div>
+      <ol class="steps small" id="m-steps"></ol>
+      <div class="dash"></div>
+      <div class="row small up"><span>My cue</span><span id="m-cue"></span></div>
+      <div class="actions"><button class="btn solid sm" id="m-ics">📅 Add a daily reminder</button><button class="btn ghost sm" id="m-edit">Change cue or start</button></div>
+      <p class="hint">The reminder is a calendar file with one event a day at your usual time, for 66 days. Open it and your calendar app adds them.</p>
+    </div>
+    <div class="rc">
+      <div class="disp" style="font-size:24px">Six stages</div>
+      <div class="dash"></div>
+      <div id="m-stages"></div>
+    </div>
+    <div class="rc flat">
+      <div class="disp" style="font-size:24px">Sources</div>
+      <div class="dash"></div>
+      <ul class="src" id="m-sources"></ul>
+    </div>
+  </section>
+
+  <!-- ===================== MORE ===================== -->
+  <section id="v-more" class="view">
+    <div class="rc flat">
+      <div class="small up muted">Licensed to</div>
+      <p id="o-who" class="ink2"></p>
+      <div class="small up muted" style="margin-top:12px">Devices</div>
+      <ul class="list" id="o-devices"></ul>
+      <p class="hint" id="o-devHint">One purchase, up to 3 devices, shared with other Lukas tools. Remove one here to free a slot.</p>
+    </div>
+    <h2>What's new</h2>
+    <div class="rc flat" id="o-news"></div>
+    <div class="rc flat">
+      <div class="small up muted">Your data</div>
+      <p class="small ink2">Your days, notes and amounts stay in this browser. Back them up before clearing the browser or switching devices.</p>
+      <div class="actions"><button class="btn sm" id="o-backup">⬇ Backup</button><label class="btn sm" for="o-restore">⬆ Restore<input type="file" id="o-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="o-restart">Start over</button></div>
+    </div>
+    <div class="rc flat"><div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div></div>
+    <footer>One small system at a time. ☕<br>Education, not financial advice.<br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+  </section>
+</div>
+
+<nav class="tabs hidden" id="tabs">
+  <button data-v="today"><i>◉</i>Today</button>
+  <button data-v="receipt"><i>☰</i>Receipt</button>
+  <button data-v="method"><i>?</i>Method</button>
+  <button data-v="more"><i>⋯</i>More</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<div id="print"></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i);};
+var KEY="lukas-enough-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
+var TOTAL=66, CATCH=11; // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
+var API=(function(){ try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o) return o; }catch(e){}
+  var q=new URLSearchParams(location.search).get("api"); if(q){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
+  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+
+// ---------- state ----------
+var S=load(), C=null, OPEN=null; // C = premium content from /content?product=enough; OPEN = day shown in the day view
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+  d.auth=d.auth||{}; d.days=d.days||{}; d.plan=d.plan||null; return d; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+// The other Lukas apps live on the same site. Sharing their device id keeps one phone = one device slot,
+// and an existing token lets a buyer who owns several products in without a new code.
+function other(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
+function others(){ return [other(STUDIO_KEY),other(YEAR_KEY),other(AUTO_KEY)].filter(function(x){ return x&&x.auth; }); }
+function deviceId(){
+  if(!S.auth.deviceId){ var o=others().filter(function(x){ return x.auth.deviceId; })[0];
+    S.auth.deviceId=(o&&o.auth.deviceId)||(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); save(); }
+  try{ var st=other(STUDIO_KEY)||{plan:{},sunday:[],buy:{cool:[],hist:[]},auth:{}}; st.auth=st.auth||{}; if(!st.auth.deviceId){ st.auth.deviceId=S.auth.deviceId; localStorage.setItem(STUDIO_KEY,JSON.stringify(st)); } }catch(e){}
+  return S.auth.deviceId; }
+try{ var th=localStorage.getItem(KEY+"-theme"); if(th) document.documentElement.setAttribute("data-theme",th);}catch(e){}
+$("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
+  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
+var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2600); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function num(v){ v=parseFloat(String(v==null?"":v).replace(",",".")); return isFinite(v)&&v>0?Math.round(v*100)/100:0; }
+function download(name,text,type){ var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:type||"text/plain"})); a.download=name; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);},500); }
+
+// ---------- days ----------
+// Calendar day d (1-66) is fixed by the start date. Goal n = d - number of catch-up days before it.
+function isCatch(d){ return d%CATCH===0; }
+function goalNo(d){ return isCatch(d)?0:d-Math.floor(d/CATCH); }
+function goalOf(d){ var n=goalNo(d); return n?C.goals[n-1]:null; }
+function stageOf(d){ var n=goalNo(d)||goalNo(d-1); return C.stages.filter(function(s){ return n>=s.days[0]&&n<=s.days[1]; })[0]; }
+function ymd(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
+function parseYmd(s){ var p=String(s||"").split("-"); return p.length===3?new Date(+p[0],+p[1]-1,+p[2]):null; }
+function dateOf(d){ var s=parseYmd(S.plan.start); s.setDate(s.getDate()+d-1); return s; }
+function todayNo(){ if(!S.plan) return 0; var s=parseYmd(S.plan.start), n=new Date(); n=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  return Math.round((n-s)/86400000)+1; } // <1 = not started, >66 = finished
+function done(d){ return !!(S.days[d]&&S.days[d].done); }
+function kept(){ return Object.keys(S.days).reduce(function(a,k){ return a+(S.days[k].done?num(S.days[k].kept):0); },0); }
+function doneCount(){ var c=0; for(var d=1;d<=TOTAL;d++) if(!isCatch(d)&&done(d)) c++; return c; }
+// Streak = the check done on consecutive calendar days, counting back from today (or yesterday if today isn't printed yet).
+function streak(){ var t=Math.min(todayNo(),TOTAL), s=0, d=done(t)?t:t-1; while(d>=1&&done(d)){ s++; d--; } return s; }
+function openBefore(t){ var out=[]; for(var d=1;d<t&&d<=TOTAL;d++) if(!isCatch(d)&&!done(d)) out.push(d); return out; }
+function money(v){ var c=(S.plan&&S.plan.cur)||"$", s=(Math.round(v*100)/100).toFixed(v%1?2:0); return c.length>1?s+" "+c:c+s; }
+function fmtDate(dt,o){ return dt.toLocaleDateString("en-GB",o||{weekday:"short",day:"numeric",month:"short"}); }
+
+// ---------- API ----------
+function api(path,opts,token){ opts=opts||{}; var h={"content-type":"application/json"}; var tk=token||S.auth.token; if(tk) h["Authorization"]="Bearer "+tk;
+  return fetch(API+path,{method:opts.method||(opts.body?"POST":"GET"),headers:h,body:opts.body?JSON.stringify(opts.body):undefined})
+    .then(function(r){ return r.json().then(function(j){ j._status=r.status; return j; }); }); }
+
+// ---------- gate ----------
+function msg(id,m){ $(id).textContent=m; }
+function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"Android":/Mac/.test(u)?"Mac":/Windows/.test(u)?"PC":"Device"; }
+(function(){ var o=others()[0]; $("g-email").value=S.auth.email||(o&&o.auth.email)||""; $("g-device").value=S.auth.deviceName||(o&&o.auth.deviceName)||""; })();
+$("g-send").addEventListener("click",function(){
+  var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
+  if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
+  if(order.length<4) return msg("g-msg","Paste the full Order # from your receipt.");
+  $("g-send").disabled=true; msg("g-msg","Checking your order…");
+  api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
+    $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
+    if(r.status==="code_sent"){ $("g-step1").classList.add("hidden"); $("g-step2").classList.remove("hidden"); $("g-email-echo").textContent=email; $("g-code").focus(); msg("g-msg2",r.message||""); }
+    else if(r.status==="already_active"){ S.auth.token=r.token; S.auth.name=r.name; save(); enter(); }
+    else msg("g-msg", r.message||r.error||"Something went wrong. Try again.");
+  }).catch(function(){ $("g-send").disabled=false; msg("g-msg","Can't reach the server. Check your connection and try again."); });
+});
+$("g-back").addEventListener("click",function(){ $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); });
+$("g-verify").addEventListener("click",function(){
+  var code=$("g-code").value.replace(/\D/g,""); if(code.length!==6) return msg("g-msg2","Enter the 6 digits.");
+  $("g-verify").disabled=true;
+  api("/verify",{body:{email:S.auth.email,code:code,deviceId:deviceId()}}).then(function(r){
+    $("g-verify").disabled=false;
+    if(r.status==="ok"){ S.auth.token=r.token; S.auth.name=r.name; save(); enter(); } else msg("g-msg2",r.message||r.error||"That didn't work.");
+  }).catch(function(){ $("g-verify").disabled=false; msg("g-msg2","Can't reach the server."); });
+});
+$("g-code").addEventListener("keydown",function(e){ if(e.key==="Enter") $("g-verify").click(); });
+$("g-other").addEventListener("click",function(){ $("g-owned").classList.add("hidden"); $("g-step1").classList.remove("hidden"); });
+
+function enter(token){
+  api("/content?product="+PRODUCT,null,token).then(function(r){
+    if(r.error==="not_owned"){ // signed in through another Lukas tool, but this one isn't bought (yet)
+      showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
+      $("g-owned-msg").textContent="This device already has another Lukas tool. The Enough Habit is its own purchase. If you just bought it, give it a few minutes and reopen this page.";
+      return; }
+    if(r.error){ if(!token){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
+    C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
+    S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; save();
+    $("gate").classList.remove("on");
+    if(!S.plan){ renderSetup(); return show("setup"); }
+    $("tabs").classList.remove("hidden"); renderAll(); show(S.ui&&S.ui!=="day"&&S.ui!=="setup"?S.ui:"today");
+    if(S.seen&&S.seen<C.version) toast("Something new: see More → What's new"); S.seen=C.version; save();
+  }).catch(function(){ if(C) return; showGate("Can't reach the server. You need a connection the first time each session."); });
+}
+function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
+(function(){ if(S.auth.token) return enter(); if(S.auth.signedOut) return;
+  var o=others().filter(function(x){ return x.auth.token; })[0]; if(o){ deviceId(); enter(o.auth.token); } })();
+
+// ---------- tabs ----------
+function show(v){ if(v!=="day"&&v!=="setup"){ S.ui=v; save(); }
+  document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
+  document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===v||(v==="day"&&b.dataset.v==="receipt")); });
+  window.scrollTo(0,0); }
+document.querySelectorAll("nav.tabs button").forEach(function(b){ b.addEventListener("click",function(){ renderAll(); show(b.dataset.v); }); });
+function renderAll(){ if(!C||!S.plan) return; renderToday(); renderReceipt(); renderMethod(); renderMore(); }
+
+// ================= SETUP =================
+function renderSetup(){ var p=S.plan||{};
+  $("su-intro").textContent=C.intro.body; $("su-honest").textContent=C.intro.honest;
+  $("su-ritualT").textContent=C.ritual.title; $("su-ritualM").textContent=C.ritual.minutes+" minutes · every morning";
+  $("su-steps").innerHTML=C.ritual.steps.map(function(s){ return "<li>"+esc(s)+"</li>"; }).join("");
+  $("su-cueWhy").textContent=C.ritual.cueWhy;
+  $("su-cues").innerHTML=C.ritual.cueExamples.map(function(c){ var v=c.replace(/^After I /i,""); return '<button class="chip" type="button" data-c="'+esc(v)+'">'+esc(v)+'</button>'; }).join("");
+  $("su-cues").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ $("su-cue").value=b.dataset.c; $("su-cues").querySelectorAll(".chip").forEach(function(x){ x.classList.toggle("on",x===b); }); }); });
+  $("su-cue").value=p.cue||""; $("su-start").value=p.start||ymd(new Date()); $("su-time").value=p.time||"07:30";
+  $("su-name").value=p.name!=null?p.name:(S.auth.name||""); $("su-cur").value=p.cur||"$";
+  $("su-go").textContent=S.plan?"Save":"Start my 66 days"; }
+$("su-go").addEventListener("click",function(){
+  var cue=$("su-cue").value.trim(), start=$("su-start").value;
+  if(!cue){ $("su-cue").focus(); return toast("Pick a cue: the moment you already do every morning."); }
+  if(!parseYmd(start)) return toast("Pick the date of day 1.");
+  var first=!S.plan; S.plan={cue:cue,start:start,time:$("su-time").value||"07:30",name:$("su-name").value.trim(),cur:$("su-cur").value}; save();
+  $("tabs").classList.remove("hidden"); renderAll(); show("today");
+  if(first) toast("Day 1 starts "+fmtDate(parseYmd(start),{weekday:"long",day:"numeric",month:"long"})+".");
+});
+
+// ================= TODAY =================
+function renderToday(){ var t=todayNo(), d=Math.max(1,Math.min(t,TOTAL)), g=goalOf(d), st=stageOf(d), rec=S.days[d]||{};
+  $("t-head").textContent=t>TOTAL?"Day 66+":"Today";
+  $("t-sub").textContent=fmtDate(new Date())+" · after I "+S.plan.cue;
+  $("t-day").textContent=d+" / "+TOTAL; $("t-stage").textContent=st?st.title+" "+(isCatch(d)?"✓":(goalNo(d)-st.days[0]+1)+"/10"):"";
+  $("t-total").textContent=money(kept());
+  var before=t<1, after=t>TOTAL;
+  $("t-pre").classList.toggle("hidden",!before);
+  if(before) $("t-preMsg").textContent="Day 1 is "+fmtDate(dateOf(1),{weekday:"long",day:"numeric",month:"long"})+". Here's a preview of the first goal. Tonight, set your cue and the reminder under Method.";
+  $("t-goal").classList.toggle("hidden",!(g&&!after)); $("t-catch").classList.toggle("hidden",!(isCatch(d)&&!after)); $("t-end").classList.toggle("hidden",!after&&d!==TOTAL);
+  if(g&&!after){ $("t-title").textContent=g.title; $("t-why").textContent=g.why; $("t-min").textContent=g.min?"≈ "+g.min+" min":"all day"; $("t-wont").value=rec.wont||""; $("t-kept").value=rec.kept||""; }
+  if(isCatch(d)&&!after){ $("t-catchBody").textContent=C.catchup.body; $("t-wont2").value=rec.wont||"";
+    var op=openBefore(d); $("t-open").innerHTML=op.length?op.map(function(x){ return '<li><span class="small">'+String(x).padStart(2,"0")+" · "+esc(goalOf(x).title)+'</span><button class="btn sm" data-open="'+x+'">Open</button></li>'; }).join(""):'<li class="small muted">Nothing open. Rest, or repeat a goal you liked.</li>';
+    bindOpen($("t-open")); }
+  if(after||d===TOTAL){ $("t-endT").textContent=C.finale.title; $("t-endB").textContent=C.finale.body; }
+  var printed=done(d)&&!before;
+  $("t-print").disabled=before||after; $("t-print").textContent=after?"All 66 days are printed":printed?"Printed ✓ · tap to edit":"Print today's line ✓";
+  $("t-stamp").classList.toggle("on",printed);
+  var early=before?[]:openBefore(Math.min(t,TOTAL+1)).filter(function(x){ return x<d; }).slice(-5);
+  $("t-earlierH").classList.toggle("hidden",!early.length||isCatch(d)); $("t-earlier").classList.toggle("hidden",!early.length||isCatch(d));
+  $("t-earlierList").innerHTML=early.map(function(x){ return '<li><span class="small">'+String(x).padStart(2,"0")+" · "+esc(goalOf(x).title)+'</span><button class="btn sm" data-open="'+x+'">Do it</button></li>'; }).join("");
+  bindOpen($("t-earlierList"));
+}
+function bindOpen(el){ el.querySelectorAll("[data-open]").forEach(function(b){ b.addEventListener("click",function(){ openDay(+b.dataset.open); }); }); }
+function printToday(){ var t=todayNo(); if(t<1||t>TOTAL) return; var d=t, rec=S.days[d]||{};
+  if(rec.done&&!confirm("Today is already printed. Save the new amount and note?")) return;
+  rec.done=rec.done||new Date().toISOString(); rec.wont=(isCatch(d)?$("t-wont2"):$("t-wont")).value.trim(); if(!isCatch(d)) rec.kept=num($("t-kept").value);
+  S.days[d]=rec; save(); renderAll();
+  var s=streak(); toast(d===TOTAL?"Day 66. That's the habit.":isCatch(d)?"Catch-up day printed. "+s+" in a row.":s>1?s+" days in a row. Same cue tomorrow.":"Printed. Same cue tomorrow."); }
+$("t-print").addEventListener("click",printToday);
+
+// ================= DAY =================
+function openDay(d){ OPEN=d; var g=goalOf(d), rec=S.days[d]||{}, t=todayNo();
+  $("d-k").textContent="Day "+d+" · "+fmtDate(dateOf(d))+(done(d)?" · printed":"");
+  $("d-title").textContent=g?g.title:C.catchup.title; $("d-why").textContent=g?g.why:C.catchup.body;
+  $("d-wont").value=rec.wont||""; $("d-kept").value=rec.kept||""; $("d-kept").parentNode.classList.toggle("hidden",!g);
+  var future=d>t; $("d-done").disabled=future; $("d-done").textContent=future?"Not yet: day "+d+" is "+fmtDate(dateOf(d)):done(d)?"✓ Save":"✓ Done";
+  $("d-undo").classList.toggle("hidden",!done(d)); show("day"); }
+$("d-back").addEventListener("click",function(){ renderReceipt(); show("receipt"); });
+$("d-done").addEventListener("click",function(){ var rec=S.days[OPEN]||{}; rec.done=rec.done||new Date().toISOString(); rec.wont=$("d-wont").value.trim(); if(goalOf(OPEN)) rec.kept=num($("d-kept").value); S.days[OPEN]=rec; save(); renderAll(); toast("Day "+OPEN+" printed."); show("receipt"); });
+$("d-undo").addEventListener("click",function(){ if(S.days[OPEN]) delete S.days[OPEN].done; save(); renderAll(); toast("Day "+OPEN+" is open again."); show("receipt"); });
+
+// ================= RECEIPT =================
+function renderReceipt(){ var t=todayNo(), h="";
+  $("r-kept").textContent=money(kept()); $("r-streak").textContent=streak(); $("r-done").textContent=doneCount()+"/60";
+  $("r-who").textContent="Receipt · "+(S.plan.name||S.auth.name||"me")+" · from "+fmtDate(dateOf(1),{day:"numeric",month:"short"});
+  C.stages.forEach(function(st){ var a=st.days[0]+Math.floor((st.days[0]-1)/10), b=a+10; // calendar days of this stage incl. its catch-up day
+    h+='<div class="stage-h">'+esc(st.title)+" · "+esc(st.tagline)+"</div>";
+    for(var d=a;d<=b&&d<=TOTAL;d++){ var g=goalOf(d), rec=S.days[d]||{}, cls=d>t?"future":done(d)?"done":isCatch(d)?"catch":"open";
+      if(d===t) cls+=" today"; if(isCatch(d)) cls+=" catch";
+      var right=done(d)?(num(rec.kept)?money(num(rec.kept)):"✓"):d===t?"NOW":d<t&&!isCatch(d)?"OPEN":"";
+      h+='<div class="line '+cls+'" tabindex="'+(d>t?-1:0)+'" data-d="'+d+'"><span>'+String(d).padStart(2,"0")+'</span><span class="t">'+esc(g?g.title:"Catch-up day")+'</span><span>'+right+"</span></div>"; } });
+  $("r-lines").innerHTML=h; $("r-total").textContent=money(kept()); $("r-left").textContent=Math.max(0,TOTAL-Math.max(0,t)+(t>=1&&t<=TOTAL?1:0));
+  $("r-lines").querySelectorAll(".line").forEach(function(l){ var d=+l.dataset.d; if(d>t) return;
+    l.addEventListener("click",function(){ openDay(d); }); l.addEventListener("keydown",function(e){ if(e.key==="Enter") openDay(d); }); }); }
+$("r-printSheet").addEventListener("click",function(){ printSheet(sheetHTML()); });
+
+// ================= METHOD =================
+function renderMethod(){ $("m-title").textContent=C.intro.title; $("m-body").textContent=C.intro.body; $("m-honest").textContent=C.intro.honest;
+  $("m-rT").textContent=C.ritual.title; $("m-rM").textContent=C.ritual.minutes+" minutes · every morning";
+  $("m-steps").innerHTML=C.ritual.steps.map(function(s){ return "<li>"+esc(s)+"</li>"; }).join("");
+  $("m-cue").textContent="after I "+S.plan.cue+" · "+S.plan.time;
+  $("m-stages").innerHTML=C.stages.map(function(st,i){ return '<div class="row small"><span>'+(i+1)+" · "+esc(st.title).toUpperCase()+'</span><span class="muted">'+esc(st.tagline)+"</span></div>"; }).join("");
+  $("m-sources").innerHTML=C.sources.map(function(s){ return "<li><b>"+esc(s.short)+"</b> · "+esc(s.text)+"</li>"; }).join(""); }
+$("m-edit").addEventListener("click",function(){ renderSetup(); $("tabs").classList.add("hidden"); show("setup"); });
+$("m-ics").addEventListener("click",function(){ download("enough-habit-reminder.ics",ics(),"text/calendar"); toast("Open the file to add the reminders."); });
+// One recurring event a day for 66 days at the buyer's usual time (floating local time, no timezone maths).
+function ics(){ var s=parseYmd(S.plan.start), tm=(S.plan.time||"07:30").split(":"), d=ymd(s).replace(/-/g,""), t=String(tm[0]).padStart(2,"0")+String(tm[1]||"00").padStart(2,"0")+"00";
+  var stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  var endT=(function(){ var h=+tm[0], m=(+tm[1]||0)+5; if(m>=60){ h=(h+1)%24; m-=60; } return String(h).padStart(2,"0")+String(m).padStart(2,"0")+"00"; })();
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Lukas The Systemized Life//The Enough Habit//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:enough-"+d+"-"+(S.auth.deviceId||"x")+"@lukas.systemized","DTSTAMP:"+stamp,"DTSTART:"+d+"T"+t,"DTEND:"+d+"T"+endT,"RRULE:FREQ=DAILY;COUNT="+TOTAL,
+    "SUMMARY:Enough Check (2 min)","DESCRIPTION:After I "+S.plan.cue.replace(/[,;\\]/g," ")+": open today's card in The Enough Habit and ask: what will I not buy today?",
+    "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Enough Check","TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
+
+// ================= MORE =================
+function renderMore(){
+  $("o-who").textContent=(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"");
+  var devs=S.auth.devices||[]; $("o-devices").innerHTML=devs.map(function(d){ return "<li><div><b>"+esc(d.name)+"</b>"+(d.this?' <span class="pill">this device</span>':"")+'<br><span class="small muted">added '+new Date(d.created*1000).toLocaleDateString()+"</span></div>"+(d.this?"":'<button class="btn sm ghost" data-rm="'+esc(d.id)+'">Remove</button>')+"</li>"; }).join("")+'<li class="muted small">'+devs.length+" of "+(S.auth.max||3)+" slots used</li>";
+  $("o-devices").querySelectorAll("[data-rm]").forEach(function(b){ b.addEventListener("click",function(){ if(!confirm("Remove this device? It will need a new code to get back in.")) return;
+    api("/me/remove-device",{body:{deviceId:b.dataset.rm}}).then(function(r){ if(r.ok){ S.auth.devices=r.devices; save(); renderMore(); toast("Removed."); } else toast(r.error||"Couldn't remove."); }); }); });
+  $("o-news").innerHTML='<p class="small muted" style="margin:0 0 6px">Edition '+esc(C.version)+"</p>"+C.changelog.slice().reverse().map(function(c){ return '<p class="small" style="margin:8px 0 0"><b>'+esc(c.date)+"</b> · "+c.notes.map(esc).join(" ")+"</p>"; }).join("");
+}
+$("o-backup").addEventListener("click",function(){ download("enough-habit-backup.json",JSON.stringify({plan:S.plan,days:S.days,exported:new Date().toISOString(),app:"the-enough-habit"},null,1),"application/json"); });
+$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.app!=="the-enough-habit"||!d.plan) throw 0; S.plan=d.plan; S.days=d.days||{}; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't an Enough Habit backup."); } }; rd.readAsText(f); });
+$("o-restart").addEventListener("click",function(){ if(!confirm("Start over from day 1? Your printed days and amounts on this device are cleared. Your licence stays.")) return; S.days={}; S.plan=null; save(); renderSetup(); $("tabs").classList.add("hidden"); show("setup"); });
+$("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
+
+// ================= PRINT =================
+function printSheet(html){ $("print").innerHTML=html; var go=function(){ window.print(); }; if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ setTimeout(go,60); }); else go(); }
+function sheetHTML(){ var who=S.plan.name||S.auth.name||S.auth.email||"", lic="Licensed to "+(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||""), cells="";
+  for(var d=1;d<=TOTAL;d++){ var g=goalOf(d), rec=S.days[d]||{};
+    cells+='<div class="cell'+(isCatch(d)?" c":"")+(done(d)?" d":"")+'"><b>'+String(d).padStart(2,"0")+"</b>"+esc(g?g.title:"Catch-up day")+(done(d)&&num(rec.kept)?'<span class="k">'+esc(money(num(rec.kept)))+"</span>":"")+"</div>"; }
+  return '<div class="sheet"><div class="wm"><span>LICENSED TO '+esc(String(S.auth.name||S.auth.email||"").toUpperCase())+'</span></div><div class="pg">'+
+    '<div class="hd"><h1>The Enough<br><em>Habit</em></h1><div class="r">'+esc(who)+'<br>Day 1 · '+esc(fmtDate(dateOf(1),{day:"numeric",month:"long",year:"numeric"}))+'<br>Day 66 · '+esc(fmtDate(dateOf(TOTAL),{day:"numeric",month:"long",year:"numeric"}))+'</div></div>'+
+    '<div class="meta"><span>MY CUE: after I '+esc(S.plan.cue)+'</span><span>THE CHECK: what will I not buy today?</span></div>'+
+    '<div class="grid">'+cells+'</div>'+
+    '<div class="foot"><div class="bx"><b>MY 3 KEEPER RULES</b><div></div><div></div><div></div></div><div class="bx"><b>TOTAL KEPT</b><div class="tot">'+(kept()?esc(money(kept())):"&nbsp;")+'</div><span style="font-size:7pt">Tick a box each evening. Dashed boxes are catch-up days.</span></div></div>'+
+    '<div class="ft"><span>'+esc(lic)+'</span><span>The Enough Habit · beacons.ai/lukas.systemized</span></div></div></div>'; }
+
+// ---------- PWA ----------
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+})();
+</script>
+</body>
+</html>
