@@ -157,6 +157,26 @@ assert.equal((await get(aTok)).status, 403, "Studio stays locked");
 await sale("s@x.com", "auto-order-2", "The Autopilot Workbook");
 assert.equal((await get(sTok, "autopilot")).status, 200);
 
+// The Enough Habit: own Beacons product and content, opens nothing else
+await sale("e@x.com", "enough-order-1", "The Enough Habit");
+r = await call("/activate", { method: "POST", body: { email: "e@x.com", order: "enough-order-1", deviceId: "e1", product: "autopilot" } });
+assert.equal(r.j.status, "pending", "Enough order does not open the Workbook");
+r = await unlock("e@x.com", "enough-order-1", "e1", "enough"); assert.equal(r.status, "ok"); const eTok = r.token;
+ym = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((x) => x.to === "e@x.com").pop();
+assert.match(ym.subject, /The Enough Habit code/);
+r = await get(eTok, "enough"); assert.equal(r.status, 200); assert.deepEqual(r.j.products, ["enough"]);
+{
+  const c = r.j.content;
+  assert.equal(c.goals.length, 60);
+  assert.deepEqual(c.goals.map((g) => g.n), Array.from({ length: 60 }, (_, i) => i + 1), "goals numbered 1-60 in order");
+  for (const g of c.goals) assert.ok(g.title && g.why && g.title.length <= 48 && typeof g.min === "number" && typeof g.kept === "boolean", "goal " + g.n);
+  assert.equal(c.stages.length, 6);
+  assert.deepEqual(c.stages.map((st) => st.days), [[1, 10], [11, 20], [21, 30], [31, 40], [41, 50], [51, 60]]);
+  assert.ok(!/\bAI\b|artificial intelligence/i.test(JSON.stringify(c)), "no AI mention in buyer-facing content");
+}
+assert.equal((await get(eTok, "year")).status, 403, "Year stays locked");
+assert.equal((await get(sTok, "enough")).status, 403, "Studio buyer does not get Enough for free");
+
 // B2B team: seats added by the owner, each person unlocks with their own email + contract number
 const A = { "X-Admin-Token": "admin" };
 r = await call("/admin/team", { method: "POST", headers: A, body: { team: "Acme Oy", order: "AP-2026-001", emails: "anna@acme.fi\nMikko@Acme.fi, bad-email", products: ["autopilot"] } });
