@@ -94,7 +94,11 @@ try {
     Set-Content -Path $Leima -Value $Tanaan -Encoding ASCII
     Kirjaa 'Valmis: 3 hakua tehty.'
 
-    if (-not $JataAuki -and -not $olikoAuki) {
+    if (-not $EiRewardsSivua) {
+        # Rewards-sivu jaa auki, jotta paivan kortit voi klikata itse.
+        Start-Process -FilePath $edge -ArgumentList @("--profile-directory=$Profiili", 'https://rewards.bing.com/')
+        Kirjaa 'Rewards-sivu avattu, Edge jatetaan auki.'
+    } elseif (-not $JataAuki -and -not $olikoAuki) {
         Start-Sleep -Seconds 3
         # Suljetaan siististi (kuin ruksista), ei pakotettuna.
         Get-Process msedge -ErrorAction SilentlyContinue |

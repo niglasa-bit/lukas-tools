@@ -13,9 +13,12 @@ Näin "Hae Bingillä" -streak ei katkea.
   (hakusanat vaihtuvat päivän mukaan, lista skriptissä).
 - Kirjoittaa päivämäärän tiedostoon `%LOCALAPPDATA%\RewardsApuri\viimeisin_ajo.txt`,
   joten saman päivän uudet kirjautumiset ohitetaan.
-- Sulkee Edgen siististi. Jos Edge oli jo auki ennestään, sitä ei suljeta.
+- Avaa lopuksi Rewards-sivun (rewards.bing.com) ja jättää Edgen auki, jotta
+  päivän kortit voi klikata itse. `-EiRewardsSivua` sulkee Edgen sen sijaan
+  (paitsi jos Edge oli jo auki ennestään).
 - Loki: `%LOCALAPPDATA%\RewardsApuri\loki.txt`.
-- **Ei** tee "Päivittäin määritetty" -tehtäviä (3 korttia): ne klikataan itse.
+- **Ei** klikkaa "Päivittäin määritetty" -kortteja automaattisesti: ne klikataan
+  itse avautuvalta Rewards-sivulta (noin puoli minuuttia).
 
 ## Asennus (PowerShell, tavallisena käyttäjänä)
 ```
