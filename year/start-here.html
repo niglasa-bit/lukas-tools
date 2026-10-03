@@ -8,27 +8,36 @@
      Open it in Edge → Print → Save as PDF (A4, background graphics on), then upload the PDF as the digital download.
      It only contains the link + instructions; the lock lives in the app. -->
 <style>
-@font-face{font-family:Fraunces;font-weight:600;src:url(fonts/fraunces-600.woff2) format("woff2")}
-@font-face{font-family:Inter;font-weight:400;src:url(fonts/inter-400.woff2) format("woff2")}
-@font-face{font-family:Inter;font-weight:700;src:url(fonts/inter-700.woff2) format("woff2")}
-body{margin:0;background:#FBF8F2;color:#12303A;font:16px/1.5 Inter,"Segoe UI",system-ui,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.page{max-width:620px;margin:0 auto;padding:30px 24px}
-.kicker{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:#2A9D8F;font-weight:700}
-h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:44px;letter-spacing:-.03em;margin:8px 0 6px;line-height:1}
-h1 em{font-style:normal;color:#2A9D8F}
-.sub{color:#3E5F7A;margin:0 0 24px}
-.card{background:#fff;border:1px solid #E4DED2;border-radius:18px;padding:20px 22px;margin:14px 0}
-.hero{background:#12303A;color:#EAF6F4;border:0}
-.btn{display:inline-block;background:#5CC8B8;color:#12303A;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:14px;font-size:18px}
-ol{padding-left:22px;margin:8px 0 0}li{margin:8px 0}
-.url{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;background:#1C434D;color:#EAF6F4;padding:6px 10px;border-radius:8px;display:inline-block}
-.muted{color:#7A949C;font-size:13.5px}
-.hero .muted{color:#8FB5BB}
-b.t{font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:600}
-@media print{@page{size:A4;margin:0}html,body{background:#FBF8F2}body{font-size:14px;min-height:297mm}.page{padding:14mm 16mm}.card{break-inside:avoid;padding:12px 16px;margin:10px 0}h1{font-size:36px}.sub{margin-bottom:12px}li{margin:4px 0}}
+/* Night Almanac identity (see the STYLE note): the year as an orbit, check-ins as moons. */
+@font-face{font-family:"Instrument Serif";font-weight:400;src:url(fonts/instrument-serif-400.woff2) format("woff2")}
+@font-face{font-family:"Instrument Serif";font-weight:400;font-style:italic;src:url(fonts/instrument-serif-400i.woff2) format("woff2")}
+@font-face{font-family:Manrope;font-weight:200 800;src:url(fonts/manrope.woff2) format("woff2")}
+html{background:#0B0E29}
+body{margin:0;background:radial-gradient(700px 500px at 100% 0%,#2A1F6B,transparent 65%),linear-gradient(180deg,#0B0E29,#16124A);color:#F4EEDF;font:16px/1.55 Manrope,"Segoe UI",system-ui,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-height:100vh;position:relative;overflow-x:hidden}
+body::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.65;background-image:radial-gradient(1.2px 1.2px at 24px 36px,#fff9,transparent),radial-gradient(1px 1px at 150px 110px,#fff7,transparent),radial-gradient(1.4px 1.4px at 90px 190px,#fff8,transparent),radial-gradient(1px 1px at 210px 60px,#fff6,transparent);background-size:240px 230px}
+.moon{position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFE9B8,#F4B740 60%,#E48B5A);box-shadow:0 0 80px rgba(244,183,64,.4);-webkit-mask:radial-gradient(circle at 18% 36%,transparent 84px,#000 85px);mask:radial-gradient(circle at 18% 36%,transparent 84px,#000 85px)}
+.page{max-width:620px;margin:0 auto;padding:34px 24px;position:relative}
+.kicker{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#A7AEFF;font-weight:800}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:56px;letter-spacing:-.02em;margin:10px 0 8px;line-height:.95}
+h1 em{color:#F4B740}
+.sub{color:#CEC8EA;margin:0 0 22px;font-size:17px}
+.card{background:rgba(244,238,223,.05);border:1px solid rgba(244,238,223,.16);border-radius:22px;padding:20px 22px;margin:14px 0}
+.hero{background:linear-gradient(160deg,rgba(124,92,255,.25),rgba(244,238,223,.04))}
+.btn{display:inline-block;background:linear-gradient(110deg,#F4B740,#FF8E78);color:#1A1238;text-decoration:none;font-weight:800;padding:14px 24px;border-radius:999px;font-size:18px}
+ol{padding-left:0;margin:10px 0 0;list-style:none;counter-reset:s}
+li{margin:0;padding:9px 0 9px 44px;border-top:1px solid rgba(244,238,223,.14);position:relative;color:#CEC8EA}
+li:first-child{border-top:0}
+li b{color:#F4EEDF}
+li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:8px;width:28px;height:28px;border-radius:50%;border:1px solid #F4B740;color:#F4B740;display:grid;place-items:center;font:400 17px/1 "Instrument Serif",Georgia,serif}
+.url{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;background:rgba(244,238,223,.08);border:1px solid rgba(244,238,223,.16);color:#F4EEDF;padding:5px 10px;border-radius:10px;display:inline-block}
+.muted{color:#A09BC9;font-size:13.5px}
+b.t{font-family:"Instrument Serif",Georgia,serif;font-size:24px;font-weight:400;color:#F4EEDF}
+b.t i{color:#F4B740}
+@media print{@page{size:A4;margin:0}html{background:radial-gradient(150mm 110mm at 100% 0%,#2A1F6B,transparent 65%),linear-gradient(180deg,#0B0E29,#16124A);height:297mm;overflow:hidden}body{background:none;font-size:13.5px;min-height:0}body::before{background-size:70mm 68mm}.page{padding:13mm 16mm;max-width:none}.card{break-inside:avoid;padding:10px 16px;margin:9px 0}h1{font-size:44px}.sub{margin-bottom:10px}li{padding:5px 0 5px 40px}li::before{top:4px}.moon{width:160px;height:160px;-webkit-mask:radial-gradient(circle at 18% 36%,transparent 66px,#000 67px);mask:radial-gradient(circle at 18% 36%,transparent 66px,#000 67px)}}
 </style>
 </head>
 <body>
+<div class="moon" aria-hidden="true"></div>
 <div class="page">
   <div class="kicker">Lukas · The Systemized Life</div>
   <h1>The Systemized Year,<br><em>start here.</em></h1>
@@ -40,7 +49,7 @@ b.t{font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:600}
   </div>
 
   <div class="card">
-    <b class="t">Unlocking takes one minute</b>
+    <b class="t">Unlocking takes <i>one minute</i></b>
     <ol>
       <li>Enter the <b>email you bought with</b>.</li>
       <li>Paste your <b>Order #</b>. It's in the Beacons receipt email (“Your purchase from lukas.systemized…”) under <i>Order Summary</i>.</li>
@@ -59,7 +68,7 @@ b.t{font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:600}
   </div>
 
   <div class="card">
-    <b class="t">What's inside</b>
+    <b class="t">What's <i>inside</i></b>
     <ol>
       <li><b>Year Reset</b> · six short steps: direction, a money floor, big yearly costs, three weekly time blocks, one thing to quit and one to guard, and three things money is actually for.</li>
       <li><b>Your year on one page</b> · a poster to print and put on the wall, with your name on it.</li>
