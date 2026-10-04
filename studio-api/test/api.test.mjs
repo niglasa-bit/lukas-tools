@@ -5,7 +5,7 @@ import worker from "../src/index.js";
 class KV {
   constructor() { this.m = new Map(); }
   async get(k, t) { const v = this.m.get(k); if (v == null) return null; return t === "json" ? JSON.parse(v) : v; }
-  async put(k, v) { this.m.set(k, v); }
+  async put(k, v, o) { this.m.set(k, v); if (o && o.expirationTtl) (this.ttl ||= new Map()).set(k, o.expirationTtl); }
   async delete(k) { this.m.delete(k); }
   async list({ prefix }) { return { keys: [...this.m.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name })) }; }
 }
@@ -20,6 +20,7 @@ const ORDER = "c47d3f10-8a6d-4f86-9376-4fc5c5624a69";
 let r = await call("/activate", { method: "POST", body: { email: "Niko@Example.com", order: ORDER, deviceId: "dev1", deviceName: "Phone" } });
 assert.equal(r.j.status, "pending");
 assert.ok(await env.STUDIO.get("pending:niko@example.com"));
+assert.equal(env.STUDIO.ttl.get("pending:niko@example.com"), 14 * 24 * 3600, "a parked activation (maybe a non-buyer's email) expires");
 
 // 2. sync from Gmail
 r = await call("/sync", { method: "POST", headers: { "X-Sync-Secret": "sync" }, body: { sales: [{ email: "niko@example.com", name: "Niko", order: ORDER, product: "Money Plan Studio", amount: "$29.00" }] } });
@@ -275,6 +276,131 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   assert.equal(r.status, 429, "11th try within the hour slows down");
   r = await call("/admin/team", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { team: "Short Oy", order: "AP-1", emails: "a@short.fi" } });
   assert.equal(r.j.error, "bad_order", "team contract numbers must be long enough to type in the app");
+}
+
+// ---------- hardening: admin page XSS, token handling, rate limit, codes, mail confirmation ----------
+{
+  env.STUDIO = new KV(); env.ADMIN_TOKEN = "admin"; delete env.MAIL_WEBHOOK_URL;
+  const A = { "X-Admin-Token": "admin" };
+
+  // The admin page loads without a token (it holds no data); the data API needs the header, never ?token=.
+  const page = await worker.fetch(new Request("https://x/admin", { headers: { Accept: "text/html" } }), env, {});
+  assert.equal(page.status, 200); const html = await page.text();
+  assert.match(page.headers.get("content-security-policy"), /frame-ancestors 'none'/);
+  assert.doesNotMatch(html, /onclick=\\?"act\(/, "no inline handler built from data");
+  r = await call("/admin?token=admin", { headers: { Accept: "application/json" } });
+  assert.equal(r.status, 403, "token in the query string is no longer accepted");
+
+  // A hostile pending row: the email passes isEmail and the order has quotes and tags.
+  const evilEmail = "a');alert(1);//@x.io", evilOrder = "x');alert(2);//<img src=x onerror=alert(3)>";
+  r = await call("/activate", { method: "POST", body: { email: evilEmail, order: evilOrder, deviceId: "d1" } });
+  assert.equal(r.j.status, "pending");
+  await env.STUDIO.put("buyer:b@x.io", JSON.stringify({ email: "b@x.io", name: "<b>N</b>\"'", orders: [{ order: "o\"'><svg onload=alert(4)>", product: "Money Plan Studio" }], devices: [{ id: "d'\");alert(5);//", name: "<i>Phone</i>" }], created: 1 }));
+
+  // Run the page script against a tiny DOM and check that no data reaches markup unescaped and the buttons send the raw values.
+  const script = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
+  const markup = [], posts = [];
+  class El {
+    constructor(tag) { this.tag = tag; this.children = []; this.listeners = {}; this._html = ""; this.textContent = ""; }
+    set innerHTML(v) { this._html = v; markup.push(v); } get innerHTML() { return this._html; }
+    insertRow() { const e = new El("tr"); this.children.push(e); return e; }
+    insertCell() { const e = new El("td"); this.children.push(e); return e; }
+    appendChild(c) { this.children.push(c); return c; }
+    addEventListener(t, f) { this.listeners[t] = f; }
+    querySelectorAll() { return []; }
+    remove() {}
+    all() { return [this, ...this.children.flatMap((c) => (c.all ? c.all() : []))]; }
+  }
+  const els = {}, doc = { body: new El("body"), getElementById: (id) => (els[id] ||= new El("table")), createElement: (t) => new El(t), createTextNode: (t) => ({ text: t }) };
+  const fakeFetch = async (path, opt = {}) => {
+    if (opt.method === "POST") posts.push({ path, headers: opt.headers, body: JSON.parse(opt.body) });
+    const res = await worker.fetch(new Request("https://x" + path, { method: opt.method || "GET", headers: opt.headers, body: opt.body }), env, {});
+    return { json: () => res.json() };
+  };
+  const loc = { hash: "#token=admin", search: "", pathname: "/admin" }; let replaced = null;
+  const store = new Map();
+  const run = new Function("document", "fetch", "location", "history", "sessionStorage", "prompt", "confirm", script + "\nreturn load;");
+  const load = run(doc, fakeFetch, loc, { replaceState: (a, b, u) => { replaced = u; } }, { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) }, () => "", () => true);
+  await load(); await new Promise((res) => setTimeout(res, 0));
+  assert.equal(replaced, "/admin", "token removed from the address bar"); assert.equal(store.get("adminToken"), "admin");
+  for (const m of markup) assert.doesNotMatch(m, /<(img|svg|i>|b>N)|['"]/, "data is escaped in markup: " + m);
+  const buttons = Object.values(els).flatMap((e) => e.all()).filter((e) => e.tag === "button");
+  const approve = buttons.find((b) => b.textContent === "Approve");
+  await approve.listeners.click(); await new Promise((res) => setTimeout(res, 0));
+  assert.deepEqual([posts[0].path, posts[0].body.email, posts[0].body.order, posts[0].headers["X-Admin-Token"]], ["/admin/approve", evilEmail.toLowerCase(), evilOrder.toLowerCase(), "admin"]);
+  const rm = buttons.find((b) => b.textContent === "×");
+  await rm.listeners.click();
+  assert.equal(posts[1].body.deviceId, "d'\");alert(5);//", "device id passed as data, not code");
+}
+{
+  // One-time codes: CSPRNG, always 6 digits.
+  const src = (await import("node:fs")).readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
+  assert.doesNotMatch(src, /Math\.random/, "no Math.random in the lock");
+  env.STUDIO = new KV();
+  await sale("c@x.com", "code-order-1", "Money Plan Studio");
+  for (let i = 0; i < 8; i++) {
+    r = await call("/activate", { method: "POST", body: { email: "c@x.com", order: "code-order-1", deviceId: "c" + i } });
+    assert.equal(r.j.status, "code_sent");
+  }
+  const codes = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.map((m) => m.subject.match(/^(\d+) /)[1]);
+  for (const c of codes) assert.match(c, /^[1-9]\d{5}$/);
+  const codeKey = [...env.STUDIO.ttl.keys()].find((k) => k.startsWith("mail:"));
+  assert.equal(env.STUDIO.ttl.get(codeKey), 15 * 60, "code mails expire with the code");
+
+  // Rate limit: 10 activations per email per hour, then 429 with a message; other emails are unaffected.
+  for (let i = 0; i < 2; i++) await call("/activate", { method: "POST", body: { email: "c@x.com", order: "code-order-1", deviceId: "c9" } });
+  r = await call("/activate", { method: "POST", body: { email: "c@x.com", order: "code-order-1", deviceId: "c9" } });
+  assert.equal(r.status, 429); assert.equal(r.j.error, "rate_limited"); assert.ok(r.j.message);
+  r = await call("/activate", { method: "POST", body: { email: "other@x.com", order: "code-order-1", deviceId: "c9" } });
+  assert.equal(r.j.status, "pending");
+  // per IP (Cloudflare sets CF-Connecting-IP): limit from RATE_ACTIVATE_IP
+  env.RATE_ACTIVATE_IP = "3";
+  for (let i = 0; i < 3; i++) {
+    r = await call("/activate", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.9" }, body: { email: "ip" + i + "@x.com", order: "whatever-1", deviceId: "z" } });
+    assert.equal(r.j.status, "pending");
+  }
+  r = await call("/activate", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.9" }, body: { email: "ip9@x.com", order: "whatever-1", deviceId: "z" } });
+  assert.equal(r.status, 429);
+  assert.equal(await env.STUDIO.get("pending:ip9@x.com"), null, "a limited call writes nothing");
+  r = await call("/activate", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.10" }, body: { email: "ip9@x.com", order: "whatever-1", deviceId: "z" } });
+  assert.equal(r.j.status, "pending");
+  delete env.RATE_ACTIVATE_IP;
+
+  // The shortest team contract number the admin page accepts (MIN_ORDER_LEN = 8) also works in /activate.
+  r = await call("/admin/team", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { team: "Tiny Oy", order: "AP-2026-", emails: "t@tiny.fi", products: ["autopilot"] } });
+  assert.equal(r.j.ok, true);
+  r = await unlock("t@tiny.fi", "ap-2026-", "t1", "autopilot"); assert.equal(r.status, "ok", "8-character contract number unlocks");
+  r = await call("/activate", { method: "POST", body: { email: "t@tiny.fi", order: "ap-2026", deviceId: "t2", product: "autopilot" } });
+  assert.equal(r.j.error, "bad_order"); assert.ok(r.j.message);
+}
+{
+  // Mail webhook: Apps Script answers 200 even on failure, so only {"ok":true} counts as sent.
+  env.STUDIO = new KV(); env.MAIL_WEBHOOK_URL = "https://script.example/exec";
+  const realFetch = globalThis.fetch; let reply = { ok: false, error: "forbidden" }, hits = 0;
+  globalThis.fetch = async (u, o) => { if (String(u) === env.MAIL_WEBHOOK_URL) { hits++; return new Response(JSON.stringify(reply), { status: 200 }); } return realFetch(u, o); };
+  const errLog = console.error; console.error = () => {};
+  try {
+    await sale("m@x.com", "mail-order-1", "Money Plan Studio");
+    r = await call("/activate", { method: "POST", body: { email: "m@x.com", order: "mail-order-1", deviceId: "m1" } });
+    assert.equal(r.j.status, "code_sent"); assert.equal(hits, 1);
+    let mails = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails;
+    assert.equal(mails.length, 1, "an unconfirmed webhook send lands in the outbox");
+    reply = { ok: true };
+    r = await call("/activate", { method: "POST", body: { email: "m@x.com", order: "mail-order-1", deviceId: "m2" } });
+    mails = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails;
+    assert.equal(mails.length, 1, "a confirmed send does not queue");
+    globalThis.fetch = async (u) => new Response("<html>Script function not found</html>", { status: 200 });
+    r = await call("/activate", { method: "POST", body: { email: "m@x.com", order: "mail-order-1", deviceId: "m3" } });
+    assert.equal((await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.length, 2, "an HTML error page is not a send");
+  } finally { globalThis.fetch = realFetch; console.error = errLog; delete env.MAIL_WEBHOOK_URL; }
+
+  // Purchase emails wait 7 days in the outbox (they are the buyer's receipt), code mails 15 minutes.
+  const { createHmac } = await import("node:crypto");
+  const ev = { type: "checkout.session.completed", data: { object: { id: "cs_test_ttl", payment_status: "paid", payment_intent: "pi_ttl", amount_total: 1900, currency: "usd", created: 1790000000, customer_details: { email: "ttl@example.com" }, metadata: { product: "Money Plan Studio" } } } };
+  const raw = JSON.stringify(ev), t = Math.floor(Date.now() / 1000);
+  await worker.fetch(new Request("https://x/stripe-webhook", { method: "POST", headers: { "Stripe-Signature": `t=${t},v1=${createHmac("sha256", "whsec_test").update(t + "." + raw).digest("hex")}` }, body: raw }), env, {});
+  const pm = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.find((m) => m.to === "ttl@example.com");
+  assert.ok(pm); assert.equal(env.STUDIO.ttl.get("mail:" + pm.id), 7 * 24 * 3600);
 }
 
 console.log("ok · all API checks passed");

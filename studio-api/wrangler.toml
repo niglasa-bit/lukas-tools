@@ -21,11 +21,14 @@ ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,h
 # APP_BASE = "https://thesystemizedlife.com"
 # One line under the purchase email, e.g. "Sold via Stripe for Sevenflow Oy, Business ID 1234567-8".
 # SELLER = ""
+# /activate limits per hour (defaults 60 per IP, 10 per email):
+# RATE_ACTIVATE_IP = "60"
+# RATE_ACTIVATE_EMAIL = "10"
 
 # Secrets (set with: npx wrangler secret put NAME):
 #   SIGNING_SECRET    long random string, signs device tokens
 #   SYNC_SECRET       shared with the Gmail Apps Script (sync + mail webhook)
-#   ADMIN_TOKEN       opens /admin?token=...
+#   ADMIN_TOKEN       opens /admin (type it when asked, or /admin#token=...)
 #   STRIPE_WEBHOOK_SECRET  whsec_... from the Stripe webhook endpoint (/stripe-webhook)
 #   STRIPE_SECRET_KEY      optional, a restricted key with Checkout Sessions read; only used when a
 #                          Payment Link has no metadata.product
