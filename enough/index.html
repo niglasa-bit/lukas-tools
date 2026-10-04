@@ -547,9 +547,8 @@ $("m-ics").addEventListener("click",function(){ download("enough-habit-reminder.
 // One recurring event a day for 66 days at the buyer's usual time (floating local time, no timezone maths).
 function ics(){ var s=parseYmd(S.plan.start), tm=(S.plan.time||"07:30").split(":"), d=ymd(s).replace(/-/g,""), t=String(tm[0]).padStart(2,"0")+String(tm[1]||"00").padStart(2,"0")+"00";
   var stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
-  var endT=(function(){ var h=+tm[0], m=(+tm[1]||0)+5; if(m>=60){ h=(h+1)%24; m-=60; } return String(h).padStart(2,"0")+String(m).padStart(2,"0")+"00"; })();
   return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Lukas The Systemized Life//The Enough Habit//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
-    "UID:enough-"+d+"-"+(S.auth.deviceId||"x")+"@lukas.systemized","DTSTAMP:"+stamp,"DTSTART:"+d+"T"+t,"DTEND:"+d+"T"+endT,"RRULE:FREQ=DAILY;COUNT="+TOTAL,
+    "UID:enough-"+d+"-"+(S.auth.deviceId||"x")+"@lukas.systemized","DTSTAMP:"+stamp,"DTSTART:"+d+"T"+t,"DURATION:PT5M","RRULE:FREQ=DAILY;COUNT="+TOTAL,
     "SUMMARY:Enough Check (2 min)","DESCRIPTION:After I "+S.plan.cue.replace(/[,;\\]/g," ")+": open today's card in The Enough Habit and ask: what will I not buy today?",
     "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Enough Check","TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
 
