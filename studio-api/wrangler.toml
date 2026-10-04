@@ -15,9 +15,10 @@ id = "92f802a9b9a246ddb3a8f4ab17dc22bb"
 # PRODUCTS = '[{"match":"money plan studio","grants":["studio"]}]'
 MAX_DEVICES = "3"
 # Comma-separated. Leave empty while testing locally.
-ALLOWED_ORIGINS = "https://niglasa-bit.github.io"
-# Where the apps live; links in the purchase email and on the thank-you page. Change to the Lukas domain.
-# APP_BASE = "https://niglasa-bit.github.io/lukas-tools"
+ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,https://www.thesystemizedlife.com"
+# Where the apps live; links in the purchase email and on the thank-you page.
+# Uncomment once thesystemizedlife.com serves this repo (until then the GitHub Pages address is used).
+# APP_BASE = "https://thesystemizedlife.com"
 # One line under the purchase email, e.g. "Sold via Stripe for Sevenflow Labs Oy, Business ID 1234567-8".
 # SELLER = ""
 
