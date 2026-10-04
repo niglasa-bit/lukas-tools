@@ -1,4 +1,4 @@
-# Money Plan Studio · setup
+# Lukas products · lock and shop setup
 
 Three parts, all free tiers:
 
@@ -7,6 +7,7 @@ Three parts, all free tiers:
 | `studio/` | GitHub Pages (this repo) | The app the buyer opens. Public shell, locked content. |
 | `studio-api/` | Cloudflare Worker + KV | The lock: activation, codes, device limit, premium content, buyer list, admin page. |
 | `studio-api/gmail-sync.gs` | Google Apps Script in your Gmail | Reads Beacons "You made a sale" emails into the buyer list, and sends the 6-digit codes from your Gmail. |
+| `shop/` | Same site as the apps | Shop page, thank-you page (shows the order code) and terms. Buttons are Stripe Payment Links. |
 
 ## 1 · Deploy the Worker (10 min)
 
@@ -32,7 +33,32 @@ Then put that URL into `studio/index.html` (`<meta name="studio-api" …>`) and 
 
 Run `testParse()` in the script editor to check the email parser without waiting for a sale.
 
-## 3 · Beacons product
+## 3 · Stripe (the shop)
+
+Stripe Checkout through Payment Links, on the company account, with Managed Payments on (Stripe is the
+merchant of record and charges each country's VAT / sales tax). The Gmail/Beacons path keeps working
+alongside, so older Beacons orders still unlock.
+
+1. Stripe → Products: one product per app, one-time price. The product name doesn't matter to the lock.
+2. Stripe → Payment Links, one per product:
+   - **Metadata**: `product` = the exact name from the table below (e.g. `Money Plan Studio`). This decides what the order unlocks.
+   - **After payment**: "Don't show confirmation page" → redirect to `https://<site>/shop/thanks.html?session_id={CHECKOUT_SESSION_ID}`.
+   - **Terms**: require the buyer to agree, with custom text: "I want access right away and understand that my 14-day right of withdrawal ends once access is given."
+   - Paste the link into `shop/config.js` (`paymentLink`) together with the price label.
+3. Stripe → Developers → Webhooks → Add endpoint `https://lukas-studio-api.<you>.workers.dev/stripe-webhook`, events
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `charge.dispute.created`.
+   `npx wrangler secret put STRIPE_WEBHOOK_SECRET` and paste the `whsec_…` signing secret.
+4. Set `APP_BASE` and `SELLER` in `wrangler.toml`, add the shop's origin to `ALLOWED_ORIGINS`, `npm run deploy`.
+5. Test mode first: a test-mode Payment Link and test webhook secret, buy with card 4242 4242 4242 4242, check the
+   thank-you page shows `LK-…`, the purchase email arrives, the app unlocks, and a refund in the dashboard locks it again.
+
+What happens on a sale: the webhook records the order (order code `LK-XXXXXXXX`, derived from the Checkout session),
+emails the buyer the code with an "Open the app" button and the withdrawal-right confirmation, and the thank-you page
+reads the same code from `/order`. A full refund or a dispute closes that one order (shown on the admin page);
+anything else the buyer owns keeps working. Codes and purchase emails go out through Resend once
+`RESEND_API_KEY` + `MAIL_FROM` are set on the shop's domain (remove `MAIL_WEBHOOK_URL` to stop using Gmail).
+
+## 3b · Beacons product (older purchases)
 
 1. Open `studio/start-here.html` in Edge → Print → Save as PDF.
 2. Create the product in Beacons named **Money Plan Studio**, upload the PDF as the download. The Worker decides what an order unlocks from the product name (`DEFAULT_PRODUCTS` in `src/index.js`), so keep these words in the Beacons product names:

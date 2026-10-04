@@ -228,16 +228,16 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card hero">
       <div class="kicker">Unlock your copy</div>
       <h3 class="serif" style="font-size:26px;margin:6px 0 8px;line-height:1.1">Hand the boring tasks to a system.</h3>
-      <p class="small">Use the email you bought with and the <b>Order #</b> from your Beacons receipt (“Your purchase from lukas.systemized…”). We'll email you a 6-digit code. One purchase works on up to 3 devices.</p>
+      <p class="small">Use the email you bought with and your <b>order code</b> from the purchase email (LK-…; bought on Beacons? use the Order # from that receipt). We'll email you a 6-digit code. One purchase works on up to 3 devices.</p>
       <p class="small" style="margin:0">Got it through your company? Use your work email and the contract number you were given as the Order #.</p>
     </div>
     <div class="card hidden" id="g-owned">
       <p class="ink2" id="g-owned-msg"></p>
-      <div class="actions"><a class="btn primary" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">See it on Beacons</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
+      <div class="actions"><a class="btn primary" href="../shop/">See it in the shop</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
     </div>
     <div class="card" id="g-step1">
       <div class="field"><label for="g-email">Purchase or work email</label><input type="email" id="g-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
-      <div class="field"><label for="g-order">Order # or contract number</label><input type="text" id="g-order" autocomplete="off" placeholder="c47d3f10-8a6d-4f86-…" spellcheck="false"><div class="hint">It's in the receipt email under “Order Summary”. Paste the whole thing.</div></div>
+      <div class="field"><label for="g-order">Order code or contract number</label><input type="text" id="g-order" autocomplete="off" placeholder="LK-3F9A2C1B" spellcheck="false"><div class="hint">It's in your purchase email and on the thank-you page. Beacons buyers: paste the Order # from that receipt.</div></div>
       <div class="field"><label for="g-device">Name this device</label><input type="text" id="g-device" maxlength="40" placeholder="e.g. Work laptop"></div>
       <div class="actions"><button class="btn primary" id="g-send">Send my code</button></div>
       <p class="small muted" id="g-msg" role="status" style="margin-top:10px"></p>
@@ -248,7 +248,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
       <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
-    <footer>What you type stays on this device; only your email and order number are checked.<br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+    <footer>What you type stays on this device; only your email and order number are checked.<br><a href="../links/">The Systemized Life</a></footer>
   </section>
 
   <!-- ===================== START ===================== -->
@@ -364,7 +364,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card" style="margin-top:12px">
       <div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div>
     </div>
-    <footer><span id="o-sign">One small system at a time. ☕</span><br><span id="o-disc"></span><br><a id="o-link" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+    <footer><span id="o-sign">One small system at a time. ☕</span><br><span id="o-disc"></span><br><a id="o-link" href="../links/">The Systemized Life</a></footer>
   </section>
 </div>
 
@@ -421,7 +421,7 @@ function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPho
 $("g-send").addEventListener("click",function(){
   var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
   if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
-  if(order.length<4) return msg("g-msg","Paste the full Order # from your receipt.");
+  if(order.length<4) return msg("g-msg","Paste the order code from your purchase email.");
   $("g-send").disabled=true; msg("g-msg","Checking your order…");
   api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
     $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
@@ -640,7 +640,7 @@ function mapHTML(){ var who=S.auth.name||S.auth.email||"", cost=activeTasks().re
     '<div class="bx"><h2>Top 5 <em>start with number 1</em></h2><table>'+top+'</table></div>'+
     '<div class="bx"><h2>Running <em>check once a month</em></h2><table>'+run+'</table></div>'+
     '<div class="bx"><h2>'+esc(C.monthly.title)+' <em>same day every month</em></h2><div class="q">'+C.monthly.questions.map(function(q){ return '<div>'+esc(q)+'</div>'; }).join("")+'</div></div>'+
-    '<div class="ft"><span>'+esc(lic)+'</span><span>The Autopilot Workbook'+(S.auth.team?"":" · beacons.ai/lukas.systemized")+'</span></div></div></div>'; }
+    '<div class="ft"><span>'+esc(lic)+'</span><span>The Autopilot Workbook'+(S.auth.team?"":" · "+location.host)+'</span></div></div></div>'; }
 
 // ---------- PWA ----------
 if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(function(){}); }

@@ -1,9 +1,13 @@
 // Money Plan Studio · license API (Cloudflare Worker)
 //
-// Lock model, honestly stated: Beacons delivers the same file to every buyer,
+// Lock model, honestly stated: the shop delivers the same link to every buyer,
 // so this Worker is the lock. A buyer unlocks the app with the email used at
-// purchase + the Order # from the Beacons receipt, confirms with a one-time
-// code sent to that email, and may activate up to MAX_DEVICES devices.
+// purchase + their order code (LK-XXXXXXXX from the Stripe purchase email, or the
+// Order # of an older Beacons receipt), confirms with a one-time code sent to that
+// email, and may activate up to MAX_DEVICES devices.
+//
+// Sales arrive two ways and both stay on: Stripe calls /stripe-webhook directly,
+// and the Gmail Apps Script posts Beacons sales to /sync.
 // Premium content is only served to a device that holds a valid signed token.
 //
 // Several products share this lock (Money Plan Studio, The Systemized Year, the
@@ -17,6 +21,8 @@
 //   pending:<email> {email,order,product,deviceName,created,attempts}   (activation tried before the sale synced)
 //   code:<email>    {code,deviceId,deviceName,exp,tries}          (TTL 15 min)
 //   mail:<id>       {to,subject,html,created}                     (outbox, only when no MAIL_WEBHOOK_URL)
+//   session:<id>    {email,order,product}                         (Stripe Checkout session → order code, for the thank-you page; TTL 30 d)
+//   pi:<id>         {email,order}                                 (Stripe payment intent → order, so a refund finds it)
 
 import { CONTENT } from "./content.js";
 import { CONTENT_YEAR } from "./content-year.js";
@@ -31,7 +37,7 @@ const PRODUCT_INFO = {
   enough: { name: "The Enough Habit", content: CONTENT_ENOUGH },
 };
 
-// Which Beacons product names unlock which product keys. First matching rule wins,
+// Which product names (Beacons product name, or metadata.product on a Stripe Payment Link) unlock which product keys. First matching rule wins,
 // matched case-insensitively against the product name in the sale email.
 // `requires`: the rule only counts if the buyer already owns that key through
 // another order (the hidden upgrade product is only for Studio buyers).
@@ -78,6 +84,8 @@ async function route(request, env, url) {
   if (p === "/me" && m === "GET") return me(request, env);
   if (p === "/me/remove-device" && m === "POST") return removeDevice(request, env);
   if (p === "/sync" && m === "POST") return sync(request, env);
+  if (p === "/stripe-webhook" && m === "POST") return stripeWebhook(request, env);
+  if (p === "/order" && m === "GET") return orderLookup(env, url);
   if (p === "/outbox" && m === "GET") return outbox(request, env);
   if (p === "/outbox/ack" && m === "POST") return outboxAck(request, env);
   if (p.startsWith("/admin")) return admin(request, env, url, p);
@@ -212,20 +220,136 @@ async function sync(request, env) {
   const sales = Array.isArray(b.sales) ? b.sales : [];
   let added = 0, updated = 0, skipped = 0;
   for (const s of sales) {
-    const email = normEmail(s.email);
-    const order = normOrder(s.order);
-    if (!isEmail(email) || order.length < 8) { skipped++; continue; }
-    const buyer = (await getBuyer(env, email)) || { email, name: "", orders: [], devices: [], approved: false, created: now() };
-    if (!buyer.orders.find((o) => o.order === order)) {
-      buyer.orders.push({ order, product: String(s.product || "").slice(0, 120), amount: String(s.amount || "").slice(0, 20), date: String(s.date || "").slice(0, 40), synced: now() });
-      if (!buyer.name && s.name) buyer.name = String(s.name).slice(0, 80);
-      buyer.orders.length === 1 ? added++ : updated++;
-      await putBuyer(env, buyer);
-      await env.STUDIO.delete("pending:" + email);
-    } else skipped++;
+    const r = await recordSale(env, s);
+    if (r === "added") added++; else if (r === "updated") updated++; else skipped++;
   }
   return json({ ok: true, added, updated, skipped });
 }
+
+// One sale from any source. Returns "added" (first order of a new buyer), "updated" or "skipped" (bad or already known).
+async function recordSale(env, s) {
+  const email = normEmail(s.email);
+  const order = normOrder(s.order);
+  if (!isEmail(email) || order.length < 8) return "skipped";
+  const buyer = (await getBuyer(env, email)) || { email, name: "", orders: [], devices: [], approved: false, created: now() };
+  if (buyer.orders.find((o) => o.order === order)) return "skipped";
+  const rec = { order, product: String(s.product || "").slice(0, 120), amount: String(s.amount || "").slice(0, 20), date: String(s.date || "").slice(0, 40), synced: now() };
+  if (s.source) rec.source = s.source;
+  if (s.pi) rec.pi = String(s.pi).slice(0, 80);
+  buyer.orders.push(rec);
+  if (!buyer.name && s.name) buyer.name = String(s.name).slice(0, 80);
+  await putBuyer(env, buyer);
+  await env.STUDIO.delete("pending:" + email);
+  return buyer.orders.length === 1 ? "added" : "updated";
+}
+
+// ---------- Stripe (Checkout / Payment Links) ----------
+// Stripe posts here (Dashboard → Developers → Webhooks, events below). Each Payment Link carries
+// metadata.product = the product name ("Money Plan Studio", "The Systemized Year" …), so the same
+// name rules as Beacons decide what an order unlocks. Without metadata the line item names are read
+// from the Stripe API when STRIPE_SECRET_KEY is set. The buyer's order code is LK-XXXXXXXX, derived
+// from the Checkout session id, shown on the thank-you page and in the purchase email.
+
+async function stripeWebhook(request, env) {
+  const raw = await request.text();
+  if (!(await stripeSignatureOk(raw, request.headers.get("Stripe-Signature"), env.STRIPE_WEBHOOK_SECRET))) return json({ error: "bad_signature" }, 400);
+  let ev; try { ev = JSON.parse(raw); } catch { return json({ error: "bad_json" }, 400); }
+  const o = (ev.data && ev.data.object) || {};
+
+  if (ev.type === "checkout.session.completed" || ev.type === "checkout.session.async_payment_succeeded") {
+    // Bank-debit style payments complete later: they arrive "unpaid" first, then as async_payment_succeeded.
+    if (o.payment_status !== "paid" && o.payment_status !== "no_payment_required") return json({ ok: true, ignored: "unpaid" });
+    const email = normEmail((o.customer_details && o.customer_details.email) || o.customer_email);
+    if (!isEmail(email) || !o.id) return json({ ok: true, ignored: "no_email" });
+    const product = await stripeProductName(env, o);
+    const order = await orderCode(env, o.id);
+    const result = await recordSale(env, {
+      email, order, product,
+      name: o.customer_details && o.customer_details.name,
+      amount: money(o.amount_total, o.currency),
+      date: new Date((o.created || now()) * 1000).toISOString().slice(0, 16).replace("T", " "),
+      pi: o.payment_intent, source: "stripe",
+    });
+    await env.STUDIO.put("session:" + o.id, JSON.stringify({ email, order, product }), { expirationTtl: 30 * 24 * 3600 });
+    if (o.payment_intent) await env.STUDIO.put("pi:" + o.payment_intent, JSON.stringify({ email, order }));
+    // Stripe retries a webhook until it gets a 2xx, so the purchase email goes out only for a new order.
+    if (result !== "skipped") {
+      const buyer = await getBuyer(env, email);
+      await sendMail(env, { to: email, subject: `Your ${product || "Lukas"} order code: ${order.toUpperCase()}`, html: purchaseMail(env, buyer && buyer.name, product, order) });
+    }
+    return json({ ok: true, result });
+  }
+
+  if (ev.type === "charge.refunded" || ev.type === "charge.dispute.created") {
+    // Full refund or chargeback closes that one order; anything else the buyer owns keeps working.
+    if (ev.type === "charge.refunded" && !o.refunded) return json({ ok: true, ignored: "partial_refund" });
+    const done = await closeOrder(env, o.payment_intent, ev.type === "charge.refunded" ? "refund" : "dispute");
+    return json({ ok: true, closed: done });
+  }
+  return json({ ok: true, ignored: ev.type || "unknown" });
+}
+
+async function closeOrder(env, pi, why) {
+  if (!pi) return false;
+  const ref = await env.STUDIO.get("pi:" + pi, "json");
+  if (!ref) return false;
+  const buyer = await getBuyer(env, ref.email);
+  const o = buyer && (buyer.orders || []).find((x) => x.order === ref.order);
+  if (!o) return false;
+  if (!o.closed) { o.closed = why; o.closedAt = now(); await putBuyer(env, buyer); }
+  return true;
+}
+
+// The thank-you page (success_url …?session_id={CHECKOUT_SESSION_ID}) asks for the order code.
+// Session ids are long and unguessable; the email is shown masked.
+async function orderLookup(env, url) {
+  const id = String(url.searchParams.get("session_id") || "").slice(0, 200);
+  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(id)) return json({ error: "bad_session" }, 400);
+  const rec = await env.STUDIO.get("session:" + id, "json");
+  if (!rec) return json({ status: "waiting" });
+  const rules = productRules(env);
+  const r = orderRule({ product: rec.product }, rules);
+  return json({ status: "ready", order: rec.order.toUpperCase(), product: rec.product, email: maskEmail(rec.email), apps: r ? r.grants.map((k) => ({ key: k, name: PRODUCT_INFO[k].name, url: appUrl(env, k) })) : [] });
+}
+
+async function stripeProductName(env, o) {
+  const meta = o.metadata && o.metadata.product;
+  if (meta) return String(meta).slice(0, 120);
+  if (!env.STRIPE_SECRET_KEY) return "";
+  try {
+    const r = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(o.id)}/line_items?limit=10`, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY } });
+    const j = await r.json();
+    return (j.data || []).map((li) => li.description || "").filter(Boolean).join(" + ").slice(0, 120);
+  } catch { return ""; }
+}
+
+async function orderCode(env, sessionId) {
+  const sig = await crypto.subtle.sign("HMAC", await hmacKey(env), new TextEncoder().encode("order:" + sessionId));
+  return "lk-" + [...new Uint8Array(sig).slice(0, 4)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Stripe-Signature: t=<unix>,v1=<hex hmac-sha256 of "t.body">[,v1=…]. Five-minute tolerance against replays.
+async function stripeSignatureOk(raw, header, secret) {
+  if (!secret || !header) return false;
+  const parts = String(header).split(",").map((x) => x.split("="));
+  const t = (parts.find(([k]) => k === "t") || [])[1];
+  const sigs = parts.filter(([k]) => k === "v1").map(([, v]) => v);
+  if (!t || !sigs.length || Math.abs(now() - parseInt(t, 10)) > 300) return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(t + "." + raw)));
+  const hex = [...mac].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return sigs.some((v) => secretOk(v, hex));
+}
+
+function money(cents, cur) {
+  if (cents == null) return "";
+  const c = String(cur || "").toUpperCase();
+  return (c === "USD" ? "$" : c === "EUR" ? "€" : c + " ") + (cents / 100).toFixed(2);
+}
+function maskEmail(e) { const [u, d] = String(e).split("@"); return (u || "").slice(0, 2) + "•••@" + (d || ""); }
+
+const APP_PATHS = { studio: "studio/", year: "year/", autopilot: "autopilot/", enough: "enough/" };
+function appUrl(env, key) { return String(env.APP_BASE || "https://niglasa-bit.github.io/lukas-tools").replace(/\/+$/, "") + "/" + APP_PATHS[key]; }
 
 // When there is no MAIL_WEBHOOK_URL, codes wait here and the Apps Script sends them (polls every minute).
 async function outbox(request, env) {
@@ -368,6 +492,7 @@ function productRules(env) {
 // What one order unlocks on its own, before `requires` is checked.
 function orderRule(o, rules) {
   if (o.product === "manual") return null; // hand approvals live in buyer.approvedProducts
+  if (o.closed) return null; // refunded or disputed
   const name = String(o.product || "").toLowerCase();
   return rules.find((r) => name.includes(String(r.match).toLowerCase())) || null;
 }
@@ -468,6 +593,22 @@ function codeMail(name, code, deviceName, productName, team) {
   <p style="color:#5F8A99;font-size:13px">${team ? `${escapeHtml(productName)} · licensed to ${escapeHtml(team)}` : "One small system at a time. ☕<br>Lukas · The Systemized Life"}</p>
 </div>`;
 }
+// Sent once per Stripe order. Also confirms, on a durable medium, that the buyer asked for immediate
+// access and so gave up the 14-day withdrawal right (required for digital content in the EU).
+function purchaseMail(env, name, product, order) {
+  const hi = name ? `Hi ${escapeHtml(String(name).split(" ")[0])},` : "Hi,";
+  const r = orderRule({ product }, productRules(env));
+  const apps = r ? r.grants.map((k) => `<p><a href="${appUrl(env, k)}" style="display:inline-block;background:#2A9D8F;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:700">Open ${escapeHtml(PRODUCT_INFO[k].name)}</a></p>`).join("") : "";
+  return `<div style="font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1F3A5F;max-width:480px">
+  <p>${hi}</p>
+  <p>Thank you for buying <b>${escapeHtml(product || "a Lukas product")}</b>. Your order code:</p>
+  <p style="font-size:28px;font-weight:800;letter-spacing:.08em;margin:8px 0 16px">${escapeHtml(order.toUpperCase())}</p>
+  ${apps}
+  <p>Open the app, enter this email address and the order code, and we'll send you a 6-digit code. Works on up to ${parseInt(env.MAX_DEVICES || "3", 10)} devices.</p>
+  <p style="color:#5F8A99;font-size:13px">You asked for immediate access to digital content and acknowledged that the 14-day right of withdrawal ends once access is given.${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
+  <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life</p>
+</div>`;
+}
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
 const ADMIN_HTML = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Studio admin</title>
@@ -489,7 +630,7 @@ const P=document.getElementById("pending"); P.querySelectorAll("tr+tr").forEach(
 for(const p of d.pending){const tr=P.insertRow(); tr.innerHTML="<td>"+esc(p.email)+"</td><td><code>"+esc(p.order)+"</code></td><td>"+esc(p.product||"studio")+"</td><td>"+(p.attempts||1)+"</td><td><button class=p onclick=\\"act('approve','"+esc(p.email)+"','"+esc(p.order)+"',null,'"+esc(p.product||"studio")+"')\\">Approve</button> <button onclick=\\"act('dismiss-pending','"+esc(p.email)+"')\\">Dismiss</button></td>";}
 if(!d.pending.length){P.insertRow().innerHTML="<td colspan=5 class=muted>Nothing waiting.</td>";}
 const B=document.getElementById("buyers"); B.querySelectorAll("tr+tr").forEach(e=>e.remove());
-for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,8))+"…</code> "+esc(o.product||"")+" "+esc(o.amount||"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
+for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+")</b>":"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
 if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=5 class=muted>No buyers yet.</td>";}}
 async function act(a,email,order,deviceId,product){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify({email,order,deviceId,products:product?[product]:undefined})}); load();}
 async function approve(){await fetch("/admin/approve",{method:"POST",headers:H,body:JSON.stringify({email:aEmail.value,name:aName.value,order:aOrder.value,products:aProd.value.split(",")})}); aEmail.value=aName.value=aOrder.value=""; load();}

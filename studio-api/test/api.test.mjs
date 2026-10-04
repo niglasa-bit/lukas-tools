@@ -201,4 +201,56 @@ assert.equal(await env.STUDIO.get("buyer:anna@acme.fi"), null);
 r = await call("/admin", { headers: { ...A, Accept: "application/json" } });
 assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, ["studio"]);
 
+// Stripe: signed webhook → order code, purchase email, thank-you lookup, unlock, full refund closes only that order
+{
+  const { createHmac } = await import("node:crypto");
+  env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+  env.SELLER = "Sold via Stripe for Sevenflow Labs Oy";
+  const hook = async (ev, { secret = "whsec_test", t = Math.floor(Date.now() / 1000) } = {}) => {
+    const raw = JSON.stringify(ev);
+    const sig = createHmac("sha256", secret).update(t + "." + raw).digest("hex");
+    const res = await worker.fetch(new Request("https://x/stripe-webhook", { method: "POST", headers: { "Stripe-Signature": `t=${t},v1=${sig}` }, body: raw }), env, {});
+    return { status: res.status, j: await res.json() };
+  };
+  const session = (id, product, extra = {}) => ({ type: "checkout.session.completed", data: { object: { id, payment_status: "paid", payment_intent: "pi_" + id, amount_total: 1900, currency: "usd", created: 1790000000, customer_details: { email: "Sara@Example.com", name: "Sara Buyer" }, metadata: { product }, ...extra } } });
+
+  r = await hook(session("cs_test_year1", "The Systemized Year"), { secret: "whsec_wrong" });
+  assert.equal(r.status, 400, "bad signature rejected");
+  r = await hook(session("cs_test_year1", "The Systemized Year"), { t: Math.floor(Date.now() / 1000) - 3600 });
+  assert.equal(r.status, 400, "old timestamp rejected");
+  r = await call("/order?session_id=cs_test_year1");
+  assert.equal(r.j.status, "waiting");
+
+  r = await hook(session("cs_test_year1", "The Systemized Year"));
+  assert.equal(r.j.result, "added");
+  r = await hook(session("cs_test_year1", "The Systemized Year"));
+  assert.equal(r.j.result, "skipped", "Stripe retry does not duplicate");
+  let mails = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((m) => m.to === "sara@example.com");
+  assert.equal(mails.length, 1, "one purchase email");
+  const code = mails[0].subject.match(/LK-[0-9A-F]{8}/)[0];
+  assert.match(mails[0].html, /year\//); assert.match(mails[0].html, /right of withdrawal/); assert.match(mails[0].html, /Sevenflow Labs Oy/);
+
+  r = await call("/order?session_id=cs_test_year1");
+  assert.equal(r.j.status, "ready"); assert.equal(r.j.order, code); assert.equal(r.j.email, "sa•••@example.com");
+  assert.deepEqual(r.j.apps.map((a) => a.key), ["year"]);
+  assert.equal((await call("/order?session_id=../x")).status, 400);
+
+  r = await unlock("sara@example.com", code.toLowerCase(), "s1", "year"); assert.equal(r.status, "ok"); const yTok = r.token;
+  assert.equal((await get(yTok, "year")).status, 200);
+
+  // unpaid (async) session is ignored until it succeeds
+  r = await hook(session("cs_test_late", "Money Plan Studio", { payment_status: "unpaid" }));
+  assert.equal(r.j.ignored, "unpaid");
+  r = await hook({ ...session("cs_test_late", "Money Plan Studio"), type: "checkout.session.async_payment_succeeded" });
+  assert.equal(r.j.result, "updated");
+
+  // partial refund keeps access, full refund closes only the Year order
+  r = await hook({ type: "charge.refunded", data: { object: { payment_intent: "pi_cs_test_year1", refunded: false } } });
+  assert.equal(r.j.ignored, "partial_refund");
+  r = await hook({ type: "charge.refunded", data: { object: { payment_intent: "pi_cs_test_year1", refunded: true } } });
+  assert.equal(r.j.closed, true);
+  assert.equal((await get(yTok, "year")).status, 403, "refunded product locks");
+  assert.equal((await get(yTok, "studio")).status, 200, "other purchase still works");
+}
+
 console.log("ok · all API checks passed");
