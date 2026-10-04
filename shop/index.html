@@ -20,9 +20,9 @@ function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"
 S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   var ready = !!p.paymentLink;
   var d = document.createElement("div"); d.className = "card" + (p.featured ? " featured" : "");
-  d.innerHTML = "<b>"+esc(p.emoji)+" "+esc(p.name)+"</b><span class='d'>"+esc(p.line)+"</span>"+
+  d.innerHTML = "<h2 class='t'><span aria-hidden='true'>"+esc(p.emoji)+"</span> "+esc(p.name)+"</h2><span class='d'>"+esc(p.line)+"</span>"+
     "<div class='row'><span class='price'>"+esc(p.price)+"</span>"+
-    "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"'":"aria-disabled='true'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
+    "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"' aria-label='Buy "+esc(p.name)+"'":"aria-disabled='true' role='link'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
     (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : "<p class='small'>Opens all three apps with one order code.</p>");
   list.appendChild(d);
 });

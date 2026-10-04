@@ -259,6 +259,22 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   r = await unlock("all@example.com", r.j.order.toLowerCase(), "a1", "autopilot"); assert.equal(r.status, "ok"); const aTok = r.token;
   for (const k of ["studio", "year", "autopilot"]) assert.equal((await get(aTok, k)).status, 200, k + " opens");
   assert.equal((await get(aTok, "enough")).status, 403, "Enough is not in the bundle");
+
+  // another Sevenflow product on the shared Stripe account is not a Lukas buyer and gets no Lukas email
+  r = await hook({ ...session("cs_test_other", "Pocket Expert Pro"), data: { object: { ...session("cs_test_other", "Pocket Expert Pro").data.object, customer_details: { email: "other@example.com" } } } });
+  assert.equal(r.j.ignored, "other_product");
+  assert.equal(await env.STUDIO.get("buyer:other@example.com"), null);
+}
+
+// hardening: a malformed token is a 401 (not a 500), errors leak no internals, activation is rate limited
+{
+  const res = await worker.fetch(new Request("https://x/content", { headers: { Authorization: "Bearer x.!!!" } }), env, {});
+  assert.equal(res.status, 401);
+  for (let i = 0; i < 10; i++) await call("/activate", { method: "POST", body: { email: "guess@example.com", order: "guess-0000-" + i, deviceId: "g" } });
+  r = await call("/activate", { method: "POST", body: { email: "guess@example.com", order: "guess-0000-x", deviceId: "g" } });
+  assert.equal(r.status, 429, "11th try within the hour slows down");
+  r = await call("/admin/team", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { team: "Short Oy", order: "AP-1", emails: "a@short.fi" } });
+  assert.equal(r.j.error, "bad_order", "team contract numbers must be long enough to type in the app");
 }
 
 console.log("ok · all API checks passed");
