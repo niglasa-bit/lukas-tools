@@ -264,6 +264,14 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   r = await hook({ ...session("cs_test_other", "Pocket Expert Pro"), data: { object: { ...session("cs_test_other", "Pocket Expert Pro").data.object, customer_details: { email: "other@example.com" } } } });
   assert.equal(r.j.ignored, "other_product");
   assert.equal(await env.STUDIO.get("buyer:other@example.com"), null);
+
+  // a PRODUCTS rule with an unknown key (typo) still records the sale and sends the purchase email
+  env.PRODUCTS = '[{"match":"typo pack","grants":["year","autopiloot"]}]';
+  r = await hook({ ...session("cs_test_typo", "Typo Pack"), data: { object: { ...session("cs_test_typo", "Typo Pack").data.object, customer_details: { email: "typo@example.com" } } } });
+  assert.equal(r.j.result, "added");
+  assert.equal((await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((m) => m.to === "typo@example.com").length, 1, "purchase email sent");
+  assert.deepEqual((await call("/order?session_id=cs_test_typo")).j.apps.map((a) => a.key), ["year"]);
+  delete env.PRODUCTS;
 }
 
 // hardening: a malformed token is a 401 (not a 500), errors leak no internals, activation is rate limited
