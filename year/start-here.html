@@ -12,8 +12,8 @@
 @font-face{font-family:"Instrument Serif";font-weight:400;src:url(fonts/instrument-serif-400.woff2) format("woff2")}
 @font-face{font-family:"Instrument Serif";font-weight:400;font-style:italic;src:url(fonts/instrument-serif-400i.woff2) format("woff2")}
 @font-face{font-family:Manrope;font-weight:200 800;src:url(fonts/manrope.woff2) format("woff2")}
-html{background:#0B0E29}
-body{margin:0;background:radial-gradient(700px 500px at 100% 0%,#2A1F6B,transparent 65%),linear-gradient(180deg,#0B0E29,#16124A);color:#F4EEDF;font:16px/1.55 Manrope,"Segoe UI",system-ui,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-height:100vh;position:relative;overflow-x:hidden}
+html{background:#0B0E29;overflow-x:hidden}
+body{margin:0;background:radial-gradient(700px 500px at 100% 0%,#2A1F6B,transparent 65%),linear-gradient(180deg,#0B0E29,#16124A);color:#F4EEDF;font:16px/1.55 Manrope,"Segoe UI",system-ui,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-height:100vh;position:relative;overflow-x:hidden;overflow-x:clip}
 body::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.65;background-image:radial-gradient(1.2px 1.2px at 24px 36px,#fff9,transparent),radial-gradient(1px 1px at 150px 110px,#fff7,transparent),radial-gradient(1.4px 1.4px at 90px 190px,#fff8,transparent),radial-gradient(1px 1px at 210px 60px,#fff6,transparent);background-size:240px 230px}
 .moon{position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#FFE9B8,#F4B740 60%,#E48B5A);box-shadow:0 0 80px rgba(244,183,64,.4);-webkit-mask:radial-gradient(circle at 18% 36%,transparent 84px,#000 85px);mask:radial-gradient(circle at 18% 36%,transparent 84px,#000 85px)}
 .page{max-width:620px;margin:0 auto;padding:34px 24px;position:relative}
