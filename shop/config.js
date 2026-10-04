@@ -4,7 +4,7 @@
 // confirmation page must redirect to  <this site>/shop/thanks.html?session_id={CHECKOUT_SESSION_ID}
 window.SHOP = {
   api: "https://lukas-studio-api.lukas-systemized.workers.dev",
-  seller: "Sevenflow Labs Oy", // + Business ID once registered, see legal.html
+  seller: "Sevenflow", // add "Oy" and the Business ID once registered, see legal.html
   products: [
     { name: "Money Plan Studio", app: "studio/", emoji: "🧭", price: "", paymentLink: "",
       line: "Your whole money plan on one page, a 10-minute Sunday check-in, and a price-tag reader for every purchase." },

@@ -19,7 +19,7 @@ ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,h
 # Where the apps live; links in the purchase email and on the thank-you page.
 # Uncomment once thesystemizedlife.com serves this repo (until then the GitHub Pages address is used).
 # APP_BASE = "https://thesystemizedlife.com"
-# One line under the purchase email, e.g. "Sold via Stripe for Sevenflow Labs Oy, Business ID 1234567-8".
+# One line under the purchase email, e.g. "Sold via Stripe for Sevenflow Oy, Business ID 1234567-8".
 # SELLER = ""
 
 # Secrets (set with: npx wrangler secret put NAME):

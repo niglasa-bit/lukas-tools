@@ -205,7 +205,7 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
 {
   const { createHmac } = await import("node:crypto");
   env.STRIPE_WEBHOOK_SECRET = "whsec_test";
-  env.SELLER = "Sold via Stripe for Sevenflow Labs Oy";
+  env.SELLER = "Sold via Stripe for Sevenflow Oy";
   const hook = async (ev, { secret = "whsec_test", t = Math.floor(Date.now() / 1000) } = {}) => {
     const raw = JSON.stringify(ev);
     const sig = createHmac("sha256", secret).update(t + "." + raw).digest("hex");
@@ -228,7 +228,7 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   let mails = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((m) => m.to === "sara@example.com");
   assert.equal(mails.length, 1, "one purchase email");
   const code = mails[0].subject.match(/LK-[0-9A-F]{8}/)[0];
-  assert.match(mails[0].html, /year\//); assert.match(mails[0].html, /right of withdrawal/); assert.match(mails[0].html, /Sevenflow Labs Oy/);
+  assert.match(mails[0].html, /year\//); assert.match(mails[0].html, /right of withdrawal/); assert.match(mails[0].html, /Sevenflow Oy/);
 
   r = await call("/order?session_id=cs_test_year1");
   assert.equal(r.j.status, "ready"); assert.equal(r.j.order, code); assert.equal(r.j.email, "sa•••@example.com");
