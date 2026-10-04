@@ -251,6 +251,14 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   assert.equal(r.j.closed, true);
   assert.equal((await get(yTok, "year")).status, 403, "refunded product locks");
   assert.equal((await get(yTok, "studio")).status, 200, "other purchase still works");
+  // All-Access bundle: one order opens Studio, Year and Autopilot, not Enough
+  r = await hook({ ...session("cs_test_all", "all-access"), data: { object: { ...session("cs_test_all", "all-access").data.object, customer_details: { email: "all@example.com", name: "All" } } } });
+  assert.equal(r.j.result, "added");
+  r = await call("/order?session_id=cs_test_all");
+  assert.deepEqual(r.j.apps.map((a) => a.key), ["studio", "year", "autopilot"]);
+  r = await unlock("all@example.com", r.j.order.toLowerCase(), "a1", "autopilot"); assert.equal(r.status, "ok"); const aTok = r.token;
+  for (const k of ["studio", "year", "autopilot"]) assert.equal((await get(aTok, k)).status, 200, k + " opens");
+  assert.equal((await get(aTok, "enough")).status, 403, "Enough is not in the bundle");
 }
 
 console.log("ok · all API checks passed");
