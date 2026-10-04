@@ -346,9 +346,13 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
 var $=function(i){return document.getElementById(i);};
 var KEY="lukas-enough-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
 var TOTAL=66, CATCH=11; // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
-var API=(function(){ try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o) return o; }catch(e){}
-  var q=new URLSearchParams(location.search).get("api"); if(q){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
-  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+// API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
+// served from localhost) and is never stored; an address saved by an older version is cleared.
+var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
+  try{ localStorage.removeItem(STUDIO_KEY+"-api"); }catch(e){}
+  var loc=/^(localhost|127\.0\.0\.1)$/, q=new URLSearchParams(location.search).get("api");
+  if(q && loc.test(location.hostname)){ try{ var u=new URL(q); if(loc.test(u.hostname)) return u.origin; }catch(e){} }
+  return d; })();
 
 // ---------- state ----------
 var S=load(), C=null, OPEN=null; // C = premium content from /content?product=enough; OPEN = day shown in the day view

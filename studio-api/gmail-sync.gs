@@ -100,15 +100,21 @@ function parseSale(text, date) {
 }
 
 // Web app endpoint: the API posts {secret,to,subject,html} and we send it from Gmail.
+// Apps Script always answers HTTP 200, so the body carries the result: {"ok":true} only when the mail
+// was handed to Gmail, otherwise {"ok":false,"error":...}. The Worker treats anything but ok:true as
+// not sent and falls back to Resend or its outbox (which sendOutbox() below drains).
 function doPost(e) {
   var out = ContentService.createTextOutput().setMimeType(ContentService.MimeType.JSON);
+  function reply(obj) { return out.setContent(JSON.stringify(obj)); }
   try {
-    var b = JSON.parse(e.postData.contents || "{}");
-    if (b.secret !== CONFIG.SYNC_SECRET) return out.setContent('{"error":"forbidden"}');
+    var b = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    if (b.secret !== CONFIG.SYNC_SECRET) return reply({ ok: false, error: "forbidden" });
+    if (!b.to || !b.subject) return reply({ ok: false, error: "bad_request" });
+    if (MailApp.getRemainingDailyQuota() < 1) return reply({ ok: false, error: "quota" });
     sendMail(b.to, b.subject, b.html);
-    return out.setContent('{"ok":true}');
+    return reply({ ok: true });
   } catch (err) {
-    return out.setContent(JSON.stringify({ error: String(err) }));
+    return reply({ ok: false, error: String(err) });
   }
 }
 
@@ -152,6 +158,6 @@ function api(path, payload, method) {
 
 // Paste a notification's plain text here to check the parser without waiting for a sale.
 function testParse() {
-  var sample = "PRODUCT\nThe 1-Page Money Plan (Free)\nTYPE\ndigital-products\nAMOUNT\n$0.00\nCUSTOMER\nNiko\nCUSTOMER EMAIL\nniglasa@gmail.com\nORDER #\nc47d3f10-8a6d-4f86-9376-4fc5c5624a69\n";
+  var sample = "PRODUCT\nThe 1-Page Money Plan (Free)\nTYPE\ndigital-products\nAMOUNT\n$0.00\nCUSTOMER\nNiko\nCUSTOMER EMAIL\nbuyer@example.com\nORDER #\nc47d3f10-8a6d-4f86-9376-4fc5c5624a69\n";
   Logger.log(JSON.stringify(parseSale(sample, new Date())));
 }
