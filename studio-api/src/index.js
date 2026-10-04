@@ -136,7 +136,9 @@ async function activate(request, env) {
   const prevCode = await env.STUDIO.get("code:" + email, "json");
   if (prevCode && prevCode.deviceId === deviceId && prevCode.exp - CODE_TTL > now() - 60) return json({ status: "code_sent", message: "Check your email for a 6-digit code (valid 15 minutes)." });
   const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
-  await env.STUDIO.put("code:" + email, JSON.stringify({ code, deviceId, deviceName, exp: now() + CODE_TTL, tries: 0 }), { expirationTtl: CODE_TTL });
+  // Wrong guesses carry over to a re-sent code, so asking for new codes doesn't reset the 5-try limit.
+  const tries = prevCode && prevCode.exp >= now() ? prevCode.tries || 0 : 0;
+  await env.STUDIO.put("code:" + email, JSON.stringify({ code, deviceId, deviceName, exp: now() + CODE_TTL, tries }), { expirationTtl: CODE_TTL });
   await sendMail(env, {
     to: email,
     subject: `${code} is your ${PRODUCT_INFO[product].name} code`,
@@ -319,7 +321,7 @@ async function orderLookup(env, url) {
   if (!rec) return json({ status: "waiting" });
   const rules = productRules(env);
   const r = orderRule({ product: rec.product }, rules);
-  return json({ status: "ready", order: rec.order.toUpperCase(), product: rec.product, email: maskEmail(rec.email), apps: r ? r.grants.map((k) => ({ key: k, name: PRODUCT_INFO[k].name, url: appUrl(env, k) })) : [] });
+  return json({ status: "ready", order: rec.order.toUpperCase(), product: rec.product, email: maskEmail(rec.email), apps: r ? r.grants.filter((k) => PRODUCT_INFO[k]).map((k) => ({ key: k, name: PRODUCT_INFO[k].name, url: appUrl(env, k) })) : [] });
 }
 
 async function stripeProductName(env, o) {
