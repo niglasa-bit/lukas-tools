@@ -348,11 +348,13 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
 var $=function(i){return document.getElementById(i);};
 var KEY="lukas-enough-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
 var TOTAL=66, CATCH=11; // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
-// ?api= is a developer override for a local Worker only: a link must never send a buyer's login to another server.
-var API=(function(){ var dev=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
-  try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o&&dev.test(o)) return o; if(o) localStorage.removeItem(STUDIO_KEY+"-api"); }catch(e){}
-  var q=new URLSearchParams(location.search).get("api"); if(q&&dev.test(q)){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
-  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+// API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
+// served from localhost) and is never stored; an address saved by an older version is cleared.
+var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
+  try{ localStorage.removeItem(STUDIO_KEY+"-api"); }catch(e){}
+  var loc=/^(localhost|127\.0\.0\.1)$/, q=new URLSearchParams(location.search).get("api");
+  if(q && loc.test(location.hostname)){ try{ var u=new URL(q); if(loc.test(u.hostname)) return u.origin; }catch(e){} }
+  return d; })();
 
 // ---------- state ----------
 var S=load(), C=null, OPEN=null; // C = premium content from /content?product=enough; OPEN = day shown in the day view
@@ -409,7 +411,7 @@ function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPho
 $("g-send").addEventListener("click",function(){
   var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
   if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
-  if(order.length<4) return msg("g-msg","Paste the order code from your purchase email.");
+  if(order.length<8) return msg("g-msg","Paste the order code from your purchase email.");
   $("g-send").disabled=true; msg("g-msg","Checking your order…");
   api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
     $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
@@ -546,9 +548,8 @@ $("m-ics").addEventListener("click",function(){ download("enough-habit-reminder.
 // One recurring event a day for 66 days at the buyer's usual time (floating local time, no timezone maths).
 function ics(){ var s=parseYmd(S.plan.start), tm=(S.plan.time||"07:30").split(":"), d=ymd(s).replace(/-/g,""), t=String(tm[0]).padStart(2,"0")+String(tm[1]||"00").padStart(2,"0")+"00";
   var stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
-  var endT=(function(){ var h=+tm[0], m=(+tm[1]||0)+5; if(m>=60){ h=(h+1)%24; m-=60; } return String(h).padStart(2,"0")+String(m).padStart(2,"0")+"00"; })();
   return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Lukas The Systemized Life//The Enough Habit//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
-    "UID:enough-"+d+"-"+(S.auth.deviceId||"x")+"@lukas.systemized","DTSTAMP:"+stamp,"DTSTART:"+d+"T"+t,"DTEND:"+d+"T"+endT,"RRULE:FREQ=DAILY;COUNT="+TOTAL,
+    "UID:enough-"+d+"-"+(S.auth.deviceId||"x")+"@lukas.systemized","DTSTAMP:"+stamp,"DTSTART:"+d+"T"+t,"DURATION:PT5M","RRULE:FREQ=DAILY;COUNT="+TOTAL,
     "SUMMARY:Enough Check (2 min)","DESCRIPTION:After I "+S.plan.cue.replace(/[,;\\]/g," ")+": open today's card in The Enough Habit and ask: what will I not buy today?",
     "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Enough Check","TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
 

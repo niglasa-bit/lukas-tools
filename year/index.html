@@ -387,11 +387,13 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
 var $=function(i){return document.getElementById(i);};
 var KEY="lukas-year-v1", STUDIO_KEY="lukas-studio-v1", PRODUCT="year";
 var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
-// ?api= is a developer override for a local Worker only: a link must never send a buyer's login to another server.
-var API=(function(){ var dev=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
-  try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o&&dev.test(o)) return o; if(o) localStorage.removeItem(STUDIO_KEY+"-api"); }catch(e){}
-  var q=new URLSearchParams(location.search).get("api"); if(q&&dev.test(q)){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
-  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+// API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
+// served from localhost) and is never stored; an address saved by an older version is cleared.
+var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
+  try{ localStorage.removeItem(STUDIO_KEY+"-api"); }catch(e){}
+  var loc=/^(localhost|127\.0\.0\.1)$/, q=new URLSearchParams(location.search).get("api");
+  if(q && loc.test(location.hostname)){ try{ var u=new URL(q); if(loc.test(u.hostname)) return u.origin; }catch(e){} }
+  return d; })();
 
 // ---------- state ----------
 var S=load(), C=null; // C = premium content from /content?product=year

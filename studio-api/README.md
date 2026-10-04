@@ -30,6 +30,7 @@ Then put that URL into `studio/index.html` (`<meta name="studio-api" …>`) and 
 2. Run `setup()` once and accept the Gmail permission. This creates the 5-minute sync trigger.
 3. Deploy → New deployment → **Web app** → Execute as *Me*, Who has access *Anyone*. Copy the URL.
 4. `npx wrangler secret put MAIL_WEBHOOK_URL` and paste it. Codes now go out instantly from your Gmail.
+   The web app answers `{"ok":true}` only when Gmail took the mail (`{"ok":false,"error":…}` on a wrong secret or a full daily quota). The Worker counts nothing else as sent and puts the mail in its outbox, which `sendOutbox()` drains every minute. After changing the script, **Deploy → Manage deployments → edit → New version**, or the old code keeps answering.
 
 Run `testParse()` in the script editor to check the email parser without waiting for a sale.
 
@@ -76,7 +77,7 @@ anything else the buyer owns keeps working. Codes and purchase emails go out thr
 
 ## Admin
 
-`https://lukas-studio-api.<you>.workers.dev/admin?token=YOUR_ADMIN_TOKEN` shows buyers, their devices and anyone whose activation arrived before the sale synced (one-click approve). Revoke after a refund.
+`https://lukas-studio-api.<you>.workers.dev/admin#token=YOUR_ADMIN_TOKEN` (or just `/admin`, and type the token when asked) shows buyers, their devices and anyone whose activation arrived before the sale synced (one-click approve). Revoke after a refund. The token sits after `#`, so it never reaches the server or its logs; the page keeps it for that browser tab only and sends it in the `X-Admin-Token` header. `?token=` links no longer work for the data, so update old bookmarks.
 
 ## Several products, one lock
 
@@ -97,6 +98,7 @@ Each app's premium content is one file in `src/` (`content.js`, `content-year.js
 - Each purchase can hold `MAX_DEVICES` (3) devices. A device holds a signed token; every launch re-checks it, so a removed or refunded device stops working.
 - Lessons, rules and prompts come from the Worker only after that check. The app shell is public and that's fine.
 - Every printed plan carries “Licensed to <name> · <email>” and a faint watermark.
+- `/activate` is limited per hour: 60 calls per IP (`RATE_ACTIVATE_IP`) and 10 per email (`RATE_ACTIVATE_EMAIL`); after that it answers 429. Parked activations (`pending:`) expire after 14 days. Order codes and B2B contract numbers need at least 8 characters (`MIN_ORDER_LEN`), in the Worker and in every app.
 - What it does **not** do: stop a buyer from handing their email + receipt to a friend (max 3 devices, visible on the admin page), or stop screenshots. No downloadable product can.
 
 ## Local test

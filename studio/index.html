@@ -321,11 +321,13 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 "use strict";
 var $=function(i){return document.getElementById(i);};
 var KEY="lukas-studio-v1";
-// ?api= is a developer override for a local Worker only: a link must never send a buyer's login to another server.
-var API=(function(){ var dev=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
-  try{ var o=localStorage.getItem(KEY+"-api"); if(o&&dev.test(o)) return o; if(o) localStorage.removeItem(KEY+"-api"); }catch(e){}
-  var q=new URLSearchParams(location.search).get("api"); if(q&&dev.test(q)){ try{localStorage.setItem(KEY+"-api",q);}catch(e){} return q; }
-  var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
+// API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
+// served from localhost) and is never stored; an address saved by an older version is cleared.
+var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
+  try{ localStorage.removeItem(KEY+"-api"); }catch(e){}
+  var loc=/^(localhost|127\.0\.0\.1)$/, q=new URLSearchParams(location.search).get("api");
+  if(q && loc.test(location.hostname)){ try{ var u=new URL(q); if(loc.test(u.hostname)) return u.origin; }catch(e){} }
+  return d; })();
 
 // ---------- state ----------
 var S=load(); var C=null; // C = premium content from /content
@@ -489,19 +491,20 @@ function renderSunday(){
   $("su-list").innerHTML= list.length? list.slice(0,30).map(function(e){ return "<li><div><b>"+esc(e.d)+"</b> · "+money(+e.buffer+ +e.invested)+(e.wants?' · <span class="muted">wants '+money(e.wants)+"</span>":"")+(e.win?'<br><span class="small muted">🏆 '+esc(e.win)+"</span>":"")+(e.next?'<br><span class="small muted">→ '+esc(e.next)+"</span>":"")+'</div><button class="btn sm ghost" data-del="'+esc(e.d)+'" aria-label="Delete">×</button></li>'; }).join("") : '<li class="muted">No check-ins yet. The first one is the hardest. It takes two minutes.</li>';
   $("su-list").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ S.sunday=S.sunday.filter(function(e){ return e.d!==b.dataset.del; }); save(); renderSunday(); }); });
 }
-// Dates are the buyer's local calendar days (UTC strings shifted weeks for anyone west of Greenwich).
-function ymdLocal(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-function weekKey(d){ d=typeof d==="string"?new Date(d+"T12:00:00"):new Date(d); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return ymdLocal(d); }
-function streak(list){ if(!list.length) return 0; var wk=weekKey(new Date()), s=0, keys={}; list.forEach(function(e){ keys[weekKey(e.d)]=1; });
-  var d=new Date(wk+"T12:00:00"); if(!keys[wk]){ d.setDate(d.getDate()-7); if(!keys[ymdLocal(d)]) return 0; }
-  while(keys[ymdLocal(d)]){ s++; d.setDate(d.getDate()-7); } return s; }
+// Dates are local calendar days ("YYYY-MM-DD" in the user's own time zone), and a week starts on the local Monday.
+function ymd(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
+function dayOf(v){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(v)); if(m) return new Date(+m[1],+m[2]-1,+m[3]); var t=new Date(v); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); }
+function weekKey(v){ var d=v instanceof Date?new Date(v.getFullYear(),v.getMonth(),v.getDate()):dayOf(v); d.setDate(d.getDate()-(d.getDay()+6)%7); return ymd(d); }
+function streak(list,today){ if(!list.length) return 0; var keys={}, s=0; list.forEach(function(e){ keys[weekKey(e.d)]=1; });
+  var d=dayOf(weekKey(today||new Date())); if(!keys[ymd(d)]){ d.setDate(d.getDate()-7); if(!keys[ymd(d)]) return 0; }
+  while(keys[ymd(d)]){ s++; d.setDate(d.getDate()-7); } return s; }
 // Fill an input from the plan unless the user has typed something else since the last fill.
 function prefill(id,v){ var el=$(id); v=v>0?String(v):""; if(el.value===""||el.value===el.dataset.pre) el.value=v; el.dataset.pre=v; }
 function spark(vals){ var svg=$("su-spark"); if(vals.length<2){ svg.innerHTML=""; return; } var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), rg=(mx-mn)||1;
   var pts=vals.map(function(v,i){ return [i/(vals.length-1)*320, 60-(v-mn)/rg*52+2]; });
   svg.innerHTML='<polyline fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ")+'"/>'; }
 $("su-save").addEventListener("click",function(){
-  var d=ymdLocal(new Date());
+  var d=ymd(new Date());
   var e={d:d,buffer:+$("su-buffer").value||0,invested:+$("su-invested").value||0,wants:+$("su-wants").value||0,win:$("su-win").value.trim(),next:$("su-next").value.trim()};
   S.sunday=S.sunday.filter(function(x){ return x.d!==d; }); S.sunday.push(e);
   S.plan.buffer=e.buffer; S.plan.invested=e.invested; save();
@@ -540,8 +543,8 @@ function buyNums(){ if(!C) return; var c=buyCalc(), r=calc();
   var kept=S.buy.hist.filter(function(h){ return h.what==="skipped"; }).reduce(function(a,h){ return a+(+h.fv||0); },0); $("b-kept").textContent=money(kept);
   var yes=C.beforeYouBuy.checklist.filter(function(_,i){ var e=$("b-q"+i); return e&&e.checked; }).length;
   $("b-verdict").textContent= yes>=2 ? "Verdict: probably an asset" : "Verdict: liability"; $("b-verdictSub").textContent= yes>=2 ? "— it may pay you back." : "— fine if it's worth "+money(c.fv)+" to you. Decide on purpose."; }
-function snapshot(what){ var c=buyCalc(); return {name:$("b-name").value.trim(),price:c.paid,fv:Math.round(c.fv),years:c.y,d:new Date().toISOString().slice(0,10),what:what}; }
-function decide(item,what){ if(!item) return; item.what=what; item.d=new Date().toISOString().slice(0,10); S.buy.hist.push(item); save(); renderBuy(); toast(what==="skipped"?"Kept "+money(item.fv)+" of future you.":"Bought on purpose. That's the point."); }
+function snapshot(what){ var c=buyCalc(); return {name:$("b-name").value.trim(),price:c.paid,fv:Math.round(c.fv),years:c.y,d:ymd(new Date()),what:what}; }
+function decide(item,what){ if(!item) return; item.what=what; item.d=ymd(new Date()); S.buy.hist.push(item); save(); renderBuy(); toast(what==="skipped"?"Kept "+money(item.fv)+" of future you.":"Bought on purpose. That's the point."); }
 $("b-cool").addEventListener("click",function(){ var s=snapshot(); s.until=Date.now()+C.beforeYouBuy.coolDownHours*36e5; S.buy.cool.push(s); save(); renderBuy(); toast("On the list. Check back in 48 h."); });
 $("b-skip").addEventListener("click",function(){ decide(snapshot(),"skipped"); });
 $("b-bought").addEventListener("click",function(){ decide(snapshot(),"bought"); });
