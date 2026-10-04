@@ -15,11 +15,19 @@ id = "92f802a9b9a246ddb3a8f4ab17dc22bb"
 # PRODUCTS = '[{"match":"money plan studio","grants":["studio"]}]'
 MAX_DEVICES = "3"
 # Comma-separated. Leave empty while testing locally.
-ALLOWED_ORIGINS = "https://niglasa-bit.github.io"
+ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,https://www.thesystemizedlife.com"
+# Where the apps live; links in the purchase email and on the thank-you page.
+# Uncomment once thesystemizedlife.com serves this repo (until then the GitHub Pages address is used).
+# APP_BASE = "https://thesystemizedlife.com"
+# One line under the purchase email, e.g. "Sold via Stripe for Sevenflow Oy, Business ID 1234567-8".
+# SELLER = ""
 
 # Secrets (set with: npx wrangler secret put NAME):
 #   SIGNING_SECRET    long random string, signs device tokens
 #   SYNC_SECRET       shared with the Gmail Apps Script (sync + mail webhook)
 #   ADMIN_TOKEN       opens /admin?token=...
+#   STRIPE_WEBHOOK_SECRET  whsec_... from the Stripe webhook endpoint (/stripe-webhook)
+#   STRIPE_SECRET_KEY      optional, a restricted key with Checkout Sessions read; only used when a
+#                          Payment Link has no metadata.product
 #   MAIL_WEBHOOK_URL  the Apps Script web-app URL (sends codes from your Gmail). Optional:
 #   RESEND_API_KEY + MAIL_FROM   if you later get a domain and prefer Resend

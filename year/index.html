@@ -266,15 +266,15 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
     <div class="card hero">
       <div class="kicker">Unlock your copy</div>
       <h3 class="serif" style="font-size:26px;margin:6px 0 8px;line-height:1.1">Your whole year, set in one evening.</h3>
-      <p class="small">Use the email you bought with and the <b>Order #</b> from your Beacons receipt (“Your purchase from lukas.systemized…”). We'll email you a 6-digit code. One purchase works on up to 3 devices, shared with Money Plan Studio if you have it.</p>
+      <p class="small">Use the email you bought with and your <b>order code</b> from the purchase email (LK-…; bought on Beacons? use the Order # from that receipt). We'll email you a 6-digit code. One purchase works on up to 3 devices, shared with Money Plan Studio if you have it.</p>
     </div>
     <div class="card hidden" id="g-owned">
       <p class="ink2" id="g-owned-msg"></p>
-      <div class="actions"><a class="btn primary" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">See it on Beacons</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
+      <div class="actions"><a class="btn primary" href="../shop/">See it in the shop</a><button class="btn ghost" id="g-other">I bought it with another email</button></div>
     </div>
     <div class="card" id="g-step1">
       <div class="field"><label for="g-email">Purchase email</label><input type="email" id="g-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
-      <div class="field"><label for="g-order">Order #</label><input type="text" id="g-order" autocomplete="off" placeholder="c47d3f10-8a6d-4f86-…" spellcheck="false"><div class="hint">It's in the receipt email under “Order Summary”. Paste the whole thing.</div></div>
+      <div class="field"><label for="g-order">Order code</label><input type="text" id="g-order" autocomplete="off" placeholder="LK-3F9A2C1B" spellcheck="false"><div class="hint">It's in your purchase email and on the thank-you page. Beacons buyers: paste the Order # from that receipt.</div></div>
       <div class="field"><label for="g-device">Name this device</label><input type="text" id="g-device" maxlength="40" placeholder="e.g. Phone"></div>
       <div class="actions"><button class="btn primary" id="g-send">Send my code</button></div>
       <p class="small muted" id="g-msg" role="status" style="margin-top:10px"></p>
@@ -285,7 +285,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
       <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
-    <footer>Your numbers never leave this device; only your email and order number are checked.<br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+    <footer>Your numbers never leave this device; only your email and order number are checked.<br><a href="../links/">The Systemized Life</a></footer>
   </section>
 
   <!-- ===================== YEAR ===================== -->
@@ -367,7 +367,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
     <div class="card" style="margin-top:12px">
       <div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div>
     </div>
-    <footer>One small system at a time. ☕<br><span id="o-disc"></span><br><a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a></footer>
+    <footer>One small system at a time. ☕<br><span id="o-disc"></span><br><a href="../links/">The Systemized Life</a></footer>
   </section>
 </div>
 
@@ -425,7 +425,7 @@ function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPho
 $("g-send").addEventListener("click",function(){
   var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
   if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
-  if(order.length<8) return msg("g-msg","Paste the full Order # from your receipt.");
+  if(order.length<8) return msg("g-msg","Paste the order code from your purchase email.");
   $("g-send").disabled=true; msg("g-msg","Checking your order…");
   api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
     $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
@@ -661,7 +661,7 @@ function posterHTML(){ var y=S.y, cs=costs(), col={money:"#F4B740",time:"#A7AEFF
     (y.theme?'<div class="th"><span class="k">This year<br>is about</span><p>'+esc(y.theme)+'</p></div>':'')+
     '<div class="grid">'+areas+'</div>'+
     '<div class="moons"><div class="mh2"><span class="k">Twelve check-ins</span><span>'+(cs.length?'Big yearly costs, split so they never surprise you · '+esc(money(fundTotal()))+' / year = '+esc(money(monthly()))+' / month':'')+'</span></div><div class="mrow">'+months+'</div></div>'+
-    '<div class="foot"><div class="one"><span class="k">One thing today</span><p>'+esc(oneToday())+'</p></div><div class="lic">'+esc(lic())+'<br>The Systemized Year · beacons.ai/lukas.systemized</div></div></div></div>'; }
+    '<div class="foot"><div class="one"><span class="k">One thing today</span><p>'+esc(oneToday())+'</p></div><div class="lic">'+esc(lic())+'<br>The Systemized Year · '+location.host+'</div></div></div></div>'; }
 function monthHTML(m){ var y=S.y, rec=S.months[m]||{}, inn=num(rec.in), out=num(rec.out), saved=inn-out, prev=lastCheck(m-1);
   var buf=rec.buffer!==""&&rec.buffer!=null?num(rec.buffer):bufferNow(m-1), prevBuf=prev?num(prev.buffer):num(y.buffer), d=bufMonths(buf)-bufMonths(prevBuf);
   var bt=bufTarget(), g=[]; if(bt) g.push([(+y.bufMonths||6)+"-month buffer",pct(buf,bt),bufMonths(buf).toFixed(1)+" / "+(+y.bufMonths||6)+" mo","#F4B740"]);
@@ -678,7 +678,7 @@ function monthHTML(m){ var y=S.y, rec=S.months[m]||{}, inn=num(rec.in), out=num(
     '<div class="box"><h2>One fix for '+esc(MONTHS[m%12])+'</h2>'+w(rec.fix)+'</div>'+
     '<div class="nx"><div><small>Next action · do it before you close this page</small><p>'+(rec.next?esc(rec.next):"&nbsp;")+'</p></div><div class="ck"></div></div>'+
     '<p class="lq">“'+esc(C.month.quotes[m-1])+'” · Lukas</p>'+
-    '<div class="foot"><div class="lic" style="text-align:left">'+esc(lic())+'</div><div class="lic">The Systemized Year · beacons.ai/lukas.systemized</div></div></div></div>'; }
+    '<div class="foot"><div class="lic" style="text-align:left">'+esc(lic())+'</div><div class="lic">The Systemized Year · '+location.host+'</div></div></div></div>'; }
 
 // ================= MORE =================
 function renderMore(){

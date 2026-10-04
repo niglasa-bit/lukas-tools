@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lukas Shop</title><meta name="description" content="Simple money and time systems by Lukas · The Systemized Life. One-time payment, works on your phone and computer.">
+<link rel="stylesheet" href="style.css"><script src="config.js"></script></head>
+<body><div class="wrap">
+<h1>The Systemized Life · Shop</h1>
+<p class="sub">Small systems that run themselves. One-time payment, no subscription. Opens in your browser on up to 3 devices.</p>
+<div id="list"></div>
+<p class="more">Looking for the free tools? <a href="../links/">All free tools →</a></p>
+<footer>
+  Lukas is an AI-generated character, made by <span id="seller"></span>. Not financial advice.<br>
+  Payments are handled by Stripe, which acts as the reseller and handles sales tax.<br>
+  <a href="legal.html">Terms, refunds &amp; privacy</a>
+</footer>
+</div>
+<script>
+var S = window.SHOP, list = document.getElementById("list");
+document.getElementById("seller").textContent = S.seller;
+function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
+  var ready = !!p.paymentLink;
+  var d = document.createElement("div"); d.className = "card";
+  d.innerHTML = "<b>"+esc(p.emoji)+" "+esc(p.name)+"</b><span class='d'>"+esc(p.line)+"</span>"+
+    "<div class='row'><span class='price'>"+esc(p.price)+"</span>"+
+    "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"'":"aria-disabled='true'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
+    "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>";
+  list.appendChild(d);
+});
+</script></body></html>

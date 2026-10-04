@@ -148,13 +148,13 @@ select{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid
   <h2>More small systems</h2>
   <div class="card">
     <p style="margin:0 0 10px">Run your whole plan, not just one purchase: the free Sunday Wealth Tracker has a compounding tab.</p>
-    <a class="btn" href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">🆓 Free tracker &amp; more tools →</a>
+    <a class="btn" href="../links/">🆓 Free tracker &amp; more tools →</a>
   </div>
 
   <footer>
     One small system at a time. ☕<br>
     Lukas is an AI-generated character. Your numbers stay on this device.<br>
-    <a href="https://beacons.ai/lukas.systemized" target="_blank" rel="noopener">beacons.ai/lukas.systemized</a>
+    <a href="../links/">The Systemized Life</a>
   </footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -187,7 +187,7 @@ select{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid
     $("verdictSub").textContent= yes>=2 ? "— it may pay you back." : "— fine if it's worth "+cur+fmt(c.fv)+" to you. Just decide on purpose.";
   }
   $("copy").addEventListener("click",function(){var c=calc(),cur=($("cur").value||"").trim();
-    var txt="This purchase really costs me "+cur+fmt(c.fv)+" in "+c.y+" years. Future Cost Calculator by Lukas → beacons.ai/lukas.systemized";
+    var txt="This purchase really costs me "+cur+fmt(c.fv)+" in "+c.y+" years. Future Cost Calculator by Lukas → "+location.host+location.pathname;
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function(){toast("Copied");},function(){prompt("Copy this:",txt);}); else prompt("Copy this:",txt);});
   $("theme").addEventListener("click",function(){var root=document.documentElement,cu=root.getAttribute("data-theme");
     var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx);
