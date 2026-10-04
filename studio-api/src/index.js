@@ -18,7 +18,7 @@
 // KV layout (binding STUDIO):
 //   buyer:<email>   {name,email,orders:[{order,product,amount,date}],devices:[{id,name,created}],approved,approvedProducts,team,created}
 //                   team = {id,name,order,until} for B2B seats added under /admin (see addTeam)
-//   pending:<email> {email,order,product,deviceName,created,attempts}   (activation tried before the sale synced; TTL 30 d)
+//   pending:<email> {email,order,product,deviceName,created,attempts}   (activation tried before the sale synced; TTL 14 d)
 //   code:<email>    {code,deviceId,deviceName,exp,tries}          (TTL 15 min)
 //   mail:<id>       {to,subject,html,created}                     (outbox when no mail route accepted it; code mails TTL 15 min, purchase mails 7 d)
 //   rl:<scope>:<id> {n,exp}                                       (rate-limit counter for /activate, TTL = window)
@@ -56,9 +56,9 @@ const DEFAULT_PRODUCTS = [
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const CODE_TTL = 15 * 60;       // seconds
-const PENDING_TTL = 30 * 24 * 3600; // a parked activation (may hold a non-buyer's email) disappears after 30 days
+const PENDING_TTL = 14 * 24 * 3600; // a parked activation (may hold a non-buyer's email) disappears after two weeks
 const PURCHASE_MAIL_TTL = 7 * 24 * 3600; // the purchase email is the buyer's durable receipt, so it waits longer in the outbox
-const MIN_ORDER_LEN = 4;        // shortest order / contract number accepted, same for /activate and B2B teams
+const MIN_ORDER_LEN = 8;        // shortest order / contract number accepted, same for /activate, B2B teams and the apps
 const RATE_WINDOW = 3600;       // /activate limits are per hour: RATE_ACTIVATE_IP (default 60) and RATE_ACTIVATE_EMAIL (default 10)
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
 
@@ -111,9 +111,9 @@ async function activate(request, env) {
   const deviceId = String(b.deviceId || "").slice(0, 64);
   const deviceName = String(b.deviceName || "device").slice(0, 60);
   const product = productKey(b.product);
-  if (!isEmail(email)) return json({ error: "bad_email", message: "That doesn't look like an email address." }, 400);
-  if (order.length < MIN_ORDER_LEN) return json({ error: "bad_order", message: "Enter the order code from your purchase email (or your team's contract number)." }, 400);
-  if (!deviceId) return json({ error: "bad_device" }, 400);
+  if (!isEmail(email)) return json({ error: "bad_email", message: "Check the email address: use the one you bought with." }, 400);
+  if (order.length < MIN_ORDER_LEN) return json({ error: "bad_order", message: "Check the order code: copy it whole from your purchase email (Order #)." }, 400);
+  if (!deviceId) return json({ error: "bad_device", message: "This browser blocks storage. Turn off private mode and try again." }, 400);
   if (await rateLimited(env, "email:" + email, parseInt(env.RATE_ACTIVATE_EMAIL || "10", 10))) return tooMany();
 
   const buyer = await getBuyer(env, email);
@@ -138,6 +138,9 @@ async function activate(request, env) {
     return json({ status: "device_limit", max, message: `This purchase is already active on ${max} devices. Remove one under More → Devices on an active device, or reply to your receipt email.` });
   }
 
+  // A code sent less than a minute ago to the same device is still on its way: don't mail another one.
+  const prevCode = await env.STUDIO.get("code:" + email, "json");
+  if (prevCode && prevCode.deviceId === deviceId && prevCode.exp - CODE_TTL > now() - 60) return json({ status: "code_sent", message: "Check your email for a 6-digit code (valid 15 minutes)." });
   const code = oneTimeCode();
   await env.STUDIO.put("code:" + email, JSON.stringify({ code, deviceId, deviceName, exp: now() + CODE_TTL, tries: 0 }), { expirationTtl: CODE_TTL });
   await sendMail(env, {
@@ -153,13 +156,13 @@ async function verify(request, env) {
   const email = normEmail(b.email);
   const code = String(b.code || "").replace(/\D/g, "");
   const deviceId = String(b.deviceId || "").slice(0, 64);
-  if (!isEmail(email) || code.length !== 6 || !deviceId) return json({ error: "bad_request" }, 400);
+  if (!isEmail(email) || code.length !== 6 || !deviceId) return json({ error: "bad_request", message: "Type the 6-digit code from the email." }, 400);
 
   const key = "code:" + email;
   const rec = await env.STUDIO.get(key, "json");
   if (!rec || rec.exp < now()) return json({ error: "code_expired", message: "That code has expired. Request a new one." }, 400);
   if (rec.deviceId !== deviceId) return json({ error: "device_mismatch", message: "Request the code from the device you want to unlock." }, 400);
-  if (rec.code !== code) {
+  if (!secretOk(code, rec.code)) {
     rec.tries = (rec.tries || 0) + 1;
     if (rec.tries >= 5) { await env.STUDIO.delete(key); return json({ error: "too_many_tries", message: "Too many attempts. Request a new code." }, 400); }
     await env.STUDIO.put(key, JSON.stringify(rec), { expirationTtl: Math.max(60, rec.exp - now()) });
@@ -167,11 +170,11 @@ async function verify(request, env) {
   }
 
   const buyer = await getBuyer(env, email);
-  if (!buyer) return json({ error: "no_buyer" }, 400);
+  if (!buyer) return json({ error: "no_buyer", message: "We couldn't find that purchase any more. Reply to your receipt email and we'll sort it out." }, 400);
   const max = parseInt(env.MAX_DEVICES || "3", 10);
   buyer.devices = buyer.devices || [];
   if (!buyer.devices.find((d) => d.id === deviceId)) {
-    if (buyer.devices.length >= max) return json({ status: "device_limit", max }, 400);
+    if (buyer.devices.length >= max) return json({ status: "device_limit", max, message: `This purchase is already active on ${max} devices. Remove one under More → Devices on an active device.` }, 400);
     buyer.devices.push({ id: deviceId, name: rec.deviceName || "device", created: now() });
   }
   await putBuyer(env, buyer);
@@ -273,6 +276,8 @@ async function stripeWebhook(request, env) {
     const email = normEmail((o.customer_details && o.customer_details.email) || o.customer_email);
     if (!isEmail(email) || !o.id) return json({ ok: true, ignored: "no_email" });
     const product = await stripeProductName(env, o);
+    // The Stripe account is shared with other Sevenflow products: only Lukas products become buyers here.
+    if (!orderRule({ product }, productRules(env))) return json({ ok: true, ignored: "other_product" });
     const order = await orderCode(env, o.id);
     const result = await recordSale(env, {
       email, order, product,
@@ -345,7 +350,7 @@ async function stripeSignatureOk(raw, header, secret) {
   const parts = String(header).split(",").map((x) => x.split("="));
   const t = (parts.find(([k]) => k === "t") || [])[1];
   const sigs = parts.filter(([k]) => k === "v1").map(([, v]) => v);
-  if (!t || !sigs.length || Math.abs(now() - parseInt(t, 10)) > 300) return false;
+  if (!t || !sigs.length || !(Math.abs(now() - parseInt(t, 10)) <= 300)) return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(t + "." + raw)));
   const hex = [...mac].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -444,7 +449,7 @@ async function addTeam(env, b) {
   const order = normOrder(b.order);
   const id = teamId(name);
   if (!id) return json({ error: "bad_team" }, 400);
-  if (order.length < MIN_ORDER_LEN) return json({ error: "bad_order" }, 400);
+  if (order.length < MIN_ORDER_LEN) return json({ error: "bad_order", message: `Use a contract number of at least ${MIN_ORDER_LEN} characters (the apps ask for ${MIN_ORDER_LEN}).` }, 400);
   const grants = (Array.isArray(b.products) ? b.products : ["autopilot"]).filter((k) => PRODUCT_INFO[k]);
   const until = b.until ? Math.floor(Date.parse(String(b.until) + "T23:59:59Z") / 1000) || 0 : 0;
   const emails = [...new Set(String(Array.isArray(b.emails) ? b.emails.join("\n") : b.emails || "").split(/[\s,;]+/).map(normEmail).filter(isEmail))];
@@ -592,7 +597,8 @@ function secretOk(given, expected) {
 
 // --- token: base64url(payload).base64url(hmac-sha256) ---
 async function hmacKey(env) {
-  return crypto.subtle.importKey("raw", new TextEncoder().encode(env.SIGNING_SECRET || ""), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+  if (!env.SIGNING_SECRET) throw new Error("SIGNING_SECRET is not set"); // never sign with an empty key
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(env.SIGNING_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 async function sign(env, payload) {
   const data = b64u(new TextEncoder().encode(JSON.stringify(payload)));
@@ -602,7 +608,8 @@ async function sign(env, payload) {
 async function verifyToken(env, token) {
   const [data, sig] = String(token).split(".");
   if (!data || !sig) return null;
-  const ok = await crypto.subtle.verify("HMAC", await hmacKey(env), unb64u(sig), new TextEncoder().encode(data));
+  let ok = false;
+  try { ok = await crypto.subtle.verify("HMAC", await hmacKey(env), unb64u(sig), new TextEncoder().encode(data)); } catch { return null; } // malformed base64
   if (!ok) return null;
   try { return JSON.parse(new TextDecoder().decode(unb64u(data))); } catch { return null; }
 }

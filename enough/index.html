@@ -20,7 +20,7 @@
    Its own identity: no other Lukas product uses these colours or fonts. */
 :root{
   --table:#2438E8; --table2:#1A2BC4; --table-ink:#FFFFFF; --table-muted:#C9D0FF;
-  --paper:#FCFCF8; --paper2:#F1F1EA; --ink:#141414; --ink2:#3A3A36; --muted:#86867F; --rule:#141414; --faint:#C4C4BC;
+  --paper:#FCFCF8; --paper2:#F1F1EA; --ink:#141414; --ink2:#3A3A36; --muted:#6B6B64; --rule:#141414; --faint:#C4C4BC;
   --yellow:#FFD23F; --yellow-ink:#141414; --kept:#0E9F55; --red:#D8342B;
 }
 @media (prefers-color-scheme: dark){
@@ -150,6 +150,7 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
 .sheet .ft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:6.5pt;color:#86867F}
 .sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
 .sheet .wm span{transform:rotate(-30deg);font-size:22pt;font-weight:700;letter-spacing:.14em;color:rgba(20,20,20,.035);white-space:nowrap}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -324,7 +325,7 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
     <div class="rc flat">
       <div class="small up muted">Your data</div>
       <p class="small ink2">Your days, notes and amounts stay in this browser. Back them up before clearing the browser or switching devices.</p>
-      <div class="actions"><button class="btn sm" id="o-backup">⬇ Backup</button><label class="btn sm" for="o-restore">⬆ Restore<input type="file" id="o-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="o-restart">Start over</button></div>
+      <div class="actions"><button class="btn sm" id="o-backup">⬇ Backup</button><label class="btn sm" for="o-restore">⬆ Restore<input type="file" id="o-restore" accept="application/json" class="vh"></label><button class="btn sm ghost" id="o-restart">Start over</button></div>
     </div>
     <div class="rc flat"><div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div></div>
     <footer>One small system at a time. ☕<br>Education, not financial advice.<br><a href="../links/">The Systemized Life</a></footer>
@@ -356,7 +357,7 @@ var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=
 
 // ---------- state ----------
 var S=load(), C=null, OPEN=null; // C = premium content from /content?product=enough; OPEN = day shown in the day view
-function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){} if(!d||typeof d!=="object") d={};
   d.auth=d.auth||{}; d.days=d.days||{}; d.plan=d.plan||null; return d; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 // The other Lukas apps live on the same site. Sharing their device id keeps one phone = one device slot,
@@ -391,7 +392,8 @@ function done(d){ return !!(S.days[d]&&S.days[d].done); }
 function kept(){ return Object.keys(S.days).reduce(function(a,k){ return a+(S.days[k].done?num(S.days[k].kept):0); },0); }
 function doneCount(){ var c=0; for(var d=1;d<=TOTAL;d++) if(!isCatch(d)&&done(d)) c++; return c; }
 // Streak = the check done on consecutive calendar days, counting back from today (or yesterday if today isn't printed yet).
-function streak(){ var t=Math.min(todayNo(),TOTAL), s=0, d=done(t)?t:t-1; while(d>=1&&done(d)){ s++; d--; } return s; }
+// Catch-up days are optional ("or just rest"): skipping one neither breaks nor adds to the streak.
+function streak(){ var t=Math.min(todayNo(),TOTAL), s=0, d=done(t)?t:t-1; while(d>=1){ if(done(d)) s++; else if(!isCatch(d)) break; d--; } return s; }
 function openBefore(t){ var out=[]; for(var d=1;d<t&&d<=TOTAL;d++) if(!isCatch(d)&&!done(d)) out.push(d); return out; }
 function money(v){ var c=(S.plan&&S.plan.cur)||"$", s=(Math.round(v*100)/100).toFixed(v%1?2:0); return c.length>1?s+" "+c:c+s; }
 function fmtDate(dt,o){ return dt.toLocaleDateString("en-GB",o||{weekday:"short",day:"numeric",month:"short"}); }
@@ -408,7 +410,7 @@ function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPho
 $("g-send").addEventListener("click",function(){
   var email=$("g-email").value.trim(), order=$("g-order").value.trim(), dn=$("g-device").value.trim()||guessDevice();
   if(!/^\S+@\S+\.\S+$/.test(email)) return msg("g-msg","Please enter the email you bought with.");
-  if(order.length<4) return msg("g-msg","Paste the order code from your purchase email.");
+  if(order.length<8) return msg("g-msg","Paste the order code from your purchase email.");
   $("g-send").disabled=true; msg("g-msg","Checking your order…");
   api("/activate",{body:{email:email,order:order,deviceId:deviceId(),deviceName:dn,product:PRODUCT}}).then(function(r){
     $("g-send").disabled=false; S.auth.email=email; S.auth.deviceName=dn; save();
@@ -435,7 +437,7 @@ function enter(token){
       showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
       $("g-owned-msg").textContent="This device already has another Lukas tool. The Enough Habit is its own purchase. If you just bought it, give it a few minutes and reopen this page.";
       return; }
-    if(r.error){ if(!token){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
+    if(r.error){ if(!token&&/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error)){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
     C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
     S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; save();
     $("gate").classList.remove("on");
@@ -480,7 +482,7 @@ $("su-go").addEventListener("click",function(){
 function renderToday(){ var t=todayNo(), d=Math.max(1,Math.min(t,TOTAL)), g=goalOf(d), st=stageOf(d), rec=S.days[d]||{};
   $("t-head").textContent=t>TOTAL?"Day 66+":"Today";
   $("t-sub").textContent=fmtDate(new Date())+" · after I "+S.plan.cue;
-  $("t-day").textContent=d+" / "+TOTAL; $("t-stage").textContent=st?st.title+" "+(isCatch(d)?"✓":(goalNo(d)-st.days[0]+1)+"/10"):"";
+  $("t-day").textContent=d+" / "+TOTAL; $("t-stage").textContent=st?st.title+" "+(isCatch(d)?(done(d)?"✓":"catch-up"):(goalNo(d)-st.days[0]+1)+"/10"):"";
   $("t-total").textContent=money(kept());
   var before=t<1, after=t>TOTAL;
   $("t-pre").classList.toggle("hidden",!before);
@@ -560,7 +562,7 @@ function renderMore(){
   $("o-news").innerHTML='<p class="small muted" style="margin:0 0 6px">Edition '+esc(C.version)+"</p>"+C.changelog.slice().reverse().map(function(c){ return '<p class="small" style="margin:8px 0 0"><b>'+esc(c.date)+"</b> · "+c.notes.map(esc).join(" ")+"</p>"; }).join("");
 }
 $("o-backup").addEventListener("click",function(){ download("enough-habit-backup.json",JSON.stringify({plan:S.plan,days:S.days,exported:new Date().toISOString(),app:"the-enough-habit"},null,1),"application/json"); });
-$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.app!=="the-enough-habit"||!d.plan) throw 0; S.plan=d.plan; S.days=d.days||{}; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't an Enough Habit backup."); } }; rd.readAsText(f); });
+$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.app!=="the-enough-habit"||!d.plan||!(parseYmd(d.plan.start)>0)) throw 0; S.plan=d.plan; S.days=(d.days&&typeof d.days==="object")?d.days:{}; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't an Enough Habit backup."); } }; rd.readAsText(f); e.target.value=""; });
 $("o-restart").addEventListener("click",function(){ if(!confirm("Start over from day 1? Your printed days and amounts on this device are cleared. Your licence stays.")) return; S.days={}; S.plan=null; save(); renderSetup(); $("tabs").classList.add("hidden"); show("setup"); });
 $("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
 

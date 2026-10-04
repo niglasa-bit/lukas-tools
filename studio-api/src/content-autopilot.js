@@ -11,7 +11,7 @@ export const CONTENT_AUTOPILOT = {
   version: 1,
   updated: "2026-10-02",
   changelog: [
-    { version: 1, date: "2026-10-02", notes: ["First edition: the routine audit, 26 autopilot recipes on five tracks, 40 fill-in prompts and 10 lessons."] },
+    { version: 1, date: "2026-10-02", notes: ["First edition: the routine audit, 28 autopilot recipes on five tracks, 40 fill-in prompts and 10 lessons."] },
   ],
 
   intro: {

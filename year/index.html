@@ -252,6 +252,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
 .sheet .nx p{font-family:"Instrument Serif",Georgia,serif;font-size:16pt;margin:1mm 0 0}
 .sheet .nx .ck{width:9mm;height:9mm;border:.5mm solid #F4B740;border-radius:50%;flex:none}
 .sheet .lq{margin-top:4mm;font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-size:11pt;color:#3F3B78}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -281,7 +282,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
     </div>
     <div class="card hidden" id="g-step2">
       <p class="ink2">Enter the 6-digit code we just emailed to <b id="g-email-echo"></b>.</p>
-      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••"></div>
+      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" aria-label="6-digit code"></div>
       <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
@@ -360,7 +361,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
     <div class="card">
       <h3>Your data</h3>
       <p class="small ink2">Everything you type stays in this browser. Back it up before clearing the browser or switching phones.</p>
-      <div class="actions"><button class="btn sm" id="o-backup">⬇︎ Backup</button><label class="btn sm" for="o-restore">⬆︎ Restore<input type="file" id="o-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="o-wipe">Erase my data</button></div>
+      <div class="actions"><button class="btn sm" id="o-backup">⬇︎ Backup</button><label class="btn sm" for="o-restore">⬆︎ Restore<input type="file" id="o-restore" accept="application/json" class="vh"></label><button class="btn sm ghost" id="o-wipe">Erase my data</button></div>
     </div>
     <h2>The four areas</h2>
     <div id="o-lessons"></div>
@@ -395,7 +396,7 @@ var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=
 
 // ---------- state ----------
 var S=load(), C=null; // C = premium content from /content?product=year
-function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){} if(!d||typeof d!=="object") d={};
   d.y=d.y||{}; d.months=d.months||{}; d.auth=d.auth||{}; return d; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 // Money Plan Studio lives on the same site. Reading it lets the year start from the buyer's own plan,
@@ -456,7 +457,7 @@ function enter(token){
       showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
       $("g-owned-msg").textContent="This device already has Money Plan Studio. The Systemized Year is its own purchase. If you just bought it, give it a few minutes and reopen this page. Studio owners get it at an upgrade price.";
       return; }
-    if(r.error){ if(!token){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":""); return; }
+    if(r.error){ if(!token&&/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error)){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":""); return; }
     C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
     S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; save();
     $("gate").classList.remove("on"); $("tabs").classList.remove("hidden");
@@ -485,8 +486,8 @@ function monthly(){ return fundTotal()/12; }
 function ready(c,m){ var k=((m-c.m-1+12)%12)+1; return Math.min(c.a, c.a*k/12); }
 function nowMonth(){ var n=new Date(), y=+S.y.y||defaultYear(); return y===n.getFullYear()?n.getMonth()+1 : y>n.getFullYear()?1:12; }
 function lastCheck(m){ for(var i=m;i>=1;i--){ var x=S.months[i]; if(x&&x.done) return x; } return null; }
-function bufferNow(m){ var l=lastCheck(m||12); return l&&l.buffer!==""&&l.buffer!=null ? num(l.buffer) : num(S.y.buffer); }
-function debtNow(m){ var l=lastCheck(m||12); return l&&l.debt!==""&&l.debt!=null ? num(l.debt) : num(S.y.debt); }
+function bufferNow(m){ var l=lastCheck(m==null?12:m); /* m=0 is the year start */ return l&&l.buffer!==""&&l.buffer!=null ? num(l.buffer) : num(S.y.buffer); }
+function debtNow(m){ var l=lastCheck(m==null?12:m); return l&&l.debt!==""&&l.debt!=null ? num(l.debt) : num(S.y.debt); }
 function bufTarget(){ return num(S.y.essentials)*(+S.y.bufMonths||6); }
 function bufMonths(v){ var e=num(S.y.essentials); return e>0 ? v/e : 0; }
 function pct(a,b){ return b>0 ? Math.max(0,Math.min(100,a/b*100)) : 0; }
@@ -694,7 +695,7 @@ function renderMore(){
   $("o-disc").textContent=C.disclaimer;
 }
 $("o-backup").addEventListener("click",function(){ var d={y:S.y,months:S.months,exported:new Date().toISOString(),app:"the-systemized-year"}; download("systemized-year-"+(S.y.y||"backup")+".json",JSON.stringify(d,null,1),"application/json"); });
-$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d.y||!d.months) throw 0; S.y=d.y; S.months=d.months; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't a Systemized Year backup."); } }; rd.readAsText(f); });
+$("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d||typeof d.y!=="object"||typeof d.months!=="object"||!d.y||!d.months) throw 0; S.y=d.y; S.months=d.months; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't a Systemized Year backup."); } }; rd.readAsText(f); e.target.value=""; });
 $("o-wipe").addEventListener("click",function(){ if(!confirm("Erase your year and all check-ins on this device? Your license stays.")) return; S.y={}; S.months={}; save(); location.reload(); });
 $("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
 

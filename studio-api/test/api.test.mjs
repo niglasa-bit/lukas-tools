@@ -20,7 +20,7 @@ const ORDER = "c47d3f10-8a6d-4f86-9376-4fc5c5624a69";
 let r = await call("/activate", { method: "POST", body: { email: "Niko@Example.com", order: ORDER, deviceId: "dev1", deviceName: "Phone" } });
 assert.equal(r.j.status, "pending");
 assert.ok(await env.STUDIO.get("pending:niko@example.com"));
-assert.equal(env.STUDIO.ttl.get("pending:niko@example.com"), 30 * 24 * 3600, "a parked activation (maybe a non-buyer's email) expires");
+assert.equal(env.STUDIO.ttl.get("pending:niko@example.com"), 14 * 24 * 3600, "a parked activation (maybe a non-buyer's email) expires");
 
 // 2. sync from Gmail
 r = await call("/sync", { method: "POST", headers: { "X-Sync-Secret": "sync" }, body: { sales: [{ email: "niko@example.com", name: "Niko", order: ORDER, product: "Money Plan Studio", amount: "$29.00" }] } });
@@ -260,6 +260,22 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   r = await unlock("all@example.com", r.j.order.toLowerCase(), "a1", "autopilot"); assert.equal(r.status, "ok"); const aTok = r.token;
   for (const k of ["studio", "year", "autopilot"]) assert.equal((await get(aTok, k)).status, 200, k + " opens");
   assert.equal((await get(aTok, "enough")).status, 403, "Enough is not in the bundle");
+
+  // another Sevenflow product on the shared Stripe account is not a Lukas buyer and gets no Lukas email
+  r = await hook({ ...session("cs_test_other", "Pocket Expert Pro"), data: { object: { ...session("cs_test_other", "Pocket Expert Pro").data.object, customer_details: { email: "other@example.com" } } } });
+  assert.equal(r.j.ignored, "other_product");
+  assert.equal(await env.STUDIO.get("buyer:other@example.com"), null);
+}
+
+// hardening: a malformed token is a 401 (not a 500), errors leak no internals, activation is rate limited
+{
+  const res = await worker.fetch(new Request("https://x/content", { headers: { Authorization: "Bearer x.!!!" } }), env, {});
+  assert.equal(res.status, 401);
+  for (let i = 0; i < 10; i++) await call("/activate", { method: "POST", body: { email: "guess@example.com", order: "guess-0000-" + i, deviceId: "g" } });
+  r = await call("/activate", { method: "POST", body: { email: "guess@example.com", order: "guess-0000-x", deviceId: "g" } });
+  assert.equal(r.status, 429, "11th try within the hour slows down");
+  r = await call("/admin/team", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { team: "Short Oy", order: "AP-1", emails: "a@short.fi" } });
+  assert.equal(r.j.error, "bad_order", "team contract numbers must be long enough to type in the app");
 }
 
 // ---------- hardening: admin page XSS, token handling, rate limit, codes, mail confirmation ----------
@@ -350,11 +366,11 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   assert.equal(r.j.status, "pending");
   delete env.RATE_ACTIVATE_IP;
 
-  // A short team contract number accepted by the admin page also works in /activate.
-  r = await call("/admin/team", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { team: "Tiny Oy", order: "AP-1", emails: "t@tiny.fi", products: ["autopilot"] } });
+  // The shortest team contract number the admin page accepts (MIN_ORDER_LEN = 8) also works in /activate.
+  r = await call("/admin/team", { method: "POST", headers: { "X-Admin-Token": "admin" }, body: { team: "Tiny Oy", order: "AP-2026-", emails: "t@tiny.fi", products: ["autopilot"] } });
   assert.equal(r.j.ok, true);
-  r = await unlock("t@tiny.fi", "ap-1", "t1", "autopilot"); assert.equal(r.status, "ok", "4-character contract number unlocks");
-  r = await call("/activate", { method: "POST", body: { email: "t@tiny.fi", order: "ap", deviceId: "t2", product: "autopilot" } });
+  r = await unlock("t@tiny.fi", "ap-2026-", "t1", "autopilot"); assert.equal(r.status, "ok", "8-character contract number unlocks");
+  r = await call("/activate", { method: "POST", body: { email: "t@tiny.fi", order: "ap-2026", deviceId: "t2", product: "autopilot" } });
   assert.equal(r.j.error, "bad_order"); assert.ok(r.j.message);
 }
 {
