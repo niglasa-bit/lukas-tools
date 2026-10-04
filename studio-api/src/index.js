@@ -56,6 +56,8 @@ const DEFAULT_PRODUCTS = [
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const CODE_TTL = 15 * 60;       // seconds
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
+const PENDING_TTL = 14 * 24 * 3600;    // an unmatched activation is forgotten after two weeks
+const PURCHASE_MAIL_TTL = 7 * 24 * 3600; // outbox lifetime of an order-code mail (login codes keep CODE_TTL)
 
 export default {
   async fetch(request, env, ctx) {
@@ -69,7 +71,8 @@ export default {
       for (const [k, v] of Object.entries(cors)) res.headers.set(k, v);
       return res;
     } catch (e) {
-      return json({ error: "server_error", detail: String(e && e.message || e) }, 500, cors);
+      console.error(e && e.stack || e);
+      return json({ error: "server_error" }, 500, cors);
     }
   },
 };
@@ -102,9 +105,10 @@ async function activate(request, env) {
   const deviceId = String(b.deviceId || "").slice(0, 64);
   const deviceName = String(b.deviceName || "device").slice(0, 60);
   const product = productKey(b.product);
-  if (!isEmail(email)) return json({ error: "bad_email" }, 400);
-  if (order.length < 8) return json({ error: "bad_order" }, 400);
-  if (!deviceId) return json({ error: "bad_device" }, 400);
+  if (!isEmail(email)) return json({ error: "bad_email", message: "Check the email address: use the one you bought with." }, 400);
+  if (order.length < 8) return json({ error: "bad_order", message: "Check the order code: copy it whole from your purchase email (Order #)." }, 400);
+  if (!deviceId) return json({ error: "bad_device", message: "This browser blocks storage. Turn off private mode and try again." }, 400);
+  if (await limited(env, "act:" + email, 10)) return json({ error: "slow_down", message: "Too many tries for this email. Wait an hour and try again, or reply to your receipt email." }, 429);
 
   const buyer = await getBuyer(env, email);
   const ok = buyer && orderUnlocks(buyer, order, product, env);
@@ -113,7 +117,7 @@ async function activate(request, env) {
     // the admin page shows it with a one-click approve. Never reveal whether the email exists.
     const key = "pending:" + email;
     const prev = (await env.STUDIO.get(key, "json")) || { attempts: 0 };
-    await env.STUDIO.put(key, JSON.stringify({ email, order, product, deviceName, created: prev.created || now(), last: now(), attempts: (prev.attempts || 0) + 1 }));
+    await env.STUDIO.put(key, JSON.stringify({ email, order, product, deviceName, created: prev.created || now(), last: now(), attempts: (prev.attempts || 0) + 1 }), { expirationTtl: PENDING_TTL });
     return json({ status: "pending", message: "We couldn't match that order yet. New purchases take a few minutes to arrive. Try again shortly, or reply to your receipt email and Lukas will unlock it by hand." });
   }
 
@@ -128,7 +132,10 @@ async function activate(request, env) {
     return json({ status: "device_limit", max, message: `This purchase is already active on ${max} devices. Remove one under More → Devices on an active device, or reply to your receipt email.` });
   }
 
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  // A code sent less than a minute ago to the same device is still on its way: don't mail another one.
+  const prevCode = await env.STUDIO.get("code:" + email, "json");
+  if (prevCode && prevCode.deviceId === deviceId && prevCode.exp - CODE_TTL > now() - 60) return json({ status: "code_sent", message: "Check your email for a 6-digit code (valid 15 minutes)." });
+  const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
   await env.STUDIO.put("code:" + email, JSON.stringify({ code, deviceId, deviceName, exp: now() + CODE_TTL, tries: 0 }), { expirationTtl: CODE_TTL });
   await sendMail(env, {
     to: email,
@@ -143,13 +150,13 @@ async function verify(request, env) {
   const email = normEmail(b.email);
   const code = String(b.code || "").replace(/\D/g, "");
   const deviceId = String(b.deviceId || "").slice(0, 64);
-  if (!isEmail(email) || code.length !== 6 || !deviceId) return json({ error: "bad_request" }, 400);
+  if (!isEmail(email) || code.length !== 6 || !deviceId) return json({ error: "bad_request", message: "Type the 6-digit code from the email." }, 400);
 
   const key = "code:" + email;
   const rec = await env.STUDIO.get(key, "json");
   if (!rec || rec.exp < now()) return json({ error: "code_expired", message: "That code has expired. Request a new one." }, 400);
   if (rec.deviceId !== deviceId) return json({ error: "device_mismatch", message: "Request the code from the device you want to unlock." }, 400);
-  if (rec.code !== code) {
+  if (!secretOk(code, rec.code)) {
     rec.tries = (rec.tries || 0) + 1;
     if (rec.tries >= 5) { await env.STUDIO.delete(key); return json({ error: "too_many_tries", message: "Too many attempts. Request a new code." }, 400); }
     await env.STUDIO.put(key, JSON.stringify(rec), { expirationTtl: Math.max(60, rec.exp - now()) });
@@ -157,11 +164,11 @@ async function verify(request, env) {
   }
 
   const buyer = await getBuyer(env, email);
-  if (!buyer) return json({ error: "no_buyer" }, 400);
+  if (!buyer) return json({ error: "no_buyer", message: "We couldn't find that purchase any more. Reply to your receipt email and we'll sort it out." }, 400);
   const max = parseInt(env.MAX_DEVICES || "3", 10);
   buyer.devices = buyer.devices || [];
   if (!buyer.devices.find((d) => d.id === deviceId)) {
-    if (buyer.devices.length >= max) return json({ status: "device_limit", max }, 400);
+    if (buyer.devices.length >= max) return json({ status: "device_limit", max, message: `This purchase is already active on ${max} devices. Remove one under More → Devices on an active device.` }, 400);
     buyer.devices.push({ id: deviceId, name: rec.deviceName || "device", created: now() });
   }
   await putBuyer(env, buyer);
@@ -263,6 +270,8 @@ async function stripeWebhook(request, env) {
     const email = normEmail((o.customer_details && o.customer_details.email) || o.customer_email);
     if (!isEmail(email) || !o.id) return json({ ok: true, ignored: "no_email" });
     const product = await stripeProductName(env, o);
+    // The Stripe account is shared with other Sevenflow products: only Lukas products become buyers here.
+    if (!orderRule({ product }, productRules(env))) return json({ ok: true, ignored: "other_product" });
     const order = await orderCode(env, o.id);
     const result = await recordSale(env, {
       email, order, product,
@@ -276,7 +285,7 @@ async function stripeWebhook(request, env) {
     // Stripe retries a webhook until it gets a 2xx, so the purchase email goes out only for a new order.
     if (result !== "skipped") {
       const buyer = await getBuyer(env, email);
-      await sendMail(env, { to: email, subject: `Your ${product || "Lukas"} order code: ${order.toUpperCase()}`, html: purchaseMail(env, buyer && buyer.name, product, order) });
+      await sendMail(env, { to: email, subject: `Your ${product || "Lukas"} order code: ${order.toUpperCase()}`, html: purchaseMail(env, buyer && buyer.name, product, order), ttl: PURCHASE_MAIL_TTL });
     }
     return json({ ok: true, result });
   }
@@ -335,7 +344,7 @@ async function stripeSignatureOk(raw, header, secret) {
   const parts = String(header).split(",").map((x) => x.split("="));
   const t = (parts.find(([k]) => k === "t") || [])[1];
   const sigs = parts.filter(([k]) => k === "v1").map(([, v]) => v);
-  if (!t || !sigs.length || Math.abs(now() - parseInt(t, 10)) > 300) return false;
+  if (!t || !sigs.length || !(Math.abs(now() - parseInt(t, 10)) <= 300)) return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(t + "." + raw)));
   const hex = [...mac].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -377,7 +386,7 @@ async function admin(request, env, url, p) {
   if (!secretOk(token, env.ADMIN_TOKEN)) return json({ error: "forbidden" }, 403);
 
   if (p === "/admin" && request.method === "GET") {
-    if ((request.headers.get("Accept") || "").includes("text/html")) return new Response(ADMIN_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
+    if ((request.headers.get("Accept") || "").includes("text/html")) return new Response(ADMIN_HTML, { headers: { "content-type": "text/html; charset=utf-8", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY", "Cache-Control": "no-store" } });
     const buyers = [], pending = [];
     for (const k of (await env.STUDIO.list({ prefix: "buyer:" })).keys) { const b = await env.STUDIO.get(k.name, "json"); if (b) buyers.push({ ...b, products: entitlements(b, env) }); }
     for (const k of (await env.STUDIO.list({ prefix: "pending:" })).keys) { const b = await env.STUDIO.get(k.name, "json"); if (b) pending.push(b); }
@@ -429,7 +438,7 @@ async function addTeam(env, b) {
   const order = normOrder(b.order);
   const id = teamId(name);
   if (!id) return json({ error: "bad_team" }, 400);
-  if (order.length < 4) return json({ error: "bad_order" }, 400);
+  if (order.length < 8) return json({ error: "bad_order", message: "Use a contract number of at least 8 characters (the app asks for 8)." }, 400);
   const grants = (Array.isArray(b.products) ? b.products : ["autopilot"]).filter((k) => PRODUCT_INFO[k]);
   const until = b.until ? Math.floor(Date.parse(String(b.until) + "T23:59:59Z") / 1000) || 0 : 0;
   const emails = [...new Set(String(Array.isArray(b.emails) ? b.emails.join("\n") : b.emails || "").split(/[\s,;]+/).map(normEmail).filter(isEmail))];
@@ -554,7 +563,8 @@ function secretOk(given, expected) {
 
 // --- token: base64url(payload).base64url(hmac-sha256) ---
 async function hmacKey(env) {
-  return crypto.subtle.importKey("raw", new TextEncoder().encode(env.SIGNING_SECRET || ""), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+  if (!env.SIGNING_SECRET) throw new Error("SIGNING_SECRET is not set"); // never sign with an empty key
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(env.SIGNING_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 async function sign(env, payload) {
   const data = b64u(new TextEncoder().encode(JSON.stringify(payload)));
@@ -564,7 +574,8 @@ async function sign(env, payload) {
 async function verifyToken(env, token) {
   const [data, sig] = String(token).split(".");
   if (!data || !sig) return null;
-  const ok = await crypto.subtle.verify("HMAC", await hmacKey(env), unb64u(sig), new TextEncoder().encode(data));
+  let ok = false;
+  try { ok = await crypto.subtle.verify("HMAC", await hmacKey(env), unb64u(sig), new TextEncoder().encode(data)); } catch { return null; } // malformed base64
   if (!ok) return null;
   try { return JSON.parse(new TextDecoder().decode(unb64u(data))); } catch { return null; }
 }
@@ -572,16 +583,33 @@ function b64u(bytes) { let s = ""; for (const b of bytes) s += String.fromCharCo
 function unb64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; const bin = atob(s); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
 
 // --- mail: Apps Script webhook (instant, free, from the owner's Gmail) → Resend → outbox ---
-async function sendMail(env, mail) {
+// The Apps Script answers HTTP 200 even when Gmail refuses (quota, bad secret), so its JSON decides.
+// A network error falls through to the next route instead of failing the buyer's request.
+async function sendMail(env, { ttl, ...mail }) {
   if (env.MAIL_WEBHOOK_URL) {
-    const r = await fetch(env.MAIL_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ secret: env.SYNC_SECRET, ...mail }), redirect: "follow" });
-    if (r.ok) return;
+    try {
+      const r = await fetch(env.MAIL_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ secret: env.SYNC_SECRET, ...mail }), redirect: "follow" });
+      let j = null; try { j = JSON.parse(await r.text()); } catch {}
+      if (r.ok && !(j && j.error)) return;
+      console.error("mail webhook failed", r.status, j && j.error);
+    } catch (e) { console.error("mail webhook unreachable", e); }
   }
   if (env.RESEND_API_KEY && env.MAIL_FROM) {
-    const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: "Bearer " + env.RESEND_API_KEY }, body: JSON.stringify({ from: env.MAIL_FROM, to: [mail.to], subject: mail.subject, html: mail.html }) });
-    if (r.ok) return;
+    try {
+      const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: "Bearer " + env.RESEND_API_KEY }, body: JSON.stringify({ from: env.MAIL_FROM, to: [mail.to], subject: mail.subject, html: mail.html }) });
+      if (r.ok) return;
+      console.error("resend failed", r.status);
+    } catch (e) { console.error("resend unreachable", e); }
   }
-  await env.STUDIO.put("mail:" + crypto.randomUUID(), JSON.stringify({ ...mail, created: now() }), { expirationTtl: CODE_TTL });
+  await env.STUDIO.put("mail:" + crypto.randomUUID(), JSON.stringify({ ...mail, created: now() }), { expirationTtl: ttl || CODE_TTL });
+}
+
+// Rough per-key counter for an hour (KV is eventually consistent, so this slows guessing rather than counting exactly).
+async function limited(env, key, max) {
+  const k = "rl:" + key;
+  const n = parseInt((await env.STUDIO.get(k)) || "0", 10) + 1;
+  await env.STUDIO.put(k, String(n), { expirationTtl: 3600 });
+  return n > max;
 }
 
 function codeMail(name, code, deviceName, productName, team) {
@@ -627,12 +655,16 @@ button{font:inherit;border:1px solid #CFE6E1;background:#E6F3F0;border-radius:8p
 const T=new URLSearchParams(location.search).get("token"); const H={"content-type":"application/json","X-Admin-Token":T};
 async function load(){const r=await fetch("/admin",{headers:{"X-Admin-Token":T,"Accept":"application/json"}}); const d=await r.json(); if(d.error){document.body.innerHTML="<p>Forbidden</p>";return;}
 document.getElementById("meta").textContent="Products: "+(d.productMatch||"(none)")+" · mail mode: "+d.mailMode;
-const P=document.getElementById("pending"); P.querySelectorAll("tr+tr").forEach(e=>e.remove());
-for(const p of d.pending){const tr=P.insertRow(); tr.innerHTML="<td>"+esc(p.email)+"</td><td><code>"+esc(p.order)+"</code></td><td>"+esc(p.product||"studio")+"</td><td>"+(p.attempts||1)+"</td><td><button class=p onclick=\\"act('approve','"+esc(p.email)+"','"+esc(p.order)+"',null,'"+esc(p.product||"studio")+"')\\">Approve</button> <button onclick=\\"act('dismiss-pending','"+esc(p.email)+"')\\">Dismiss</button></td>";}
+ARGS.length=0; const P=document.getElementById("pending"); P.querySelectorAll("tr+tr").forEach(e=>e.remove());
+for(const p of d.pending){const tr=P.insertRow(); tr.innerHTML="<td>"+esc(p.email)+"</td><td><code>"+esc(p.order)+"</code></td><td>"+esc(p.product||"studio")+"</td><td>"+(p.attempts||1)+"</td><td>"+btn("approve","Approve",{email:p.email,order:p.order,product:p.product||"studio"},"p")+" "+btn("dismiss-pending","Dismiss",{email:p.email})+"</td>";}
 if(!d.pending.length){P.insertRow().innerHTML="<td colspan=5 class=muted>Nothing waiting.</td>";}
 const B=document.getElementById("buyers"); B.querySelectorAll("tr+tr").forEach(e=>e.remove());
-for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+")</b>":"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" <button onclick=\\"act('remove-device','"+esc(b.email)+"',null,'"+esc(x.id)+"')\\">×</button>").join("<br>")+"</td><td><button onclick=\\"act('reset-devices','"+esc(b.email)+"')\\">Reset devices</button> <button onclick=\\"if(confirm('Remove buyer? Use after a refund.'))act('revoke','"+esc(b.email)+"')\\">Revoke</button></td>";}
+for(const b of d.buyers){const tr=B.insertRow(); tr.innerHTML="<td>"+esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span></td><td>"+esc((b.products||[]).join(", ")||"nothing")+"</td><td>"+(b.orders||[]).map(o=>"<code>"+esc(o.order.slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+")</b>":"")).join("<br>")+"</td><td>"+(b.devices||[]).map(x=>esc(x.name)+" "+btn("remove-device","×",{email:b.email,deviceId:x.id})).join("<br>")+"</td><td>"+btn("reset-devices","Reset devices",{email:b.email})+" "+btn("revoke","Revoke",{email:b.email})+"</td>";}
 if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=5 class=muted>No buyers yet.</td>";}}
+// Row buttons carry their data in data-* attributes (never inside inline JS), so a typed email or order can't run script here.
+const ARGS=[]; function btn(a,label,args,cls){ARGS.push(args);return "<button"+(cls?" class="+cls:"")+" data-a=\\""+a+"\\" data-i=\\""+(ARGS.length-1)+"\\">"+esc(label)+"</button>";}
+document.addEventListener("click",e=>{const b=e.target.closest("button[data-a]"); if(!b)return; const a=b.dataset.a, x=ARGS[+b.dataset.i]||{};
+if(a==="revoke"&&!confirm("Remove buyer? Use after a refund."))return; act(a,x.email,x.order,x.deviceId,x.product);});
 async function act(a,email,order,deviceId,product){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify({email,order,deviceId,products:product?[product]:undefined})}); load();}
 async function approve(){await fetch("/admin/approve",{method:"POST",headers:H,body:JSON.stringify({email:aEmail.value,name:aName.value,order:aOrder.value,products:aProd.value.split(",")})}); aEmail.value=aName.value=aOrder.value=""; load();}
 async function team(){const r=await fetch("/admin/team",{method:"POST",headers:H,body:JSON.stringify({team:tName.value,order:tOrder.value,until:tUntil.value,products:[tProd.value],emails:tEmails.value})}); const j=await r.json(); tMsg.textContent=j.ok?(j.seats+" seats ("+j.added+" new)"):(j.error||"error"); if(j.ok) tEmails.value=""; load();}

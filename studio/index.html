@@ -13,7 +13,7 @@
 <style>
 :root{
   --bg:#F3FAF8; --surface:#FFFFFF; --surface2:#E6F3F0; --line:#CFE6E1;
-  --ink:#1F3A5F; --ink2:#3E5F7A; --muted:#5F8A99;
+  --ink:#1F3A5F; --ink2:#3E5F7A; --muted:#4D7886;
   --accent:#2A9D8F; --accent-ink:#FFFFFF; --accent-soft:#D6EFEA;
   --good:#2A9D8F; --bad:#E07A5F; --warn:#E9C46A;
   --radius:16px; --shadow:0 1px 2px rgba(31,58,95,.07),0 6px 20px rgba(31,58,95,.07);
@@ -95,7 +95,8 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 .steps i.on{background:var(--accent)}
 .stage{display:inline-block;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .stage.secure{background:#FDEBD0;color:#8A5A00}.stage.comfortable{background:var(--accent-soft);color:var(--accent)}.stage.rich{background:#E6E0F8;color:#4B3A8A}
-:root[data-theme="dark"] .stage.secure,:root:not([data-theme="light"]) .stage.secure{background:#4A3A1A;color:#F2D28C}
+:root[data-theme="dark"] .stage.secure{background:#4A3A1A;color:#F2D28C}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stage.secure{background:#4A3A1A;color:#F2D28C}}
 .list{list-style:none;margin:0;padding:0}
 .list li{padding:10px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:flex-start;font-size:14px}
 .list li:first-child{border-top:0}
@@ -128,6 +129,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
   .plan-sheet{position:relative;z-index:1}
   .plan-sheet .lic{position:fixed;bottom:8mm;right:10mm;font-size:10px;color:#666}
 }
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -153,7 +155,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     </div>
     <div class="card hidden" id="g-step2">
       <p class="ink2">Enter the 6-digit code we just emailed to <b id="g-email-echo"></b>.</p>
-      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••"></div>
+      <div class="field"><input type="text" id="g-code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" aria-label="6-digit code"></div>
       <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
@@ -240,7 +242,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     </div>
     <h2>History</h2>
     <div class="card"><ul class="list" id="su-list"></ul>
-      <div class="actions"><button class="btn sm" id="su-csv">⬇︎ CSV</button><button class="btn sm" id="su-backup">⬇︎ Backup</button><label class="btn sm" for="su-restore">⬆︎ Restore<input type="file" id="su-restore" accept="application/json" class="hidden"></label></div>
+      <div class="actions"><button class="btn sm" id="su-csv">⬇︎ CSV</button><button class="btn sm" id="su-backup">⬇︎ Backup</button><label class="btn sm" for="su-restore">⬆︎ Restore<input type="file" id="su-restore" accept="application/json" class="vh"></label></div>
     </div>
   </section>
 
@@ -292,7 +294,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card">
       <h3>Your data</h3>
       <p class="small ink2">Everything you type stays in this browser. Back it up before clearing the browser or switching phones.</p>
-      <div class="actions"><button class="btn sm" id="m-backup">⬇︎ Backup everything</button><label class="btn sm" for="m-restore">⬆︎ Restore<input type="file" id="m-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="m-wipe">Erase my data</button></div>
+      <div class="actions"><button class="btn sm" id="m-backup">⬇︎ Backup everything</button><label class="btn sm" for="m-restore">⬆︎ Restore<input type="file" id="m-restore" accept="application/json" class="vh"></label><button class="btn sm ghost" id="m-wipe">Erase my data</button></div>
     </div>
     <div class="card">
       <h3>Lessons</h3>
@@ -318,14 +320,16 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 "use strict";
 var $=function(i){return document.getElementById(i);};
 var KEY="lukas-studio-v1";
-var API=(function(){ try{ var o=localStorage.getItem(KEY+"-api"); if(o) return o; }catch(e){}
-  var q=new URLSearchParams(location.search).get("api"); if(q){ try{localStorage.setItem(KEY+"-api",q);}catch(e){} return q; }
+// ?api= is a developer override for a local Worker only: a link must never send a buyer's login to another server.
+var API=(function(){ var dev=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
+  try{ var o=localStorage.getItem(KEY+"-api"); if(o&&dev.test(o)) return o; if(o) localStorage.removeItem(KEY+"-api"); }catch(e){}
+  var q=new URLSearchParams(location.search).get("api"); if(q&&dev.test(q)){ try{localStorage.setItem(KEY+"-api",q);}catch(e){} return q; }
   var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
 
 // ---------- state ----------
 var S=load(); var C=null; // C = premium content from /content
-function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
-  d.plan=d.plan||{}; d.sunday=d.sunday||[]; d.buy=d.buy||{cool:[],hist:[]}; d.auth=d.auth||{}; return d; }
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){} if(!d||typeof d!=="object") d={};
+  d.plan=d.plan||{}; if(!Array.isArray(d.sunday)) d.sunday=[]; if(!d.buy||typeof d.buy!=="object") d.buy={}; if(!Array.isArray(d.buy.cool)) d.buy.cool=[]; if(!Array.isArray(d.buy.hist)) d.buy.hist=[]; d.auth=d.auth||{}; return d; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 try{ var t=localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
 $("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
@@ -374,7 +378,7 @@ function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPho
 
 function enter(){
   api("/content").then(function(r){
-    if(r.error){ S.auth.token=null; save(); showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":"Please sign in again."); return; }
+    if(r.error){ var signedOut=/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error); if(signedOut){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":signedOut?"Please sign in again.":"The server had a hiccup. Reopen the app in a minute."); return; }
     C=r.content; if(r.token){ S.auth.token=r.token; } S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; save();
     $("gate").classList.remove("on"); $("tabs").classList.remove("hidden");
     renderAll(); show(S.ui||"plan");
@@ -434,7 +438,7 @@ function renderPlan(){
   if(st.after) st.after();
   $("p-prev").style.visibility=step===0?"hidden":"visible"; $("p-next").textContent= step===STEPS.length-1 ? "Build my plan →" : "Next →";
 }
-$("p-next").addEventListener("click",function(){ if(step===1 && num("income")===0) return toast("Add your monthly income first."); if(step<STEPS.length-1){ step++; S.plan._step=step; save(); renderPlan(); } else { S.plan._done=true; S.plan.builtAt=new Date().toISOString(); save(); renderPlan(); toast("Your plan is ready."); } });
+$("p-next").addEventListener("click",function(){ if(step===1 && num("income")===0) return toast("Add your monthly income first."); if(STEPS[step].k==="essentials" && ess()===0) return toast("Add at least your housing or food cost. A plan with zero essentials would say you're done.");  if(step<STEPS.length-1){ step++; S.plan._step=step; save(); renderPlan(); } else { S.plan._done=true; S.plan.builtAt=new Date().toISOString(); save(); renderPlan(); toast("Your plan is ready."); } });
 $("p-prev").addEventListener("click",function(){ if(step>0){ step--; S.plan._step=step; save(); renderPlan(); } });
 $("s-edit").addEventListener("click",function(){ S.plan._done=false; step=1; S.plan._step=1; save(); renderPlan(); });
 $("s-redo").addEventListener("click",function(){ if(!confirm("Clear all plan answers?")) return; S.plan={cur:S.plan.cur}; step=0; save(); renderPlan(); });
@@ -454,14 +458,14 @@ function renderSheet(){
   if(r.debt>0) tl.push(["Debt gone (all of the transfer goes there first)", r.monthsDebt?months(r.monthsDebt):"set a transfer"]);
   tl.push(["Secure: 3 months of essentials ("+money(r.secureT)+")", r.buffer>=r.secureT?"✓ done":(r.monthsSecure!=null?months(r.monthsSecure+r.monthsDebt):"set a transfer")]);
   tl.push(["Comfortable: 6 months ("+money(r.comfT)+") + 15% investing", r.buffer>=r.comfT&&r.auto>=r.income*0.15?"✓ done":(r.monthsComf!=null?months(r.monthsComf+r.monthsDebt):"set a transfer")]);
-  tl.push(["Rich: 25× yearly spending ("+money(r.fi)+") at 7%/yr", r.yearsFI===0?"✓ done":(r.yearsFI!=null?(r.yearsFI<1?"under a year":Math.round(r.yearsFI)+" years"):"set a transfer")]);
+  tl.push(["Rich: 25× yearly spending ("+money(r.fi)+") at 7%/yr", r.yearsFI===0?"✓ done":(r.yearsFI!=null?(r.yearsFI<1?"under a year":Math.round(r.yearsFI)+(Math.round(r.yearsFI)===1?" year":" years")):"set a transfer")]);
   $("s-timeline").innerHTML=tl.map(function(w){ return "<li><span>"+esc(w[0])+"</span><b>"+esc(w[1])+"</b></li>"; }).join("");
   $("s-autonote").textContent="Transfer "+money(r.auto)+" on payday, automatically. "+(r.auto<r.suggested?"Lukas would nudge it toward "+money(r.suggested)+" when you can.":"");
   var pool=C.oneThingToday[r.stage]; $("s-one").textContent=pool[(new Date().getDate())%pool.length];
   $("s-source").textContent="Sources: "+st.source; $("s-disc").textContent=C.plan.disclaimer;
   var lic="Licensed to "+(S.auth.name||who)+" · "+(S.auth.email||""); $("s-lic").textContent=lic; $("wm-text").textContent=lic;
 }
-function months(m){ return m<=0?"now":m<12?m+" months":(m/12).toFixed(1).replace(".0","")+" years"; }
+function months(m){ return m<=0?"now":m<12?m+(m===1?" month":" months"):(m/12).toFixed(1).replace(".0","")+(m===12?" year":" years"); }
 
 // ================= SUNDAY =================
 function renderSunday(){
@@ -484,17 +488,19 @@ function renderSunday(){
   $("su-list").innerHTML= list.length? list.slice(0,30).map(function(e){ return "<li><div><b>"+esc(e.d)+"</b> · "+money(+e.buffer+ +e.invested)+(e.wants?' · <span class="muted">wants '+money(e.wants)+"</span>":"")+(e.win?'<br><span class="small muted">🏆 '+esc(e.win)+"</span>":"")+(e.next?'<br><span class="small muted">→ '+esc(e.next)+"</span>":"")+'</div><button class="btn sm ghost" data-del="'+esc(e.d)+'" aria-label="Delete">×</button></li>'; }).join("") : '<li class="muted">No check-ins yet. The first one is the hardest. It takes two minutes.</li>';
   $("su-list").querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ S.sunday=S.sunday.filter(function(e){ return e.d!==b.dataset.del; }); save(); renderSunday(); }); });
 }
-function weekKey(d){ d=new Date(d); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return d.toISOString().slice(0,10); }
+// Dates are the buyer's local calendar days (UTC strings shifted weeks for anyone west of Greenwich).
+function ymdLocal(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function weekKey(d){ d=typeof d==="string"?new Date(d+"T12:00:00"):new Date(d); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return ymdLocal(d); }
 function streak(list){ if(!list.length) return 0; var wk=weekKey(new Date()), s=0, keys={}; list.forEach(function(e){ keys[weekKey(e.d)]=1; });
-  var d=new Date(wk); if(!keys[wk]){ d.setDate(d.getDate()-7); if(!keys[d.toISOString().slice(0,10)]) return 0; }
-  while(keys[d.toISOString().slice(0,10)]){ s++; d.setDate(d.getDate()-7); } return s; }
+  var d=new Date(wk+"T12:00:00"); if(!keys[wk]){ d.setDate(d.getDate()-7); if(!keys[ymdLocal(d)]) return 0; }
+  while(keys[ymdLocal(d)]){ s++; d.setDate(d.getDate()-7); } return s; }
 // Fill an input from the plan unless the user has typed something else since the last fill.
 function prefill(id,v){ var el=$(id); v=v>0?String(v):""; if(el.value===""||el.value===el.dataset.pre) el.value=v; el.dataset.pre=v; }
 function spark(vals){ var svg=$("su-spark"); if(vals.length<2){ svg.innerHTML=""; return; } var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), rg=(mx-mn)||1;
   var pts=vals.map(function(v,i){ return [i/(vals.length-1)*320, 60-(v-mn)/rg*52+2]; });
   svg.innerHTML='<polyline fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ")+'"/>'; }
 $("su-save").addEventListener("click",function(){
-  var d=new Date().toISOString().slice(0,10);
+  var d=ymdLocal(new Date());
   var e={d:d,buffer:+$("su-buffer").value||0,invested:+$("su-invested").value||0,wants:+$("su-wants").value||0,win:$("su-win").value.trim(),next:$("su-next").value.trim()};
   S.sunday=S.sunday.filter(function(x){ return x.d!==d; }); S.sunday.push(e);
   S.plan.buffer=e.buffer; S.plan.invested=e.invested; save();
@@ -505,7 +511,7 @@ $("su-csv").addEventListener("click",function(){ var rows=[["date","buffer","inv
 function q(s){ return '"'+String(s||"").replace(/"/g,'""')+'"'; }
 $("su-backup").addEventListener("click",backup); $("m-backup").addEventListener("click",backup);
 function backup(){ var d=JSON.parse(JSON.stringify(S)); delete d.auth; download("money-plan-studio-backup.json",JSON.stringify(d,null,2),"application/json"); }
-function restore(file){ var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.plan) S.plan=d.plan; if(d.sunday) S.sunday=d.sunday; if(d.buy) S.buy=d.buy; save(); renderAll(); toast("Restored."); }catch(e){ toast("That file didn't look right."); } }; rd.readAsText(file); }
+function restore(file){ var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d||typeof d!=="object") throw 0; if(d.plan&&typeof d.plan==="object") S.plan=d.plan; if(Array.isArray(d.sunday)) S.sunday=d.sunday; if(d.buy&&typeof d.buy==="object") S.buy={cool:Array.isArray(d.buy.cool)?d.buy.cool:[],hist:Array.isArray(d.buy.hist)?d.buy.hist:[]}; save(); renderAll(); toast("Restored."); }catch(e){ toast("That file didn't look right."); } }; rd.readAsText(file); }
 $("su-restore").addEventListener("change",function(){ if(this.files[0]) restore(this.files[0]); this.value=""; });
 $("m-restore").addEventListener("change",function(){ if(this.files[0]) restore(this.files[0]); this.value=""; });
 

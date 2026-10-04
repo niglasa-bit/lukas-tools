@@ -18,7 +18,7 @@
 @font-face{font-family:Inter;font-weight:700;font-display:swap;src:url(fonts/inter-700.woff2) format("woff2")}
 :root{
   --bg:#FBF8F2; --surface:#FFFFFF; --surface2:#F3EEE4; --line:#E4DED2;
-  --ink:#12303A; --ink2:#3E5F7A; --muted:#6F8A92;
+  --ink:#12303A; --ink2:#3E5F7A; --muted:#5A747C;
   --accent:#2A9D8F; --accent-ink:#FFFFFF; --accent-soft:#DCEFEA;
   --sand:#E9C46A; --sand-soft:#F6EBCB; --sand-ink:#7A5C14; --coral:#E07A5F; --coral-soft:#F8E0D8;
   --hero:#12303A; --hero-ink:#EAF6F4; --hero-muted:#8FB5BB;
@@ -214,6 +214,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 .sheet .ft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:7pt;color:#7A949C}
 .sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
 .sheet .wm span{transform:rotate(-28deg);font-size:22pt;font-weight:800;letter-spacing:.12em;color:rgba(18,48,58,.035);white-space:nowrap}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -357,7 +358,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card" style="margin-top:12px">
       <h3>Your data</h3>
       <p class="small ink2">Your audit, recipe progress and saved fields stay in this browser. Back them up before clearing the browser or switching devices.</p>
-      <div class="actions"><button class="btn sm" id="o-backup">⬇︎ Backup</button><label class="btn sm" for="o-restore">⬆︎ Restore<input type="file" id="o-restore" accept="application/json" class="hidden"></label><button class="btn sm ghost" id="o-wipe">Erase my data</button></div>
+      <div class="actions"><button class="btn sm" id="o-backup">⬇︎ Backup</button><label class="btn sm" for="o-restore">⬆︎ Restore<input type="file" id="o-restore" accept="application/json" class="vh"></label><button class="btn sm ghost" id="o-wipe">Erase my data</button></div>
     </div>
     <h2>Sources</h2>
     <div class="card"><ul class="rules" id="o-sources"></ul></div>
@@ -383,13 +384,15 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 "use strict";
 var $=function(i){return document.getElementById(i);};
 var KEY="lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
-var API=(function(){ try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o) return o; }catch(e){}
-  var q=new URLSearchParams(location.search).get("api"); if(q){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
+// ?api= is a developer override for a local Worker only: a link must never send a buyer's login to another server.
+var API=(function(){ var dev=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/;
+  try{ var o=localStorage.getItem(STUDIO_KEY+"-api"); if(o&&dev.test(o)) return o; if(o) localStorage.removeItem(STUDIO_KEY+"-api"); }catch(e){}
+  var q=new URLSearchParams(location.search).get("api"); if(q&&dev.test(q)){ try{localStorage.setItem(STUDIO_KEY+"-api",q);}catch(e){} return q; }
   var m=document.querySelector('meta[name="studio-api"]'); return m?m.content.replace(/\/+$/,""):""; })();
 
 // ---------- state ----------
 var S=load(), C=null; // C = premium content from /content?product=autopilot
-function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){} if(!d||typeof d!=="object") d={};
   d.auth=d.auth||{}; d.tasks=d.tasks||null; d.tracks=d.tracks||null; d.rec=d.rec||{}; d.lessons=d.lessons||{}; d.fills=d.fills||{}; d.f=d.f||{}; return d; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 // The other Lukas apps live on the same site. Sharing their device id keeps one phone = one device slot,
@@ -448,7 +451,7 @@ function enter(token){
       showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
       $("g-owned-msg").textContent="This device already has another Lukas tool. The Autopilot Workbook is its own purchase. If you just bought it, give it a few minutes and reopen this page.";
       return; }
-    if(r.error){ if(!token){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
+    if(r.error){ if(!token&&/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error)){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
     C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
     S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; S.auth.team=r.team||""; save();
     $("gate").classList.remove("on"); $("tabs").classList.remove("hidden");
@@ -633,7 +636,9 @@ function printSheet(html){ $("print").innerHTML=html; var go=function(){ window.
 function mapHTML(){ var who=S.auth.name||S.auth.email||"", cost=activeTasks().reduce(function(s,t){ return s+taskHours(t); },0), back=hoursBack();
   var running=C.recipes.filter(function(r){ return st(r.id)==="run"; }), lic="Licensed to "+(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"")+(S.auth.team?" · "+S.auth.team:"");
   var top=topTasks().map(function(t,i){ var r=bestRecipe(t); return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(t.name)+'<small>'+esc(C.tracks[r.track].title+" · "+r.title)+'</small></td><td class="s">'+esc(LABEL[st(r.id)])+'</td><td class="h">'+hrs(taskHours(t))+' h / yr</td></tr>'; }).join("");
-  var run=running.map(function(r){ return '<tr><td class="n">✓</td><td>'+esc(r.title)+'<small>'+esc(C.tracks[r.track].title)+'</small></td><td class="s"></td><td class="h">'+saves(r.id)+' min / wk</td></tr>'; }).join("")||'<tr><td></td><td style="color:#7A949C">Nothing running yet. Number 1 above is the place to start.</td><td></td><td></td></tr>';
+  // The map is one A4 page: show the 6 that save the most and count the rest.
+  var MAXRUN=6, shown=running.slice().sort(function(a,b){ return saves(b.id)-saves(a.id); }).slice(0,MAXRUN);
+  var run=shown.map(function(r){ return '<tr><td class="n">✓</td><td>'+esc(r.title)+'<small>'+esc(C.tracks[r.track].title)+'</small></td><td class="s"></td><td class="h">'+saves(r.id)+' min / wk</td></tr>'; }).join("")+(running.length>MAXRUN?'<tr><td></td><td style="color:#7A949C">+ '+(running.length-MAXRUN)+' more running, listed in the app</td><td></td><td></td></tr>':'')||'<tr><td></td><td style="color:#7A949C">Nothing running yet. Number 1 above is the place to start.</td><td></td><td></td></tr>';
   return '<div class="sheet"><div class="wm"><span>LICENSED TO '+esc(String(who).toUpperCase())+'</span></div><div class="pg"><div class="tp"><span>The Autopilot Workbook</span><span>'+esc(S.auth.team?"for "+S.auth.team:"Lukas · The Systemized Life")+'</span></div>'+
     '<h1>My autopilot<br><em>map.</em></h1><p class="sub">'+esc(who?who.split(" ")[0]+"'s":"My")+' boring tasks, priced and handed to systems. Printed '+esc(new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}))+'.</p>'+
     '<div class="mt"><div><small>Repeating work</small><b>'+hrs(cost)+' h</b>a year</div><div class="a"><small>Hours back</small><b>'+hrs(back)+' h</b>a year so far</div><div><small>Running</small><b>'+running.length+'</b>autopilots</div></div>'+

@@ -14,6 +14,7 @@ var S = window.SHOP, box = document.getElementById("box");
 var id = new URLSearchParams(location.search).get("session_id") || "";
 function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 var tries = 0;
+function late(){ box.innerHTML = "<p>Your payment went through, but the order is taking longer than usual. Your order code will arrive by email in a few minutes.</p>"; }
 function poll(){
   if (!/^cs_(test|live)_/.test(id)) { box.innerHTML = "<p>No order found in this link. Your order code is in the purchase email.</p>"; return; }
   fetch(S.api.replace(/\/+$/,"") + "/order?session_id=" + encodeURIComponent(id)).then(function(r){return r.json();}).then(function(j){
@@ -21,9 +22,9 @@ function poll(){
       var apps = (j.apps||[]).map(function(a){return "<p><a class='btn' href='../"+esc(a.url.split("/").slice(-2).join("/"))+"'>Open "+esc(a.name)+"</a></p>";}).join("");
       box.innerHTML = "<p>Your order code for <b>"+esc(j.product)+"</b>:</p><div class='code'>"+esc(j.order)+"</div>"+apps+
         "<p class='small'>In the app, enter the email you bought with ("+esc(j.email)+") and this code. We'll email you a 6-digit code to confirm.</p>";
-    } else if (++tries < 30) setTimeout(poll, 2000);
-    else box.innerHTML = "<p>Your payment went through, but the order is taking longer than usual. Your order code will arrive by email in a few minutes.</p>";
-  }).catch(function(){ if (++tries < 30) setTimeout(poll, 3000); });
+    } else if (j.status === "waiting" && ++tries < 30) setTimeout(poll, 2000);
+    else late();
+  }).catch(function(){ if (++tries < 30) setTimeout(poll, 3000); else late(); });
 }
 poll();
 </script></body></html>
