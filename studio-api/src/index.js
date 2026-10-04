@@ -44,6 +44,7 @@ const PRODUCT_INFO = {
 // Override with the PRODUCTS var (same JSON shape). Without it, the old single
 // PRODUCT_MATCH keeps working and unlocks the Studio only.
 const DEFAULT_PRODUCTS = [
+  { match: "all-access", grants: ["studio", "year", "autopilot"] },
   { match: "autopilot workbook", grants: ["autopilot"] },
   { match: "enough habit", grants: ["enough"] },
   { match: "systemized year upgrade", grants: ["year"], requires: "studio" },
