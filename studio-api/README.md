@@ -69,8 +69,8 @@ anything else the buyer owns keeps working. Codes and purchase emails go out thr
    | `Money Plan Studio` | the Studio |
    | `The Systemized Year` | the Year app |
    | `Systemized Year Upgrade` (hidden, for Studio buyers) | the Year app, only if the same email already owns the Studio |
-   | `Systemized Life Pass` | both |
-   | `all-access` (Stripe metadata, the $49 bundle) | Studio, Year and Autopilot |
+   | `All-Access` (Beacons name or Stripe metadata, the $49 bundle) | Studio, Year and Autopilot |
+   | `Systemized Life Pass` (retired 5 Oct 2026, not sold; rule kept for safety) | Studio and Year |
    | `The Autopilot Workbook` | the Autopilot app (`autopilot/`) |
    | `The Enough Habit` | the Enough Habit app (`enough/`) |
 3. In the product's thank-you text, repeat the link and “use the email you bought with + your Order #”.
