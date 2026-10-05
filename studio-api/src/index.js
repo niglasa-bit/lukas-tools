@@ -63,7 +63,7 @@ const RATE_WINDOW = 3600;       // /activate limits are per hour: RATE_ACTIVATE_
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin") || "";
     const cors = corsHeaders(env, origin);
@@ -657,7 +657,7 @@ function codeMail(name, code, deviceName, productName, team) {
 function purchaseMail(env, name, product, order) {
   const hi = name ? `Hi ${escapeHtml(String(name).split(" ")[0])},` : "Hi,";
   const r = orderRule({ product }, productRules(env));
-  const apps = r ? r.grants.map((k) => `<p><a href="${appUrl(env, k)}" style="display:inline-block;background:#2A9D8F;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:700">Open ${escapeHtml(PRODUCT_INFO[k].name)}</a></p>`).join("") : "";
+  const apps = r ? r.grants.filter((k) => PRODUCT_INFO[k]).map((k) => `<p><a href="${appUrl(env, k)}" style="display:inline-block;background:#2A9D8F;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:700">Open ${escapeHtml(PRODUCT_INFO[k].name)}</a></p>`).join("") : "";
   return `<div style="font:16px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1F3A5F;max-width:480px">
   <p>${hi}</p>
   <p>Thank you for buying <b>${escapeHtml(product || "a Lukas product")}</b>. Your order code:</p>

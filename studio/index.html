@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Money Plan Studio</title>
 <meta name="description" content="Your whole money plan on one page, a 10-minute Sunday check-in, and a price-tag reader for every purchase. By Lukas · The Systemized Life.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="The Systemized Life"><meta property="og:title" content="Money Plan Studio"><meta property="og:description" content="Your whole money plan on one page, a 10-minute Sunday check-in, and a price-tag reader for every purchase. By Lukas · The Systemized Life."><meta property="og:image" content="https://niglasa-bit.github.io/lukas-tools/studio/icon-512.png"><meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#2A9D8F">
 <meta name="studio-api" content="https://lukas-studio-api.lukas-systemized.workers.dev">
 <link rel="manifest" href="manifest.webmanifest">
@@ -159,7 +160,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
       <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
-    <footer>Your money numbers never leave this device; only your email and order number are checked.<br><a href="../links/">The Systemized Life</a></footer>
+    <footer>Your money numbers never leave this device; only your email and order number are checked.<br>Don't have it yet? <a href="../shop/">See it in the shop</a> · <a href="../links/">The Systemized Life</a></footer>
   </section>
 
   <!-- ===================== PLAN ===================== -->
@@ -380,7 +381,7 @@ function guessDevice(){ var u=navigator.userAgent; return /iPhone/.test(u)?"iPho
 
 function enter(){
   api("/content").then(function(r){
-    if(r.error){ var signedOut=/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error); if(signedOut){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":signedOut?"Please sign in again.":"The server had a hiccup. Reopen the app in a minute."); return; }
+    if(r.error){ var signedOut=/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error); if(signedOut){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This purchase is no longer active.":r.error==="not_owned"?"This email's purchase doesn't include Money Plan Studio (or it was refunded). Reply to your purchase email if that's wrong.":signedOut?"Please sign in again.":"The server had a hiccup. Reopen the app in a minute."); return; }
     C=r.content; if(r.token){ S.auth.token=r.token; } S.auth.name=r.name; S.auth.email=r.email; S.auth.devices=r.devices; S.auth.max=r.maxDevices; save();
     $("gate").classList.remove("on"); $("tabs").classList.remove("hidden");
     renderAll(); show(S.ui||"plan");
