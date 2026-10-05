@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node test/api.test.mjs"
+    "test": "node test/api.test.mjs",
+    "stripe-setup": "node scripts/stripe-setup.mjs"
   },
   "devDependencies": {
     "wrangler": "^4"
