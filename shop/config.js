@@ -4,7 +4,7 @@
 // confirmation page must redirect to  <this site>/shop/thanks.html?session_id={CHECKOUT_SESSION_ID}
 window.SHOP = {
   api: "https://lukas-studio-api.lukas-systemized.workers.dev",
-  seller: "Sevenflow", // add "Oy" and the Business ID once registered, see legal.html
+  seller: "Sevenflowlabs Oy", // Business ID 3660293-5 (registration pending), see legal.html
   products: [
     { name: "All-Access", featured: true, emoji: "🗝️", price: "$49", paymentLink: "",
       line: "Money Plan Studio, The Systemized Year and The Autopilot Workbook in one purchase. One-time payment, the same 3 devices for all three." },

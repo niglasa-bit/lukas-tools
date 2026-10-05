@@ -19,8 +19,8 @@ ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,h
 # Where the apps live; links in the purchase email and on the thank-you page.
 # Uncomment once thesystemizedlife.com serves this repo (until then the GitHub Pages address is used).
 # APP_BASE = "https://thesystemizedlife.com"
-# One line under the purchase email, e.g. "Sold via Stripe for Sevenflow Oy, Business ID 1234567-8".
-# SELLER = ""
+# One line under the purchase email.
+SELLER = "Sold via Stripe for Sevenflowlabs Oy, Business ID 3660293-5"
 # /activate limits per hour (defaults 60 per IP, 10 per email):
 # RATE_ACTIVATE_IP = "60"
 # RATE_ACTIVATE_EMAIL = "10"
