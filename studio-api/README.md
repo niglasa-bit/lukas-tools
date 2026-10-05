@@ -40,6 +40,8 @@ Stripe Checkout through Payment Links, on the company account, with Managed Paym
 merchant of record and charges each country's VAT / sales tax). The Gmail/Beacons path keeps working
 alongside, so older Beacons orders still unlock.
 
+**Fast path:** `STRIPE_SECRET_KEY=sk_test_… npm run stripe-setup -- --apply --write-config --webhook` creates steps 1–3 in one go (products, prices, Payment Links with metadata, redirect and the withdrawal consent, and the webhook endpoint), prints the `whsec_…` secret and writes the links into `shop/config.js`. Without `--apply` it only prints the plan. Default prices: apps $19, All-Access $49 (`--prices "Money Plan Studio=19,…"`); add `--site https://thesystemizedlife.com` once the domain serves the shop. Re-running reuses what exists. Before it: Managed Payments on and Settings → Public details → Terms of service URL (`<site>/shop/legal.html`), which the consent checkbox needs. Run it once in test mode, then with `sk_live_…`.
+
 1. Stripe → Products: one product per app, one-time price. The company account is shared with other Sevenflow products, so name them with the brand, e.g. `Lukas · Money Plan Studio`. The lock reads `metadata.product` (step 2), and the fallback name match still works with the prefix.
 2. Stripe → Payment Links, one per product:
    - **Metadata**: `product` = the exact name from the table below (e.g. `Money Plan Studio`). This decides what the order unlocks.
