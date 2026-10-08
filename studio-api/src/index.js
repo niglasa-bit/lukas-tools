@@ -573,7 +573,8 @@ async function getBuyer(env, email) { return env.STUDIO.get("buyer:" + email, "j
 async function putBuyer(env, buyer) { return env.STUDIO.put("buyer:" + buyer.email, JSON.stringify(buyer)); }
 
 function normEmail(s) { return String(s || "").trim().toLowerCase().slice(0, 120); }
-function normOrder(s) { return String(s || "").trim().toLowerCase().replace(/^order\s*#?:?\s*/i, "").slice(0, 80); }
+// Buyers paste the code with whatever sits in front of it in the receipt: "Order #: x", "#: x", "# x".
+function normOrder(s) { return String(s || "").trim().toLowerCase().replace(/^(?:order)?\s*#?\s*:?\s*/i, "").slice(0, 80); }
 function isEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 function now() { return Math.floor(Date.now() / 1000); }
 async function body(request) { try { return await request.json(); } catch { return {}; } }

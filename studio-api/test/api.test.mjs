@@ -37,6 +37,9 @@ assert.equal(r.j.status, "pending");
 // 4. real buyer → code sent (to outbox, since no mail webhook), then verify
 r = await call("/activate", { method: "POST", body: { email: "niko@example.com", order: "Order #: " + ORDER.toUpperCase(), deviceId: "dev1", deviceName: "Phone" } });
 assert.equal(r.j.status, "code_sent");
+// the same order pasted as "# <code>" (copied with the hash from the receipt) matches too
+r = await call("/activate", { method: "POST", body: { email: "niko@example.com", order: "# " + ORDER, deviceId: "dev1", deviceName: "Phone" } });
+assert.equal(r.j.status, "code_sent");
 let out = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails;
 assert.equal(out.length, 1); const code = out[0].subject.match(/\d{6}/)[0];
 r = await call("/verify", { method: "POST", body: { email: "niko@example.com", code: "000000", deviceId: "dev1" } });
