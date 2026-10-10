@@ -9,7 +9,7 @@
 //   --write-config   put the Payment Link URLs and price labels into ../shop/config.js
 //   --webhook        create the /stripe-webhook endpoint (prints its whsec_ secret once:
 //                    npx wrangler secret put STRIPE_WEBHOOK_SECRET)
-//   --prices "Money Plan Studio=19,The Systemized Year=19,The Autopilot Workbook=19,All-Access=49"   (USD)
+//   --prices "Money Plan Studio=49,The Systemized Year=59,The Autopilot Workbook=39,All-Access=99"   (USD)
 //   --site https://thesystemizedlife.com      where shop/thanks.html lives (default: GitHub Pages)
 //   --api  https://lukas-studio-api....dev    the Worker (default: api in shop/config.js)
 //
@@ -40,7 +40,7 @@ const configText = readFileSync(CONFIG, "utf8");
 const SITE = opt("--site", "https://niglasa-bit.github.io/lukas-tools").replace(/\/$/, "");
 const API = opt("--api", (configText.match(/api:\s*"([^"]+)"/) || [])[1] || "").replace(/\/$/, "");
 const PRICES = Object.fromEntries(
-  opt("--prices", "Money Plan Studio=19,The Systemized Year=19,The Autopilot Workbook=19,All-Access=49")
+  opt("--prices", "Money Plan Studio=49,The Systemized Year=59,The Autopilot Workbook=39,All-Access=99")
     .split(",").map((s) => s.split("=").map((x) => x.trim())).filter(([n, v]) => n && v)
 );
 

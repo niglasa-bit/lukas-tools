@@ -40,7 +40,7 @@ Stripe Checkout through Payment Links, on the company account, with Managed Paym
 merchant of record and charges each country's VAT / sales tax). The Gmail/Beacons path keeps working
 alongside, so older Beacons orders still unlock.
 
-**Fast path:** `STRIPE_SECRET_KEY=sk_test_… npm run stripe-setup -- --apply --write-config --webhook` creates steps 1–3 in one go (products, prices, Payment Links with metadata, redirect and the withdrawal consent, and the webhook endpoint), prints the `whsec_…` secret and writes the links into `shop/config.js`. Without `--apply` it only prints the plan. Default prices: apps $19, All-Access $49 (`--prices "Money Plan Studio=19,…"`); add `--site https://thesystemizedlife.com` once the domain serves the shop. Re-running reuses what exists. Before it: Managed Payments on and Settings → Public details → Terms of service URL (`<site>/shop/legal.html`), which the consent checkbox needs. Run it once in test mode, then with `sk_live_…`.
+**Fast path:** `STRIPE_SECRET_KEY=sk_test_… npm run stripe-setup -- --apply --write-config --webhook` creates steps 1–3 in one go (products, prices, Payment Links with metadata, redirect and the withdrawal consent, and the webhook endpoint), prints the `whsec_…` secret and writes the links into `shop/config.js`. Without `--apply` it only prints the plan. Default prices (ladder 10.10.2026): Studio $49, Year $59, Autopilot $39, All-Access $99 (`--prices "Money Plan Studio=19,…"`); add `--site https://thesystemizedlife.com` once the domain serves the shop. Re-running reuses what exists. Before it: Managed Payments on and Settings → Public details → Terms of service URL (`<site>/shop/legal.html`), which the consent checkbox needs. Run it once in test mode, then with `sk_live_…`.
 
 1. Stripe → Products: one product per app, one-time price. The company account is shared with other Sevenflow products, so name them with the brand, e.g. `Lukas · Money Plan Studio`. The lock reads `metadata.product` (step 2), and the fallback name match still works with the prefix.
 2. Stripe → Payment Links, one per product:
@@ -71,7 +71,7 @@ anything else the buyer owns keeps working. Codes and purchase emails go out thr
    | `Money Plan Studio` | the Studio |
    | `The Systemized Year` | the Year app |
    | `Systemized Year Upgrade` (hidden, for Studio buyers) | the Year app, only if the same email already owns the Studio |
-   | `All-Access` (Beacons name or Stripe metadata, the $49 bundle) | Studio, Year and Autopilot |
+   | `All-Access` (Beacons name or Stripe metadata, the $99 bundle) | Studio, Year, Autopilot and Enough |
    | `Systemized Life Pass` (retired 5 Oct 2026, not sold; rule kept for safety) | Studio and Year |
    | `The Autopilot Workbook` | the Autopilot app (`autopilot/`) |
    | `The Enough Habit` | the Enough Habit app (`enough/`) |
