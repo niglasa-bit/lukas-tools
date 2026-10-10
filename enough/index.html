@@ -151,10 +151,16 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
 .sheet .ft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:6.5pt;color:#86867F}
 .sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
 .sheet .wm span{transform:rotate(-30deg);font-size:22pt;font-weight:700;letter-spacing:.14em;color:rgba(20,20,20,.035);white-space:nowrap}
+/* free sample (?sample): top bar and the locked card */
+.sbar{position:sticky;top:0;z-index:15;background:var(--yellow);color:var(--yellow-ink);font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px 12px;padding:6px 16px;flex-wrap:wrap;text-align:center;line-height:1.35}
+.sbar .btn{min-height:32px;padding:4px 12px;font-size:11.5px;border-radius:10px}
+.lock .btn.print{margin-top:14px;font-size:21px}
+.lock a.alt{display:block;text-align:center;margin-top:12px;font-size:12.5px;color:var(--ink2)}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
 </style>
 </head>
 <body>
+<div class="sbar hidden" id="sbar" role="note"><span><b>Free sample</b> · Days 1-3 are yours. Start with today.</span><a class="btn solid sm" id="sbar-buy" href="#">Get all 66 days</a></div>
 <div class="wrap">
   <header>
     <div class="brand"><b>The Enough Habit</b><span>by Lukas · The Systemized Life</span></div>
@@ -187,6 +193,16 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
     <footer>What you type stays on this device; only your email and order number are checked.<br><a href="../links/">The Systemized Life</a></footer>
+  </section>
+
+  <!-- ===================== SAMPLE: loading / can't load ===================== -->
+  <section id="v-sx" class="view">
+    <div class="rc">
+      <div class="c disp big" id="sx-t">Opening your sample…</div>
+      <div class="dash"></div>
+      <p class="small ink2" id="sx-m" role="status">Fetching the first three days.</p>
+      <div class="actions hidden" id="sx-a"><button class="btn solid" id="sx-retry">Try again</button></div>
+    </div>
   </section>
 
   <!-- ===================== SETUP (first run) ===================== -->
@@ -249,6 +265,7 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
     <div class="hidden" id="t-pre">
       <div class="rc flat" style="margin-top:14px"><p class="small ink2" style="margin:0" id="t-preMsg"></p></div>
     </div>
+    <div class="hidden" id="t-lock"></div>
     <h2 id="t-earlierH" class="hidden">Open from earlier</h2>
     <div class="rc flat hidden" id="t-earlier"><ul class="open-list" id="t-earlierList"></ul></div>
   </section>
@@ -276,10 +293,11 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
       <div id="r-lines"></div>
       <div class="dash"></div>
       <div class="row tot"><span>KEPT</span><span id="r-total"></span></div>
-      <div class="row small muted up"><span>Days left</span><span id="r-left"></span></div>
+      <div class="row small muted up"><span id="r-leftL">Days left</span><span id="r-left"></span></div>
       <div class="bar" style="height:34px"></div>
     </div>
-    <div class="actions"><button class="btn print" id="r-printSheet">🖨 Print my wall sheet</button></div>
+    <div class="hidden" id="r-lock"></div>
+    <div class="actions" id="r-sheetA"><button class="btn print" id="r-printSheet">🖨 Print my wall sheet</button></div>
   </section>
 
   <!-- ===================== METHOD ===================== -->
@@ -298,7 +316,7 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
       <div class="dash"></div>
       <div class="row small up"><span>My cue</span><span id="m-cue"></span></div>
       <div class="actions"><button class="btn solid sm" id="m-ics">📅 Add a daily reminder</button><button class="btn ghost sm" id="m-edit">Change cue or start</button></div>
-      <p class="hint">The reminder is a calendar file with one event a day at your usual time, for 66 days. Open it and your calendar app adds them.</p>
+      <p class="hint" id="m-icsHint">The reminder is a calendar file with one event a day at your usual time, for 66 days. Open it and your calendar app adds them.</p>
     </div>
     <div class="rc">
       <div class="disp" style="font-size:24px">Six stages</div>
@@ -314,21 +332,21 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
 
   <!-- ===================== MORE ===================== -->
   <section id="v-more" class="view">
-    <div class="rc flat">
+    <div class="rc flat" id="o-lic">
       <div class="small up muted">Licensed to</div>
       <p id="o-who" class="ink2"></p>
       <div class="small up muted" style="margin-top:12px">Devices</div>
       <ul class="list" id="o-devices"></ul>
       <p class="hint" id="o-devHint">One purchase, up to 3 devices, shared with other Lukas tools. Remove one here to free a slot.</p>
     </div>
-    <h2>What's new</h2>
+    <h2 id="o-newsH">What's new</h2>
     <div class="rc flat" id="o-news"></div>
     <div class="rc flat">
       <div class="small up muted">Your data</div>
       <p class="small ink2">Your days, notes and amounts stay in this browser. Back them up before clearing the browser or switching devices.</p>
       <div class="actions"><button class="btn sm" id="o-backup">⬇ Backup</button><label class="btn sm" for="o-restore">⬆ Restore<input type="file" id="o-restore" accept="application/json" class="vh"></label><button class="btn sm ghost" id="o-restart">Start over</button></div>
     </div>
-    <div class="rc flat"><div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div></div>
+    <div class="rc flat" id="o-out"><div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div></div>
     <footer>One small system at a time. ☕<br>Education, not financial advice.<br><a href="../links/">The Systemized Life</a></footer>
   </section>
 </div>
@@ -346,8 +364,12 @@ nav.tabs button.on{color:var(--yellow-ink);background:var(--yellow)}
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i);};
-var KEY="lukas-enough-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
-var TOTAL=66, CATCH=11; // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
+// Free sample: index.html?sample runs days 1-3 from the public GET /sample?product=enough, with no login and no
+// device slot. Its progress lives under its own key so a later purchase starts clean; saved tokens are never touched.
+var SAMPLE=new URLSearchParams(location.search).has("sample");
+var BUY_URL="https://shop.beacons.ai/lukas.systemized/d2c0433c-a5ce-4203-83a6-815985a10e28", ALL_URL="https://beacons.ai/lukas.systemized";
+var BASE_KEY="lukas-enough-v1", KEY=SAMPLE?"lukas-enough-sample-v1":BASE_KEY, STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
+var TOTAL=66, CATCH=11, LIMIT=66; // LIMIT = last calendar day this copy can use (3 in the sample) // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
 // API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
 // served from localhost) and is never stored; an address saved by an older version is cleared.
 var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
@@ -370,9 +392,9 @@ function deviceId(){
     S.auth.deviceId=(o&&o.auth.deviceId)||(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); save(); }
   try{ var st=other(STUDIO_KEY)||{plan:{},sunday:[],buy:{cool:[],hist:[]},auth:{}}; st.auth=st.auth||{}; if(!st.auth.deviceId){ st.auth.deviceId=S.auth.deviceId; localStorage.setItem(STUDIO_KEY,JSON.stringify(st)); } }catch(e){}
   return S.auth.deviceId; }
-try{ var th=localStorage.getItem(KEY+"-theme"); if(th) document.documentElement.setAttribute("data-theme",th);}catch(e){}
+try{ var th=localStorage.getItem(BASE_KEY+"-theme"); if(th) document.documentElement.setAttribute("data-theme",th);}catch(e){}
 $("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
-  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
+  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(BASE_KEY+"-theme",nx);}catch(e){} });
 var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2600); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
 function num(v){ v=parseFloat(String(v==null?"":v).replace(",",".")); return isFinite(v)&&v>0?Math.round(v*100)/100:0; }
@@ -394,8 +416,8 @@ function kept(){ return Object.keys(S.days).reduce(function(a,k){ return a+(S.da
 function doneCount(){ var c=0; for(var d=1;d<=TOTAL;d++) if(!isCatch(d)&&done(d)) c++; return c; }
 // Streak = the check done on consecutive calendar days, counting back from today (or yesterday if today isn't printed yet).
 // Catch-up days are optional ("or just rest"): skipping one neither breaks nor adds to the streak.
-function streak(){ var t=Math.min(todayNo(),TOTAL), s=0, d=done(t)?t:t-1; while(d>=1){ if(done(d)) s++; else if(!isCatch(d)) break; d--; } return s; }
-function openBefore(t){ var out=[]; for(var d=1;d<t&&d<=TOTAL;d++) if(!isCatch(d)&&!done(d)) out.push(d); return out; }
+function streak(){ var t=Math.min(todayNo(),LIMIT), s=0, d=done(t)?t:t-1; while(d>=1){ if(done(d)) s++; else if(!isCatch(d)) break; d--; } return s; }
+function openBefore(t){ var out=[]; for(var d=1;d<t&&d<=LIMIT;d++) if(!isCatch(d)&&!done(d)) out.push(d); return out; }
 function money(v){ var c=(S.plan&&S.plan.cur)||"$", s=(Math.round(v*100)/100).toFixed(v%1?2:0); return c.length>1?s+" "+c:c+s; }
 function fmtDate(dt,o){ return dt.toLocaleDateString("en-GB",o||{weekday:"short",day:"numeric",month:"short"}); }
 
@@ -448,8 +470,31 @@ function enter(token){
   }).catch(function(){ if(C) return; showGate("Can't reach the server. You need a connection the first time each session."); });
 }
 function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
-(function(){ if(S.auth.token) return enter(); if(S.auth.signedOut) return;
+(function(){ if(SAMPLE) return startSample(); if(S.auth.token) return enter(); if(S.auth.signedOut) return;
   var o=others().filter(function(x){ return x.auth.token; })[0]; if(o){ deviceId(); enter(o.auth.token); } })();
+
+// ---------- free sample ----------
+function startSample(){
+  $("gate").classList.remove("on"); $("sbar").classList.remove("hidden"); $("sbar-buy").href=BUY_URL;
+  $("sx-t").textContent="Opening your sample…"; $("sx-m").textContent="Fetching the first three days."; $("sx-a").classList.add("hidden"); show("sx");
+  fetch(API+"/sample?product="+PRODUCT).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){
+    var c=j&&j.content; if(!c||!c.goals||!c.goals.length||!c.stages||!c.ritual||!c.intro) throw 0;
+    c.totals=c.totals||{goals:60,days:TOTAL}; C=c;
+    LIMIT=0; while(LIMIT<TOTAL&&(isCatch(LIMIT+1)||goalNo(LIMIT+1)<=C.goals.length)) LIMIT++;
+    if(!S.plan){ renderSetup(); return show("setup"); }
+    $("tabs").classList.remove("hidden"); renderAll(); show(S.ui&&S.ui!=="day"&&S.ui!=="setup"&&S.ui!=="sx"?S.ui:"today");
+  }).catch(function(){
+    $("sx-t").textContent="The sample didn't load"; $("sx-a").classList.remove("hidden");
+    $("sx-m").textContent="Sorry, we couldn't fetch the free days just now. Check your connection and try again in a minute.";
+  });
+}
+$("sx-retry").addEventListener("click",startSample);
+// The receipt-style card for everything after the sample's last day.
+function lockHTML(){ var tot=C.totals||{}, days=tot.days||TOTAL, goals=tot.goals||60, more=Math.max(0,goals-C.goals.length), catches=Math.max(0,days-goals);
+  return '<div class="rc lock"><div class="c disp big">Days '+(LIMIT+1)+"-"+days+'</div><div class="c small muted up">Not in the free sample</div><div class="dash"></div>'+
+    '<p class="why">Days '+(LIMIT+1)+"-"+days+" are in the full app: "+more+" more goals, "+catches+" catch-up days, your printable wall sheet.</p>"+
+    '<div class="dash"></div><div class="row up small"><span>More goals</span><span>'+more+'</span></div><div class="row up small"><span>Catch-up days</span><span>'+catches+'</span></div><div class="row up small"><span>Wall sheet</span><span>1</span></div>'+
+    '<a class="btn print" href="'+BUY_URL+'">Keep going: get all '+days+' days</a><a class="alt" href="'+ALL_URL+'">or get all four Lukas tools (All-Access)</a></div>'; }
 
 // ---------- tabs ----------
 function show(v){ if(v!=="day"&&v!=="setup"){ S.ui=v; save(); }
@@ -457,7 +502,10 @@ function show(v){ if(v!=="day"&&v!=="setup"){ S.ui=v; save(); }
   document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===v||(v==="day"&&b.dataset.v==="receipt")); });
   window.scrollTo(0,0); }
 document.querySelectorAll("nav.tabs button").forEach(function(b){ b.addEventListener("click",function(){ renderAll(); show(b.dataset.v); }); });
-function renderAll(){ if(!C||!S.plan) return; renderToday(); renderReceipt(); renderMethod(); renderMore(); }
+function renderAll(){ if(!C||!S.plan) return; if(SAMPLE) sampleChrome(); renderToday(); renderReceipt(); renderMethod(); renderMore(); }
+
+// Hide what needs the full 66 days or a licence: calendar export, wall sheet, devices, What's new, sign out.
+function sampleChrome(){ ["r-sheetA","m-ics","m-icsHint","o-lic","o-newsH","o-news","o-out"].forEach(function(i){ $(i).classList.add("hidden"); }); }
 
 // ================= SETUP =================
 function renderSetup(){ var p=S.plan||{};
@@ -469,7 +517,7 @@ function renderSetup(){ var p=S.plan||{};
   $("su-cues").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ $("su-cue").value=b.dataset.c; $("su-cues").querySelectorAll(".chip").forEach(function(x){ x.classList.toggle("on",x===b); }); }); });
   $("su-cue").value=p.cue||""; $("su-start").value=p.start||ymd(new Date()); $("su-time").value=p.time||"07:30";
   $("su-name").value=p.name!=null?p.name:(S.auth.name||""); $("su-cur").value=p.cur||"$";
-  $("su-go").textContent=S.plan?"Save":"Start my 66 days"; }
+  $("su-go").textContent=S.plan?"Save":SAMPLE?"Start my free days":"Start my 66 days"; }
 $("su-go").addEventListener("click",function(){
   var cue=$("su-cue").value.trim(), start=$("su-start").value;
   if(!cue){ $("su-cue").focus(); return toast("Pick a cue: the moment you already do every morning."); }
@@ -485,7 +533,9 @@ function renderToday(){ var t=todayNo(), d=Math.max(1,Math.min(t,TOTAL)), g=goal
   $("t-sub").textContent=fmtDate(new Date())+" · after I "+S.plan.cue;
   $("t-day").textContent=d+" / "+TOTAL; $("t-stage").textContent=st?st.title+" "+(isCatch(d)?(done(d)?"✓":"catch-up"):(goalNo(d)-st.days[0]+1)+"/10"):"";
   $("t-total").textContent=money(kept());
-  var before=t<1, after=t>TOTAL;
+  var before=t<1, after=t>TOTAL, locked=SAMPLE&&t>LIMIT;
+  $("t-lock").classList.toggle("hidden",!locked); $("t-rc").classList.toggle("hidden",locked); $("t-print").classList.toggle("hidden",locked);
+  if(locked){ $("t-lock").innerHTML=lockHTML(); d=LIMIT+1; g=null; after=true; }
   $("t-pre").classList.toggle("hidden",!before);
   if(before) $("t-preMsg").textContent="Day 1 is "+fmtDate(dateOf(1),{weekday:"long",day:"numeric",month:"long"})+". Here's a preview of the first goal. Tonight, set your cue and the reminder under Method.";
   $("t-goal").classList.toggle("hidden",!(g&&!after)); $("t-catch").classList.toggle("hidden",!(isCatch(d)&&!after)); $("t-end").classList.toggle("hidden",!after&&d!==TOTAL);
@@ -493,17 +543,17 @@ function renderToday(){ var t=todayNo(), d=Math.max(1,Math.min(t,TOTAL)), g=goal
   if(isCatch(d)&&!after){ $("t-catchBody").textContent=C.catchup.body; $("t-wont2").value=rec.wont||"";
     var op=openBefore(d); $("t-open").innerHTML=op.length?op.map(function(x){ return '<li><span class="small">'+String(x).padStart(2,"0")+" · "+esc(goalOf(x).title)+'</span><button class="btn sm" data-open="'+x+'">Open</button></li>'; }).join(""):'<li class="small muted">Nothing open. Rest, or repeat a goal you liked.</li>';
     bindOpen($("t-open")); }
-  if(after||d===TOTAL){ $("t-endT").textContent=C.finale.title; $("t-endB").textContent=C.finale.body; }
+  if(!locked&&(after||d===TOTAL)){ $("t-endT").textContent=C.finale.title; $("t-endB").textContent=C.finale.body; }
   var printed=done(d)&&!before;
   $("t-print").disabled=before||after; $("t-print").textContent=after?"All 66 days are printed":printed?"Printed ✓ · tap to edit":"Print today's line ✓";
   $("t-stamp").classList.toggle("on",printed);
-  var early=before?[]:openBefore(Math.min(t,TOTAL+1)).filter(function(x){ return x<d; }).slice(-5);
+  var early=before?[]:openBefore(Math.min(t,LIMIT+1)).filter(function(x){ return x<d; }).slice(-5);
   $("t-earlierH").classList.toggle("hidden",!early.length||isCatch(d)); $("t-earlier").classList.toggle("hidden",!early.length||isCatch(d));
   $("t-earlierList").innerHTML=early.map(function(x){ return '<li><span class="small">'+String(x).padStart(2,"0")+" · "+esc(goalOf(x).title)+'</span><button class="btn sm" data-open="'+x+'">Do it</button></li>'; }).join("");
   bindOpen($("t-earlierList"));
 }
 function bindOpen(el){ el.querySelectorAll("[data-open]").forEach(function(b){ b.addEventListener("click",function(){ openDay(+b.dataset.open); }); }); }
-function printToday(){ var t=todayNo(); if(t<1||t>TOTAL) return; var d=t, rec=S.days[d]||{};
+function printToday(){ var t=todayNo(); if(t<1||t>LIMIT) return; var d=t, rec=S.days[d]||{};
   if(rec.done&&!confirm("Today is already printed. Save the new amount and note?")) return;
   rec.done=rec.done||new Date().toISOString(); rec.wont=(isCatch(d)?$("t-wont2"):$("t-wont")).value.trim(); if(!isCatch(d)) rec.kept=num($("t-kept").value);
   S.days[d]=rec; save(); renderAll();
@@ -511,7 +561,7 @@ function printToday(){ var t=todayNo(); if(t<1||t>TOTAL) return; var d=t, rec=S.
 $("t-print").addEventListener("click",printToday);
 
 // ================= DAY =================
-function openDay(d){ OPEN=d; var g=goalOf(d), rec=S.days[d]||{}, t=todayNo();
+function openDay(d){ if(d>LIMIT) return; OPEN=d; var g=goalOf(d), rec=S.days[d]||{}, t=todayNo();
   $("d-k").textContent="Day "+d+" · "+fmtDate(dateOf(d))+(done(d)?" · printed":"");
   $("d-title").textContent=g?g.title:C.catchup.title; $("d-why").textContent=g?g.why:C.catchup.body;
   $("d-wont").value=rec.wont||""; $("d-kept").value=rec.kept||""; $("d-kept").parentNode.classList.toggle("hidden",!g);
@@ -523,18 +573,20 @@ $("d-undo").addEventListener("click",function(){ if(S.days[OPEN]) delete S.days[
 
 // ================= RECEIPT =================
 function renderReceipt(){ var t=todayNo(), h="";
-  $("r-kept").textContent=money(kept()); $("r-streak").textContent=streak(); $("r-done").textContent=doneCount()+"/60";
+  $("r-kept").textContent=money(kept()); $("r-streak").textContent=streak(); $("r-done").textContent=doneCount()+"/"+(SAMPLE?C.goals.length:60);
   $("r-who").textContent="Receipt · "+(S.plan.name||S.auth.name||"me")+" · from "+fmtDate(dateOf(1),{day:"numeric",month:"short"});
   C.stages.forEach(function(st){ var a=st.days[0]+Math.floor((st.days[0]-1)/10), b=a+10; // calendar days of this stage incl. its catch-up day
     h+='<div class="stage-h">'+esc(st.title)+" · "+esc(st.tagline)+"</div>";
-    for(var d=a;d<=b&&d<=TOTAL;d++){ var g=goalOf(d), rec=S.days[d]||{}, cls=d>t?"future":done(d)?"done":isCatch(d)?"catch":"open";
+    if(a>LIMIT) return;
+    for(var d=a;d<=b&&d<=LIMIT;d++){ var g=goalOf(d), rec=S.days[d]||{}, cls=d>t?"future":done(d)?"done":isCatch(d)?"catch":"open";
       if(d===t) cls+=" today"; if(isCatch(d)) cls+=" catch";
       var right=done(d)?(num(rec.kept)?money(num(rec.kept)):"✓"):d===t?"NOW":d<t&&!isCatch(d)?"OPEN":"";
       h+='<div class="line '+cls+'" tabindex="'+(d>t?-1:0)+'" data-d="'+d+'"><span>'+String(d).padStart(2,"0")+'</span><span class="t">'+esc(g?g.title:"Catch-up day")+'</span><span>'+right+"</span></div>"; } });
-  $("r-lines").innerHTML=h; $("r-total").textContent=money(kept()); $("r-left").textContent=Math.max(0,TOTAL-Math.max(0,t)+(t>=1&&t<=TOTAL?1:0));
+  $("r-lines").innerHTML=h; $("r-total").textContent=money(kept()); $("r-left").textContent=Math.max(0,LIMIT-Math.max(0,t)+(t>=1&&t<=LIMIT?1:0));
+  $("r-leftL").textContent=SAMPLE?"Free days left":"Days left"; $("r-lock").classList.toggle("hidden",!SAMPLE); if(SAMPLE) $("r-lock").innerHTML=lockHTML();
   $("r-lines").querySelectorAll(".line").forEach(function(l){ var d=+l.dataset.d; if(d>t) return;
     l.addEventListener("click",function(){ openDay(d); }); l.addEventListener("keydown",function(e){ if(e.key==="Enter") openDay(d); }); }); }
-$("r-printSheet").addEventListener("click",function(){ printSheet(sheetHTML()); });
+$("r-printSheet").addEventListener("click",function(){ if(SAMPLE) return; printSheet(sheetHTML()); });
 
 // ================= METHOD =================
 function renderMethod(){ $("m-title").textContent=C.intro.title; $("m-body").textContent=C.intro.body; $("m-honest").textContent=C.intro.honest;
@@ -544,7 +596,7 @@ function renderMethod(){ $("m-title").textContent=C.intro.title; $("m-body").tex
   $("m-stages").innerHTML=C.stages.map(function(st,i){ return '<div class="row small"><span>'+(i+1)+" · "+esc(st.title).toUpperCase()+'</span><span class="muted">'+esc(st.tagline)+"</span></div>"; }).join("");
   $("m-sources").innerHTML=C.sources.map(function(s){ return "<li><b>"+esc(s.short)+"</b> · "+esc(s.text)+"</li>"; }).join(""); }
 $("m-edit").addEventListener("click",function(){ renderSetup(); $("tabs").classList.add("hidden"); show("setup"); });
-$("m-ics").addEventListener("click",function(){ download("enough-habit-reminder.ics",ics(),"text/calendar"); toast("Open the file to add the reminders."); });
+$("m-ics").addEventListener("click",function(){ if(SAMPLE) return; download("enough-habit-reminder.ics",ics(),"text/calendar"); toast("Open the file to add the reminders."); });
 // One recurring event a day for 66 days at the buyer's usual time (floating local time, no timezone maths).
 function ics(){ var s=parseYmd(S.plan.start), tm=(S.plan.time||"07:30").split(":"), d=ymd(s).replace(/-/g,""), t=String(tm[0]).padStart(2,"0")+String(tm[1]||"00").padStart(2,"0")+"00";
   var stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
@@ -554,7 +606,7 @@ function ics(){ var s=parseYmd(S.plan.start), tm=(S.plan.time||"07:30").split(":
     "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Enough Check","TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n"); }
 
 // ================= MORE =================
-function renderMore(){
+function renderMore(){ if(SAMPLE) return;
   $("o-who").textContent=(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"");
   var devs=S.auth.devices||[]; $("o-devices").innerHTML=devs.map(function(d){ return "<li><div><b>"+esc(d.name)+"</b>"+(d.this?' <span class="pill">this device</span>':"")+'<br><span class="small muted">added '+new Date(d.created*1000).toLocaleDateString()+"</span></div>"+(d.this?"":'<button class="btn sm ghost" data-rm="'+esc(d.id)+'">Remove</button>')+"</li>"; }).join("")+'<li class="muted small">'+devs.length+" of "+(S.auth.max||3)+" slots used</li>";
   $("o-devices").querySelectorAll("[data-rm]").forEach(function(b){ b.addEventListener("click",function(){ if(!confirm("Remove this device? It will need a new code to get back in.")) return;
@@ -563,7 +615,7 @@ function renderMore(){
 }
 $("o-backup").addEventListener("click",function(){ download("enough-habit-backup.json",JSON.stringify({plan:S.plan,days:S.days,exported:new Date().toISOString(),app:"the-enough-habit"},null,1),"application/json"); });
 $("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.app!=="the-enough-habit"||!d.plan||!(parseYmd(d.plan.start)>0)) throw 0; S.plan=d.plan; S.days=(d.days&&typeof d.days==="object")?d.days:{}; save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't an Enough Habit backup."); } }; rd.readAsText(f); e.target.value=""; });
-$("o-restart").addEventListener("click",function(){ if(!confirm("Start over from day 1? Your printed days and amounts on this device are cleared. Your licence stays.")) return; S.days={}; S.plan=null; save(); renderSetup(); $("tabs").classList.add("hidden"); show("setup"); });
+$("o-restart").addEventListener("click",function(){ if(!confirm("Start over from day 1? Your printed days and amounts on this device are cleared."+(SAMPLE?"":" Your licence stays."))) return; S.days={}; S.plan=null; save(); renderSetup(); $("tabs").classList.add("hidden"); show("setup"); });
 $("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
 
 // ================= PRINT =================

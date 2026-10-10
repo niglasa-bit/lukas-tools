@@ -29,6 +29,7 @@ import { CONTENT } from "./content.js";
 import { CONTENT_YEAR } from "./content-year.js";
 import { CONTENT_AUTOPILOT } from "./content-autopilot.js";
 import { CONTENT_ENOUGH } from "./content-enough.js";
+import { sampleFor } from "./sample.js";
 
 // Product keys an app can ask for, the name used in emails, and the content it gets.
 const PRODUCT_INFO = {
@@ -88,6 +89,7 @@ async function route(request, env, url) {
   if (p === "/activate" && m === "POST") return activate(request, env);
   if (p === "/verify" && m === "POST") return verify(request, env);
   if (p === "/content" && m === "GET") return content(request, env, url);
+  if (p === "/sample" && m === "GET") return sample(url);
   if (p === "/me" && m === "GET") return me(request, env);
   if (p === "/me/remove-device" && m === "POST") return removeDevice(request, env);
   if (p === "/sync" && m === "POST") return sync(request, env);
@@ -205,6 +207,16 @@ async function content(request, env, url) {
   // Refresh token quietly when it is getting old.
   if (now() - payload.iat > TOKEN_MAX_AGE / 2) res.token = await sign(env, { e: buyer.email, d: payload.d, iat: now() });
   return json(res);
+}
+
+// Free sample: a public slice of the content, no login, no device slot (see sample.js).
+function sample(url) {
+  const product = String(url.searchParams.get("product") || "").toLowerCase();
+  const content = sampleFor(product);
+  if (!content) return json({ error: "no_sample" }, 404);
+  const res = json({ sample: true, product, content });
+  res.headers.set("Cache-Control", "public, max-age=3600");
+  return res;
 }
 
 async function me(request, env) {
