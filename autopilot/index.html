@@ -215,10 +215,21 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 .sheet .ft{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:7pt;color:#7A949C}
 .sheet .wm{position:absolute;inset:0;z-index:5;display:grid;place-items:center;pointer-events:none}
 .sheet .wm span{transform:rotate(-28deg);font-size:22pt;font-weight:800;letter-spacing:.12em;color:rgba(18,48,58,.035);white-space:nowrap}
+/* free sample */
+.sbar{position:sticky;top:0;z-index:15;background:var(--hero);color:var(--hero-ink);font-size:13px;line-height:1.35}
+.sbar .in{max-width:640px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sbar b{color:#5CC8B8;font-weight:700}
+.sbar .btn{min-height:34px;padding:5px 12px;font-size:13px;flex:none}
+.lock{border-style:dashed;margin-top:10px;text-align:left}
+.lock .ricon{font-size:16px}
+.lock .actions{margin-top:12px}
+.lock .alt{display:block;margin-top:10px;font-size:13px;color:var(--accent)}
+.top li.locked::before{content:"🔒";background:var(--surface2);font-size:12px}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
 </style>
 </head>
 <body>
+<div class="sbar hidden" id="sbar" role="region" aria-label="Free sample"><div class="in"><span><b>Free sample</b> · Your audit is free. <span id="sbar-n">3 recipes and 5 prompts</span> to try.</span><a class="btn primary" id="sbar-buy" href="#" target="_blank" rel="noopener">Get the full workbook</a></div></div>
 <div class="wrap">
   <header>
     <div class="brand"><span class="dot"></span><div><b>The Autopilot Workbook</b><span id="byline">by Lukas · The Systemized Life</span></div></div>
@@ -251,6 +262,16 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
     <footer>What you type stays on this device; only your email and order number are checked.<br>Don't have it yet? <a href="../shop/">See it in the shop</a> · <a href="../links/">The Systemized Life</a></footer>
+  </section>
+
+  <!-- ===================== SAMPLE: loading / failed ===================== -->
+  <section id="v-sample" class="view">
+    <div class="card hero">
+      <div class="kicker">Free sample</div>
+      <h3 class="serif" style="font-size:26px;margin:6px 0 8px;line-height:1.1" id="sm-title">Opening your free sample…</h3>
+      <p class="small" id="sm-msg" style="margin:0">One moment.</p>
+      <div class="actions hidden" id="sm-actions"><button class="btn primary" id="sm-retry">Try again</button><a class="btn" id="sm-shop" href="#" target="_blank" rel="noopener">See the full workbook</a></div>
+    </div>
   </section>
 
   <!-- ===================== START ===================== -->
@@ -293,8 +314,9 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
       <h2>Your top 5 · start with number 1</h2>
       <div class="card"><ol class="top" id="d-top"></ol></div>
       <button class="next" id="d-next"><div><small>Next lesson</small><p id="d-nextT"></p></div><i>→</i></button>
-      <h2 id="d-monthlyH"></h2>
-      <div class="card"><ol class="rules" id="d-monthly"></ol></div>
+      <div id="d-monthlyW"><h2 id="d-monthlyH"></h2>
+      <div class="card"><ol class="rules" id="d-monthly"></ol></div></div>
+      <div id="d-lock"></div>
       <div class="actions">
         <button class="btn primary" id="d-print">🖨️ Print my Autopilot Map</button>
         <button class="btn" id="d-edit">✏️ Edit the audit</button>
@@ -339,21 +361,23 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
       <div class="box"><b>Do this</b><span id="c-ex"></span></div>
       <h2 id="c-readH">Read it in two minutes</h2>
       <p class="read" id="c-read"></p>
+      <div id="c-lock"></div>
       <div class="actions"><button class="btn primary" id="c-done">✓ Mark done</button><button class="btn" id="c-nextL">Next lesson →</button></div>
     </div>
   </section>
 
   <!-- ===================== MORE ===================== -->
   <section id="v-more" class="view">
-    <div class="card">
+    <div class="card" id="o-lic">
       <h3>Licensed to</h3>
       <p id="o-who" class="ink2"></p>
       <h3 style="margin-top:14px">Devices</h3>
       <ul class="list" id="o-devices"></ul>
       <p class="hint" id="o-devHint">One purchase, up to 3 devices, shared with other Lukas tools. Remove one here to free a slot.</p>
     </div>
-    <h2>What's new</h2>
-    <div class="card" id="o-news"></div>
+    <div id="o-newsW"><h2>What's new</h2>
+    <div class="card" id="o-news"></div></div>
+    <div id="o-lock"></div>
     <h2>Five safety rules</h2>
     <div class="card"><ol class="rules" id="o-safety"></ol></div>
     <div class="card" style="margin-top:12px">
@@ -363,7 +387,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     </div>
     <h2>Sources</h2>
     <div class="card"><ul class="rules" id="o-sources"></ul></div>
-    <div class="card" style="margin-top:12px">
+    <div class="card" style="margin-top:12px" id="o-out">
       <div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div>
     </div>
     <footer><span id="o-sign">One small system at a time. ☕</span><br><span id="o-disc"></span><br><a id="o-link" href="../links/">The Systemized Life</a></footer>
@@ -384,7 +408,12 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i);};
-var KEY="lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
+// Free sample (?sample): no gate, no device, no token. Its progress lives under its own key, so a later
+// purchase starts clean and the sample never touches the buyer's real data or sign-in.
+var SAMPLE=new URLSearchParams(location.search).has("sample");
+var BUY_URL="https://shop.beacons.ai/lukas.systemized/531e5986-ab7b-4716-b9b4-4d929767c981", ALL_URL="https://beacons.ai/lukas.systemized";
+var THEME_KEY="lukas-autopilot-v1-theme";
+var KEY=SAMPLE?"lukas-autopilot-sample-v1":"lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
 // API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
 // served from localhost) and is never stored; an address saved by an older version is cleared.
 var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
@@ -406,9 +435,9 @@ function deviceId(){
     S.auth.deviceId=(o&&o.auth.deviceId)||(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); save(); }
   try{ var st=other(STUDIO_KEY)||{plan:{},sunday:[],buy:{cool:[],hist:[]},auth:{}}; st.auth=st.auth||{}; if(!st.auth.deviceId){ st.auth.deviceId=S.auth.deviceId; localStorage.setItem(STUDIO_KEY,JSON.stringify(st)); } }catch(e){}
   return S.auth.deviceId; }
-try{ var t=localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
+try{ var t=localStorage.getItem(THEME_KEY); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
 $("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
-  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
+  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(THEME_KEY,nx);}catch(e){} });
 var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2400); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
 function num(v){ v=parseFloat(v); return isFinite(v)&&v>0?v:0; }
@@ -463,8 +492,38 @@ function enter(token){
   }).catch(function(){ if(C) return; showGate("Can't reach the server. You need a connection the first time each session."); });
 }
 function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
-(function(){ if(S.auth.token) return enter(); if(S.auth.signedOut) return;
+(function(){ if(SAMPLE) return enterSample(); if(S.auth.token) return enter(); if(S.auth.signedOut) return;
   var o=[other(STUDIO_KEY),other(YEAR_KEY)].filter(function(x){ return x&&x.auth&&x.auth.token; })[0]; if(o){ deviceId(); enter(o.auth.token); } })();
+
+// ---------- free sample ----------
+// Public slice from GET /sample (no auth header, never /content, /me, /activate or a device id).
+function enterSample(){
+  $("gate").classList.remove("on"); $("v-sample").classList.add("on"); $("sm-shop").href=BUY_URL;
+  $("sm-title").textContent="Opening your free sample…"; $("sm-msg").textContent="One moment."; $("sm-actions").classList.add("hidden");
+  fetch(API+"/sample?product="+PRODUCT).then(function(r){ if(!r.ok) throw new Error(String(r.status)); return r.json(); }).then(function(r){
+    if(!r||!r.content||!Array.isArray(r.content.recipes)||!r.content.intro) throw new Error("bad");
+    C=r.content; C.recipes=C.recipes||[]; C.prompts=C.prompts||[]; C.lessons=C.lessons||[]; C.totals=C.totals||{};
+    ["o-lic","o-newsW","o-out","d-print"].forEach(function(id){ $(id).classList.add("hidden"); });
+    $("sbar-n").textContent=C.recipes.length+" recipe"+(C.recipes.length===1?"":"s")+" and "+C.prompts.length+" prompt"+(C.prompts.length===1?"":"s");
+    $("sbar-buy").href=BUY_URL; $("sbar").classList.remove("hidden");
+    $("v-sample").classList.remove("on"); $("tabs").classList.remove("hidden");
+    renderAll(); show(S.ui||"start");
+  }).catch(function(){
+    $("sm-title").textContent="The free sample didn't load.";
+    $("sm-msg").textContent="That's on our side or your connection, not you. Check you're online and try again in a moment.";
+    $("sm-actions").classList.remove("hidden"); });
+}
+$("sm-retry").addEventListener("click",enterSample);
+// What the sample leaves out, counted from the server's totals (never hard-coded).
+function missing(){ var t=(C&&C.totals)||{}; return {
+  recipes:Math.max(0,(t.recipes||0)-C.recipes.length), prompts:Math.max(0,(t.prompts||0)-C.prompts.length), lessons:Math.max(0,(t.lessons||0)-C.lessons.length) }; }
+function plural(n,one,many){ return n+" more "+(n===1?one:many); }
+function lockHTML(title){ if(!SAMPLE) return ""; var m=missing(), parts=[];
+  if(m.recipes) parts.push(plural(m.recipes,"recipe","recipes")); if(m.prompts) parts.push(plural(m.prompts,"prompt","prompts")); if(m.lessons) parts.push(m.lessons+" more lesson"+(m.lessons===1?"":"s"));
+  var line=parts.length?(parts.length>1?parts.slice(0,-1).join(", ")+" and "+parts[parts.length-1]:parts[0])+" are in the full workbook.":"The rest is in the full workbook.";
+  return '<div class="card lock"><div class="kicker">🔒 '+esc(title||"In the full workbook")+'</div><p class="ink2" style="margin:8px 0 0">'+esc(line)+'</p>'+
+    '<div class="actions"><a class="btn primary" href="'+BUY_URL+'" target="_blank" rel="noopener">Get the full workbook</a></div>'+
+    '<a class="alt" href="'+ALL_URL+'" target="_blank" rel="noopener">or get all four Lukas tools (All-Access)</a></div>'; }
 
 // Team licences (B2B) show the company instead of the Lukas byline.
 function brand(){ var tm=S.auth.team;
@@ -489,7 +548,7 @@ function activeTasks(){ return (S.tasks||[]).filter(function(t){ return t.on&&ta
 // The best recipe for a task among the tools this buyer has. Own tasks get "design my automation".
 function bestRecipe(t){ var ids=(t.recipes&&t.recipes.length?t.recipes:["a-build"]), mine=myTracks();
   var ok=ids.map(recipe).filter(function(r){ return r&&mine.indexOf(r.track)>=0; });
-  return ok.filter(function(r){ return st(r.id)!=="run"; })[0]||ok[0]||recipe("a-build"); }
+  return ok.filter(function(r){ return st(r.id)!=="run"; })[0]||ok[0]||recipe("a-build")||null; }
 function topTasks(){ return activeTasks().slice().sort(function(a,b){ return taskHours(b)-taskHours(a); }).slice(0,5); }
 function st(id){ return (S.rec[id]&&S.rec[id].s)||"todo"; }
 function saves(id){ var r=S.rec[id]; if(r&&r.saves!=null&&r.saves!=="") return num(r.saves); var x=recipe(id); return x?x.saves:0; }
@@ -530,9 +589,14 @@ function renderDash(){
   $("d-head").textContent=(S.auth.name?S.auth.name.split(" ")[0]+", y":"Y")+"our week, minus the boring bits.";
   $("d-cost").textContent=hrs(cost); $("d-back").textContent=hrs(back);
   $("d-backNote").textContent=back?"hours a year, from "+Object.keys(S.rec).filter(function(id){ return st(id)==="run"; }).length+" running autopilots":"Mark a recipe Running to start counting";
-  $("d-top").innerHTML=topTasks().map(function(t){ var r=bestRecipe(t); return '<li class="'+(st(r.id)==="run"?"run":"")+'" data-r="'+esc(r.id)+'" style="cursor:pointer"><div><div class="t1">'+esc(t.name)+'</div><div class="t2">'+esc(C.tracks[r.track].icon+" "+r.title)+' · '+r.build+' min to build</div></div><div class="hrs">'+hrs(taskHours(t))+'<small>h / year</small></div></li>'; }).join("");
-  $("d-top").querySelectorAll("li").forEach(function(li){ li.addEventListener("click",function(){ openRecipe(li.dataset.r); }); });
+  $("d-top").innerHTML=topTasks().map(function(t){ var r=bestRecipe(t);
+    if(!r) return '<li class="locked" data-lock="1" style="cursor:pointer"><div><div class="t1">'+esc(t.name)+'</div><div class="t2">🔒 Its recipe is in the full workbook</div></div><div class="hrs">'+hrs(taskHours(t))+'<small>h / year</small></div></li>';
+    return '<li class="'+(st(r.id)==="run"?"run":"")+'" data-r="'+esc(r.id)+'" style="cursor:pointer"><div><div class="t1">'+esc(t.name)+'</div><div class="t2">'+esc(C.tracks[r.track].icon+" "+r.title)+' · '+r.build+' min to build</div></div><div class="hrs">'+hrs(taskHours(t))+'<small>h / year</small></div></li>'; }).join("");
+  $("d-top").querySelectorAll("li").forEach(function(li){ li.addEventListener("click",function(){ if(li.dataset.lock){ var el=$("d-lock"); if(el.firstChild) el.scrollIntoView({block:"center",behavior:"smooth"}); return; } openRecipe(li.dataset.r); }); });
+  var locked=topTasks().filter(function(t){ return !bestRecipe(t); }).length;
+  $("d-lock").innerHTML=SAMPLE?lockHTML(locked?locked+" of your top 5 use recipes from the full workbook":"In the full workbook"):"";
   var nl=C.lessons.filter(function(l){ return !S.lessons[l.id]; })[0]; $("d-next").classList.toggle("hidden",!nl); if(nl){ $("d-nextT").textContent=nl.n+". "+nl.title; $("d-next").onclick=function(){ show("course"); openLesson(nl.id); }; }
+  $("d-monthlyW").classList.toggle("hidden",!C.monthly); if(!C.monthly) return;
   $("d-monthlyH").textContent=C.monthly.title; $("d-monthly").innerHTML=C.monthly.questions.map(function(q){ return "<li>"+esc(q)+"</li>"; }).join("");
 }
 $("d-print").addEventListener("click",function(){ printSheet(mapHTML()); });
@@ -546,7 +610,7 @@ function renderRecipes(){ if(!C) return;
   $("r-tracks").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ S.f.track=b.dataset.k; save(); renderRecipes(); }); });
   $("r-areas").querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click",function(){ S.f.area=b.dataset.k; save(); renderRecipes(); }); });
   var list=C.recipes.filter(function(r){ var tOk=S.f.track==="mine"?myTracks().indexOf(r.track)>=0:r.track===S.f.track; var aOk=S.f.area==="all"||(S.f.area==="running"?st(r.id)==="run":r.area===S.f.area); return tOk&&aOk; });
-  $("r-list").innerHTML=list.length?list.map(recipeHTML).join(""):'<p class="small muted" style="margin-top:16px">Nothing here yet. Try another filter'+(S.f.track==="mine"?", or add tools under Plan → Edit the audit":"")+'.</p>';
+  $("r-list").innerHTML=(list.length?list.map(recipeHTML).join(""):'<p class="small muted" style="margin-top:16px">Nothing here yet. Try another filter'+(S.f.track==="mine"?", or add tools under Plan → Edit the audit":"")+'.</p>')+lockHTML("More recipes");
   $("r-list").querySelectorAll(".rhead").forEach(function(h){ h.addEventListener("click",function(){ S.openR=S.openR===h.dataset.r?null:h.dataset.r; save(); renderRecipes(); }); });
   $("r-list").querySelectorAll(".seg button").forEach(function(b){ b.addEventListener("click",function(){ setStatus(b.dataset.r,b.dataset.s); renderRecipes(); renderStart(); if(b.dataset.s==="run") toast("Running. "+hrs(saves(b.dataset.r)*WEEKS/60)+" hours a year back."); }); });
   $("r-list").querySelectorAll("input[data-saves]").forEach(function(n){ n.addEventListener("input",function(){ var id=n.dataset.saves; S.rec[id]=S.rec[id]||{}; S.rec[id].saves=n.value; save(); }); });
@@ -556,6 +620,7 @@ var LABEL={todo:"Not started",build:"Building",run:"Running"};
 function recipeHTML(r){ var open=S.openR===r.id, s=st(r.id), tr=C.tracks[r.track];
   var h='<div class="recipe" id="rc-'+esc(r.id)+'"><button class="rhead" data-r="'+esc(r.id)+'" aria-expanded="'+open+'"><span class="ricon '+esc(r.track)+'">'+esc(tr.icon)+'</span><span><span class="rt">'+esc(r.title)+'</span><span class="rm" style="display:block">'+esc(tr.title)+' · '+r.build+' min to build · saves ~'+saves(r.id)+' min/week</span></span><span class="status '+s+'">'+LABEL[s]+'</span></button>';
   if(open){ h+='<div class="rbody"><p class="out">'+esc(r.outcome)+'</p><ol>'+r.steps.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("")+'</ol>'+
+    (r.prompt&&!prompt(r.prompt)&&SAMPLE?'<p class="hint">🔒 The matching prompt is in the full workbook.</p>':'')+
     (r.prompt&&prompt(r.prompt)?'<div class="actions" style="margin-top:10px"><button class="btn sm" data-p="'+esc(r.prompt)+'">✦ Open the prompt: '+esc(prompt(r.prompt).title)+'</button></div>':'')+
     '<div class="box"><b>Test it</b>'+esc(r.test)+'</div><div class="box warn"><b>When it breaks</b>'+esc(r.breaks)+'</div>'+
     (r.source?'<p class="source">'+esc(r.source)+'</p>':'')+
@@ -584,6 +649,7 @@ function renderPrompts(){ if(!C) return;
         return '<div class="field"><label for="'+id+'">'+esc(k.charAt(0).toUpperCase()+k.slice(1))+'</label>'+(long?'<textarea id="'+id+'" data-pid="'+esc(p.id)+'" data-k="'+esc(k)+'" data-long="1">'+esc(tmp[k]||"")+'</textarea>':'<input type="text" id="'+id+'" data-pid="'+esc(p.id)+'" data-k="'+esc(k)+'" value="'+esc(f[k]||"")+'">')+'</div>'; }).join("")+
         '<div class="ptext" id="pt-'+esc(p.id)+'">'+preview(p)+'</div><div class="actions"><button class="btn primary" data-copy="'+esc(p.id)+'">Copy prompt</button><button class="btn ghost sm" data-clear="'+esc(p.id)+'">Clear</button></div>'+(p.cat!=="check"?'<p class="hint">Remove names, account numbers and anything private before pasting into an AI tool.</p>':'')+'</div>'; }
     return h+'</div>'; }).join("")||'<p class="small muted" style="margin-top:16px">No prompt matches that.</p>';
+  $("p-list").innerHTML+=lockHTML("More prompts");
   $("p-list").querySelectorAll("[data-p2]").forEach(function(b){ b.addEventListener("click",function(){ S.openP=S.openP===b.dataset.p2?null:b.dataset.p2; save(); renderPrompts(); }); });
   $("p-list").querySelectorAll("[data-pid]").forEach(function(el){ el.addEventListener("input",function(){ var id=el.dataset.pid;
     if(el.dataset.long){ TMP[id]=TMP[id]||{}; TMP[id][el.dataset.k]=el.value; } else { S.fills[id]=S.fills[id]||{}; S.fills[id][el.dataset.k]=el.value; save(); }
@@ -601,16 +667,19 @@ function copy(text){ var done=function(){ toast("Copied. Paste it into your AI a
 // ================= COURSE =================
 function renderCourse(){ if(!C) return;
   var n=C.lessons.filter(function(l){ return S.lessons[l.id]; }).length;
-  $("c-progress").textContent=n+" of "+C.lessons.length+" done · about "+C.lessons.reduce(function(s,l){ return s+l.minutes; },0)+" minutes in total";
+  $("c-progress").textContent=SAMPLE?"Lesson 1 is free in the sample · "+n+" of "+C.lessons.length+" done":n+" of "+C.lessons.length+" done · about "+C.lessons.reduce(function(s,l){ return s+l.minutes; },0)+" minutes in total";
   $("c-list").innerHTML=C.lessons.map(function(l){ return '<button class="lesson'+(S.lessons[l.id]?" done":"")+'" data-l="'+esc(l.id)+'"><span class="n">'+(S.lessons[l.id]?"✓":l.n)+'</span><span><span class="lt" style="display:block">'+esc(l.title)+'</span><span class="lm" style="display:block">'+(l.video?"▶︎ Video · ":"")+l.minutes+' min · '+esc(l.summary)+'</span></span><span class="muted">→</span></button>'; }).join("");
+  var cl=$("c-lockList"); if(cl) cl.remove(); if(SAMPLE) $("c-list").parentNode.insertAdjacentHTML("afterend",'<div id="c-lockList">'+lockHTML("More lessons")+'</div>');
   $("c-list").querySelectorAll("[data-l]").forEach(function(b){ b.addEventListener("click",function(){ openLesson(b.dataset.l); }); });
   if(S.openL) openLesson(S.openL,true); else { $("c-index").classList.remove("hidden"); $("c-lesson").classList.add("hidden"); } }
 function openLesson(id,quiet){ var l=C.lessons.filter(function(x){ return x.id===id; })[0]; if(!l) return; S.openL=id; save();
   $("c-index").classList.add("hidden"); $("c-lesson").classList.remove("hidden");
-  $("c-k").textContent="Lesson "+l.n+" of "+C.lessons.length+" · "+l.minutes+" min"; $("c-title").textContent=l.title;
+  $("c-k").textContent="Lesson "+l.n+" of "+((SAMPLE&&C.totals.lessons)||C.lessons.length)+" · "+l.minutes+" min"; $("c-title").textContent=l.title;
   $("c-video").innerHTML=/^[\w-]{6,20}$/.test(l.video||"")?'<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/'+esc(l.video)+'?rel=0" title="'+esc(l.title)+'" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>':"";
   $("c-sum").textContent=l.summary; $("c-points").innerHTML=l.points.map(function(p){ return "<li>"+esc(p)+"</li>"; }).join("");
-  $("c-ex").textContent=l.exercise; $("c-readH").textContent=l.video?"Or read it":"Read it in two minutes"; $("c-read").textContent=l.script;
+  $("c-ex").textContent=l.exercise; $("c-readH").textContent=l.video?"Or read it":"Read it in two minutes"; $("c-read").textContent=l.script||"";
+  $("c-readH").classList.toggle("hidden",!l.script); $("c-read").classList.toggle("hidden",!l.script);
+  $("c-lock").innerHTML=SAMPLE?lockHTML("The next lessons"):"";
   $("c-done").textContent=S.lessons[l.id]?"✓ Done":"✓ Mark done";
   var nx=C.lessons[C.lessons.indexOf(l)+1]; $("c-nextL").classList.toggle("hidden",!nx);
   if(!quiet) window.scrollTo(0,0); }
@@ -620,25 +689,27 @@ $("c-nextL").addEventListener("click",function(){ var i=C.lessons.map(function(l
 
 // ================= MORE =================
 function renderMore(){ if(!C) return;
+  $("o-lock").innerHTML=lockHTML("In the full workbook");
+  if(!SAMPLE){
   $("o-who").textContent=(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"")+(S.auth.team?" · "+S.auth.team:"");
   var devs=S.auth.devices||[]; $("o-devices").innerHTML=devs.map(function(d){ return "<li><div><b>"+esc(d.name)+"</b>"+(d.this?' <span class="pill">this device</span>':"")+'<br><span class="small muted">added '+new Date(d.created*1000).toLocaleDateString()+"</span></div>"+(d.this?"":'<button class="btn sm ghost" data-rm="'+esc(d.id)+'">Remove</button>')+"</li>"; }).join("")+'<li class="muted small">'+devs.length+" of "+(S.auth.max||3)+" slots used</li>";
   $("o-devices").querySelectorAll("[data-rm]").forEach(function(b){ b.addEventListener("click",function(){ if(!confirm("Remove this device? It will need a new code to get back in.")) return;
     api("/me/remove-device",{body:{deviceId:b.dataset.rm}}).then(function(r){ if(r.ok){ S.auth.devices=r.devices; save(); renderMore(); toast("Removed."); } else toast(r.error||"Couldn't remove."); }); }); });
-  $("o-news").innerHTML='<p class="small muted" style="margin:0 0 6px">Edition '+esc(C.version)+' · updated '+esc(C.updated)+'</p>'+C.changelog.slice().reverse().map(function(c){ return '<p class="small" style="margin:8px 0 0"><b>'+esc(c.date)+'</b> · '+c.notes.map(esc).join(" ")+'</p>'; }).join("");
-  $("o-safety").innerHTML=C.safety.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("");
-  $("o-sources").innerHTML=C.sources.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("");
-  $("o-disc").textContent=C.disclaimer;
+  $("o-news").innerHTML='<p class="small muted" style="margin:0 0 6px">Edition '+esc(C.version)+' · updated '+esc(C.updated)+'</p>'+C.changelog.slice().reverse().map(function(c){ return '<p class="small" style="margin:8px 0 0"><b>'+esc(c.date)+'</b> · '+c.notes.map(esc).join(" ")+'</p>'; }).join(""); }
+  $("o-safety").innerHTML=(C.safety||[]).map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("");
+  $("o-sources").innerHTML=(C.sources||[]).map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("");
+  $("o-disc").textContent=C.disclaimer||"";
 }
 $("o-backup").addEventListener("click",function(){ var d={tasks:S.tasks,tracks:S.tracks,rec:S.rec,lessons:S.lessons,fills:S.fills,planned:S.planned,exported:new Date().toISOString(),app:"the-autopilot-workbook"}; download("autopilot-workbook-backup.json",JSON.stringify(d,null,1),"application/json"); });
 $("o-restore").addEventListener("change",function(e){ var f=e.target.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d.app!=="the-autopilot-workbook") throw 0; ["tasks","tracks","rec","lessons","fills","planned"].forEach(function(k){ if(d[k]!=null) S[k]=d[k]; }); save(); renderAll(); toast("Restored."); }catch(x){ toast("That file isn't an Autopilot Workbook backup."); } }; rd.readAsText(f); });
-$("o-wipe").addEventListener("click",function(){ if(!confirm("Erase your audit, progress and saved fields on this device? Your licence stays.")) return; ["tasks","tracks","planned","auditOpen","openR","openP","openL"].forEach(function(k){ delete S[k]; }); S.rec={}; S.lessons={}; S.fills={}; S.f={}; save(); location.reload(); });
+$("o-wipe").addEventListener("click",function(){ if(!confirm(SAMPLE?"Erase your sample audit and progress on this device?":"Erase your audit, progress and saved fields on this device? Your licence stays.")) return; ["tasks","tracks","planned","auditOpen","openR","openP","openL"].forEach(function(k){ delete S[k]; }); S.rec={}; S.lessons={}; S.fills={}; S.f={}; save(); location.reload(); });
 $("o-logout").addEventListener("click",function(){ S.auth.token=null; S.auth.signedOut=true; save(); location.reload(); });
 
 // ================= PRINT =================
 function printSheet(html){ $("print").innerHTML=html; var go=function(){ window.print(); }; if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ setTimeout(go,60); }); else go(); }
 function mapHTML(){ var who=S.auth.name||S.auth.email||"", cost=activeTasks().reduce(function(s,t){ return s+taskHours(t); },0), back=hoursBack();
   var running=C.recipes.filter(function(r){ return st(r.id)==="run"; }), lic="Licensed to "+(S.auth.name?S.auth.name+" · ":"")+(S.auth.email||"")+(S.auth.team?" · "+S.auth.team:"");
-  var top=topTasks().map(function(t,i){ var r=bestRecipe(t); return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(t.name)+'<small>'+esc(C.tracks[r.track].title+" · "+r.title)+'</small></td><td class="s">'+esc(LABEL[st(r.id)])+'</td><td class="h">'+hrs(taskHours(t))+' h / yr</td></tr>'; }).join("");
+  var top=topTasks().map(function(t,i){ var r=bestRecipe(t); if(!r) return ''; return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(t.name)+'<small>'+esc(C.tracks[r.track].title+" · "+r.title)+'</small></td><td class="s">'+esc(LABEL[st(r.id)])+'</td><td class="h">'+hrs(taskHours(t))+' h / yr</td></tr>'; }).join("");
   // The map is one A4 page: show the 6 that save the most and count the rest.
   var MAXRUN=6, shown=running.slice().sort(function(a,b){ return saves(b.id)-saves(a.id); }).slice(0,MAXRUN);
   var run=shown.map(function(r){ return '<tr><td class="n">✓</td><td>'+esc(r.title)+'<small>'+esc(C.tracks[r.track].title)+'</small></td><td class="s"></td><td class="h">'+saves(r.id)+' min / wk</td></tr>'; }).join("")+(running.length>MAXRUN?'<tr><td></td><td style="color:#7A949C">+ '+(running.length-MAXRUN)+' more running, listed in the app</td><td></td><td></td></tr>':'')||'<tr><td></td><td style="color:#7A949C">Nothing running yet. Number 1 above is the place to start.</td><td></td><td></td></tr>';

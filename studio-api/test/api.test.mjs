@@ -413,4 +413,17 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   assert.ok(pm); assert.equal(env.STUDIO.ttl.get("mail:" + pm.id), 7 * 24 * 3600);
 }
 
+// Free samples: public slice, no login, nothing premium beyond the slice
+{
+  let r = await call("/sample?product=autopilot");
+  assert.equal(r.status, 200); assert.equal(r.j.sample, true);
+  assert.equal(r.j.content.recipes.length, 3); assert.equal(r.j.content.prompts.length, 5);
+  assert.equal(r.j.content.lessons[0].script, undefined, "lesson scripts stay private");
+  assert.equal(r.j.content.totals.recipes, 28);
+  r = await call("/sample?product=enough"); assert.equal(r.j.content.goals.length, 3);
+  r = await call("/sample?product=studio"); assert.ok(r.j.content.beforeYouBuy); assert.equal(r.j.content.stages, undefined);
+  assert.equal((await call("/sample?product=year")).status, 404);
+  assert.equal((await call("/sample")).status, 404);
+}
+
 console.log("ok · all API checks passed");

@@ -131,9 +131,20 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
   .plan-sheet .lic{position:fixed;bottom:8mm;right:10mm;font-size:10px;color:#666}
 }
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
+/* ---- free sample (?sample): slim bar on top + locked cards ---- */
+.sbar{position:sticky;top:0;z-index:15;background:var(--accent-soft);border-bottom:1px solid var(--line);color:var(--ink)}
+.sbar .in{max-width:560px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;line-height:1.35}
+.sbar .in span{flex:1;min-width:0}
+.sbar .btn{flex:none;white-space:nowrap}
+.lock .kicker{display:flex;align-items:center;gap:6px}
+.lock .actions{flex-direction:column;align-items:stretch}
+.lock a.alt{color:var(--accent);font-size:14px;font-weight:600;text-align:center;text-decoration:none;padding:6px 0}
+.lock a.alt:hover{text-decoration:underline}
+@media print{.sbar{display:none!important}}
 </style>
 </head>
 <body>
+<div class="sbar hidden" id="sbar" role="region" aria-label="Free sample"><div class="in"><span id="sbar-text">Free sample · Before you buy is yours to keep. The plan and the Sunday check-in are in the full app.</span><a class="btn sm primary" id="sbar-get" href="https://beacons.ai/lukas.systemized">Get the full app</a></div></div>
 <div class="wrap">
   <header>
     <div class="brand"><b>Money Plan Studio</b><span>by Lukas · The Systemized Life</span></div>
@@ -283,6 +294,20 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card"><ul class="list" id="b-hist"></ul><p class="source" id="b-source"></p></div>
   </section>
 
+  <!-- ===================== LOCKED (free sample only) ===================== -->
+  <section id="v-lock" class="view">
+    <div class="card hero lock">
+      <div class="kicker"><span aria-hidden="true">🔒</span><span id="lk-kicker"></span></div>
+      <h3 style="font-size:18px;margin:4px 0 6px" id="lk-title"></h3>
+      <p class="ink2" id="lk-text"></p>
+      <div class="actions">
+        <a class="btn primary" href="https://beacons.ai/lukas.systemized">Get Money Plan Studio</a>
+        <a class="alt" href="https://beacons.ai/lukas.systemized">or get all four Lukas tools (All-Access)</a>
+      </div>
+    </div>
+    <footer>Before you buy works free in this sample. Its saves stay in this browser.<br>Not financial advice.<br><a href="../links/">The Systemized Life</a></footer>
+  </section>
+
   <!-- ===================== MORE ===================== -->
   <section id="v-more" class="view">
     <div class="card">
@@ -320,11 +345,15 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 (function(){
 "use strict";
 var $=function(i){return document.getElementById(i);};
-var KEY="lukas-studio-v1";
+// ?sample opens the free sample: no gate, no token, no device slot, and its own storage key so it never
+// mixes with (or touches) a buyer's saved data and sign-in. Theme and the old API key use the shared base key.
+var SAMPLE=new URLSearchParams(location.search).has("sample");
+var BASE="lukas-studio-v1";
+var KEY=SAMPLE?BASE+"-sample":BASE;
 // API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
 // served from localhost) and is never stored; an address saved by an older version is cleared.
 var API=(function(){ var m=document.querySelector('meta[name="studio-api"]'), d=m?m.content.replace(/\/+$/,""):"";
-  try{ localStorage.removeItem(KEY+"-api"); }catch(e){}
+  try{ localStorage.removeItem(BASE+"-api"); }catch(e){}
   var loc=/^(localhost|127\.0\.0\.1)$/, q=new URLSearchParams(location.search).get("api");
   if(q && loc.test(location.hostname)){ try{ var u=new URL(q); if(loc.test(u.hostname)) return u.origin; }catch(e){} }
   return d; })();
@@ -334,9 +363,9 @@ var S=load(); var C=null; // C = premium content from /content
 function load(){ var d={}; try{ d=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){} if(!d||typeof d!=="object") d={};
   d.plan=d.plan||{}; if(!Array.isArray(d.sunday)) d.sunday=[]; if(!d.buy||typeof d.buy!=="object") d.buy={}; if(!Array.isArray(d.buy.cool)) d.buy.cool=[]; if(!Array.isArray(d.buy.hist)) d.buy.hist=[]; d.auth=d.auth||{}; return d; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
-try{ var t=localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
+try{ var t=localStorage.getItem(BASE+"-theme"); if(t) document.documentElement.setAttribute("data-theme",t);}catch(e){}
 $("theme").addEventListener("click",function(){ var root=document.documentElement,cu=root.getAttribute("data-theme");
-  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(KEY+"-theme",nx);}catch(e){} });
+  var dark=cu?cu==="dark":matchMedia("(prefers-color-scheme: dark)").matches, nx=dark?"light":"dark"; root.setAttribute("data-theme",nx); try{localStorage.setItem(BASE+"-theme",nx);}catch(e){} });
 var tt; function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on");},2200); }
 function fmt(n,d){ n=+n||0; return n.toLocaleString("en-US",{maximumFractionDigits:d||0}); }
 var CURS={eur:"€",euro:"€",euros:"€",usd:"$",dollar:"$",dollars:"$",gbp:"£",pound:"£",pounds:"£",jpy:"¥",yen:"¥",sek:"kr ",nok:"kr ",dkk:"kr ",kr:"kr ",chf:"CHF ",pln:"zł ",czk:"Kč ",inr:"₹",krw:"₩",brl:"R$",cad:"C$",aud:"A$"};
@@ -388,11 +417,41 @@ function enter(){
   }).catch(function(){ if(C) return; showGate("Can't reach the studio server. You need a connection the first time each session."); });
 }
 function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); if(m) msg("g-msg",m); }
-if(S.auth.token) enter();
+if(SAMPLE) startSample(); else if(S.auth.token) enter();
+
+// ---------- free sample ----------
+// Only /sample is called (no /content, /me or /activate, no Authorization header). Before you buy works fully;
+// the other tabs show what the full app does and where to get it.
+var LOCK={
+  plan:["The 1-page money plan","Your whole money plan on one page","A few short questions turn your real numbers into one printable page: your stage, the three rules for it, a timeline and one thing to do today."],
+  sunday:["Sunday check-in","Ten minutes on Sunday keeps the plan alive","Log your buffer and what you invested, watch your net worth and your week streak grow, and keep a history you can export."],
+  more:["The rest of the studio","Lessons, backups and your devices","The full app adds the three stage lessons (secure, comfortable, rich), backup and restore of your data, and one purchase on up to 3 devices."]
+};
+function renderLock(v){ var l=LOCK[v]||LOCK.more; $("lk-kicker").textContent=l[0]; $("lk-title").textContent=l[1]; $("lk-text").textContent=l[2]; }
+function startSample(){
+  $("gate").classList.remove("on"); $("sbar").classList.remove("hidden");
+  if(!$("b-income")){ var fld=document.createElement("div"); fld.className="field";
+    fld.innerHTML='<label for="b-income">Your take-home pay per month</label><input type="number" id="b-income" min="0" inputmode="decimal" placeholder="e.g. 3200"><div class="hint">Only used to show the price in hours of your life (160 work hours a month). It stays in this browser.</div>';
+    $("b-checks").parentNode.insertBefore(fld,$("b-checks"));
+    var inc=$("b-income"); if(S.plan.income) inc.value=S.plan.income;
+    inc.addEventListener("input",function(){ S.plan.income=inc.value; save(); buyNums(); }); }
+  $("sbar-text").textContent="Free sample · Before you buy is yours to keep. The plan and the Sunday check-in are in the full app.";
+  var rt=$("sbar-retry"); if(rt) rt.remove();
+  fetch(API+"/sample?product=studio").then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }).then(function(r){
+    if(!r||!r.content||!r.content.beforeYouBuy) throw new Error("bad sample");
+    C=r.content; $("tabs").classList.remove("hidden"); renderBuy(); show(S.ui&&S.ui!=="buy"&&LOCK[S.ui]?S.ui:"buy");
+  }).catch(function(){
+    $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
+    $("sbar-text").textContent="Free sample · Can't load it right now. Check your connection and try again.";
+    var b=document.createElement("button"); b.className="btn sm"; b.id="sbar-retry"; b.textContent="Try again"; b.addEventListener("click",startSample);
+    $("sbar-get").parentNode.insertBefore(b,$("sbar-get"));
+  });
+}
 
 // ---------- tabs ----------
-function show(v){ S.ui=v; save(); document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+v); });
-  if(v==="sunday") renderSunday(); // the plan may have changed since the last render
+function show(v){ S.ui=v; save(); var id=(SAMPLE&&v!=="buy")?"lock":v; if(id==="lock") renderLock(v);
+  document.querySelectorAll(".view").forEach(function(x){ x.classList.toggle("on", x.id==="v-"+id); });
+  if(v==="sunday"&&!SAMPLE) renderSunday(); // the plan may have changed since the last render
   document.querySelectorAll("nav.tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===v); }); window.scrollTo(0,0); }
 document.querySelectorAll("nav.tabs button").forEach(function(b){ b.addEventListener("click",function(){ show(b.dataset.v); }); });
 
@@ -539,7 +598,7 @@ function buyCalc(){ var p=Math.max(0,parseFloat($("b-price").value)||0), y=+$("b
 function buyNums(){ if(!C) return; var c=buyCalc(), r=calc();
   $("b-yearsOut").textContent=c.y+" yrs"; $("b-rateOut").textContent=(c.r*100).toFixed(1).replace(".0","")+"%";
   $("b-fv").textContent=money(c.fv); $("b-fvLine").textContent="is what this becomes in "+c.y+" years at "+(c.r*100).toFixed(1).replace(".0","")+"% if you keep it.";
-  $("b-paid").textContent=money(c.paid); $("b-hours").textContent= r.hourly>0 ? fmt(c.paid/r.hourly,1)+" h" : "add income in Plan first";
+  $("b-paid").textContent=money(c.paid); $("b-hours").textContent= r.hourly>0 ? fmt(c.paid/r.hourly,1)+" h" : (SAMPLE?"add your pay below":"add income in Plan first");
   var kept=S.buy.hist.filter(function(h){ return h.what==="skipped"; }).reduce(function(a,h){ return a+(+h.fv||0); },0); $("b-kept").textContent=money(kept);
   var yes=C.beforeYouBuy.checklist.filter(function(_,i){ var e=$("b-q"+i); return e&&e.checked; }).length;
   $("b-verdict").textContent= yes>=2 ? "Verdict: probably an asset" : "Verdict: liability"; $("b-verdictSub").textContent= yes>=2 ? "— it may pay you back." : "— fine if it's worth "+money(c.fv)+" to you. Decide on purpose."; }
