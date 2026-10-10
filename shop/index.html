@@ -24,7 +24,7 @@ S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   d.innerHTML = "<h2 class='t'><span aria-hidden='true'>"+esc(p.emoji)+"</span> "+esc(p.name)+"</h2><span class='d'>"+esc(p.line)+"</span>"+
     "<div class='row'><span class='price'>"+esc(p.price)+"</span>"+
     "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"' aria-label='Buy "+esc(p.name)+"'":"aria-disabled='true' role='link'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
-    (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : "<p class='small'>Opens all three apps with one order code.</p>");
+    (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : "<p class='small'>Opens all four apps with one order code.</p>");
   list.appendChild(d);
 });
 </script></body></html>
