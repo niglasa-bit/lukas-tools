@@ -17,9 +17,10 @@ MAX_DEVICES = "3"
 # Comma-separated. Leave empty while testing locally.
 ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,https://www.thesystemizedlife.com"
 # Where the apps live; links in the purchase email and on the thank-you page.
-# Deploy this only after thesystemizedlife.com serves the site (launch day, after PR #37 is merged).
-APP_BASE = "https://thesystemizedlife.com"
+# Uncomment once thesystemizedlife.com serves this repo (until then the GitHub Pages address is used).
+# APP_BASE = "https://thesystemizedlife.com"
 # One line under the purchase email.
+NEWS_FROM = "Lukas <hello@thesystemizedlife.com>"
 SELLER = "Sold via Stripe for Sevenflowlabs Oy, Business ID 3660293-5"
 # /activate limits per hour (defaults 60 per IP, 10 per email):
 # RATE_ACTIVATE_IP = "60"
@@ -34,3 +35,4 @@ SELLER = "Sold via Stripe for Sevenflowlabs Oy, Business ID 3660293-5"
 #                          Payment Link has no metadata.product
 #   MAIL_WEBHOOK_URL  the Apps Script web-app URL (sends codes from your Gmail). Optional:
 #   RESEND_API_KEY + MAIL_FROM   if you later get a domain and prefer Resend
+#   RESEND_API_KEY + NEWS_FROM   newsletter (src/newsletter.js); RESEND_AUDIENCE_ID optional
