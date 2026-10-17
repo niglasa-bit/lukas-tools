@@ -3,4 +3,4 @@ Disallow: /shop/thanks.html
 Disallow: /tools/
 Disallow: /*/start-here.html
 
-Sitemap: https://niglasa-bit.github.io/lukas-tools/sitemap.xml
+Sitemap: https://thesystemizedlife.com/sitemap.xml
