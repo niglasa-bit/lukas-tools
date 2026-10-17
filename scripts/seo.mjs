@@ -19,7 +19,6 @@ const SELLER = "Sevenflowlabs Oy";
 const INDEXNOW_KEY = "a6f83ddd418bf314e076c0c9569c5484";
 // Bing Webmaster Tools site verification (public by design), on the home page only.
 const BING_VERIFY = "3E2708C1CCEFDD9865268063BFC2ACC9";
-const AI_NOTE = "Lukas is an AI-generated character, made by Sevenflow.";
 
 // Search phrase first in the title (same rule as the YouTube titles, lukas-influencer lukas_youtube/HAKUSANAT.md).
 // price = USD price from shop/config.js; paid apps are described as software for sale.
@@ -48,6 +47,10 @@ const PAGES = [
   { path: "autopilot/", kind: "app", price: "39", priority: "0.7",
     title: "The Autopilot Workbook: Automate the Boring Tasks, No Code",
     description: "Find the boring tasks that eat your week and hand them to a system. No code: recipes, fill-in prompts and short lessons. By Lukas · The Systemized Life." },
+  { path: "blog/", kind: "page", priority: "0.8" },
+  { path: "blog/why-this-blog-exists/", kind: "article", published: "2026-10-17", priority: "0.8" },
+  { path: "about/", kind: "page", priority: "0.5" },
+  { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },
   { path: "shop/legal.html", kind: "page", priority: "0.2" },
   { path: "privacy/", kind: "page", priority: "0.1" },
@@ -56,7 +59,7 @@ const PAGES = [
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 const url = (p) => base + "/" + p;
 const org = { "@type": "Organization", "@id": base + "/#org", name: NAME, url: base + "/",
-  description: "Simple money systems and free calculators. " + AI_NOTE + " Sold by " + SELLER + ".",
+  description: "Simple money systems and free calculators. Sold by " + SELLER + ".",
   parentOrganization: { "@type": "Organization", name: SELLER, url: "https://sevenflowlabs.com" } };
 
 function jsonld(p, title, description) {
@@ -68,6 +71,9 @@ function jsonld(p, title, description) {
       description, url: url(p.path), applicationCategory: "FinanceApplication", operatingSystem: "Any (web browser)",
       isAccessibleForFree: p.kind === "calculator", offers: offer, publisher: { "@id": base + "/#org" } });
   }
+  if (p.kind === "article") graph.push({ "@type": "Article", headline: title.replace(/ · .*$/, ""), description, url: url(p.path),
+    datePublished: p.published, dateModified: p.modified || p.published, inLanguage: "en",
+    author: { "@id": base + "/#org" }, publisher: { "@id": base + "/#org" }, mainEntityOfPage: url(p.path) });
   if (p.path) graph.push({ "@type": "BreadcrumbList", itemListElement: [
     { "@type": "ListItem", position: 1, name: NAME, item: base + "/" },
     { "@type": "ListItem", position: 2, name: (title || p.path).split(/[:·]/)[0].trim(), item: url(p.path) }] });
@@ -92,6 +98,7 @@ for (const p of PAGES) {
   } else title = (html.match(/<title>([^<]*)<\/title>/) || [, NAME])[1];
   if (description) html = html.replace(/(<meta name="description" content=")[^"]*/, "$1" + esc(description))
     .replace(/(<meta property="og:description" content=")[^"]*/, "$1" + esc(description));
+  else description = (html.match(/<meta name="description" content="([^"]*)"/) || [, ""])[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&");
   const tags = ['<link rel="canonical" href="' + url(p.path) + '">', '<meta property="og:url" content="' + url(p.path) + '">'];
   if (description && !/name="description"/.test(html)) tags.push('<meta name="description" content="' + esc(description) + '">');
   if (!/property="og:title"/.test(html)) tags.push('<meta property="og:type" content="website"><meta property="og:site_name" content="' + NAME + '"><meta property="og:title" content="' + esc(title) + '">' + (description ? '<meta property="og:description" content="' + esc(description) + '">' : "") + '<meta name="twitter:card" content="summary">');
@@ -121,7 +128,7 @@ out("404.html", `<!DOCTYPE html>
 <li><a href="${url("samples/")}">Free printable samples</a></li>
 <li><a href="${url("shop/")}">Shop</a></li>
 </ul>
-<p><small>${AI_NOTE} Educational content, not financial advice.</small></p>
+<p><small>Educational content, not financial advice.</small></p>
 </div></body></html>
 `);
 
