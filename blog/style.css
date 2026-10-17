@@ -41,3 +41,8 @@ mark{background:var(--mark);color:inherit;padding:0 3px}
 .sources li{margin:6px 0}
 footer.site{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink2);font-size:14px}
 .signoff{font:italic 20px/1.4 var(--serif);margin:32px 0 8px}
+form.news{display:block;margin:28px 0;padding:16px 18px;border:1px solid #e3d9c4;border-radius:14px;background:#fffdf7}
+form.news b{display:block;font-size:18px}form.news span{display:block;color:#555;font-size:14px;margin:2px 0 10px}
+.news-row{display:flex;flex-wrap:wrap;gap:8px}.news-row input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid #cdbf9f;border-radius:10px}
+.news-row button{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#7a4b00;color:#fff;cursor:pointer}
+.news-hp{position:absolute;left:-9999px;width:1px;height:1px}.news-msg{display:block;margin-top:8px;color:#555}
