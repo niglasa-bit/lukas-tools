@@ -17,6 +17,8 @@ const NAME = "The Systemized Life";
 const SELLER = "Sevenflowlabs Oy";
 // IndexNow key (public by design: the file <key>.txt at the site root proves ownership to Bing/Yandex).
 const INDEXNOW_KEY = "a6f83ddd418bf314e076c0c9569c5484";
+// Bing Webmaster Tools site verification (public by design), on the home page only.
+const BING_VERIFY = "3E2708C1CCEFDD9865268063BFC2ACC9";
 const AI_NOTE = "Lukas is an AI-generated character, made by Sevenflow.";
 
 // Search phrase first in the title (same rule as the YouTube titles, lukas-influencer lukas_youtube/HAKUSANAT.md).
@@ -93,6 +95,7 @@ for (const p of PAGES) {
   const tags = ['<link rel="canonical" href="' + url(p.path) + '">', '<meta property="og:url" content="' + url(p.path) + '">'];
   if (description && !/name="description"/.test(html)) tags.push('<meta name="description" content="' + esc(description) + '">');
   if (!/property="og:title"/.test(html)) tags.push('<meta property="og:type" content="website"><meta property="og:site_name" content="' + NAME + '"><meta property="og:title" content="' + esc(title) + '">' + (description ? '<meta property="og:description" content="' + esc(description) + '">' : "") + '<meta name="twitter:card" content="summary">');
+  if (p.kind === "home") tags.push('<meta name="msvalidate.01" content="' + BING_VERIFY + '">');
   const ld = jsonld(p, title, description || "");
   if (ld) tags.push(ld);
   const i = html.indexOf("</head>");
