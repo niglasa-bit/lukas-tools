@@ -51,6 +51,7 @@ const PAGES = [
   { path: "blog/", kind: "page", priority: "0.8" },
   { path: "blog/why-this-blog-exists/", kind: "article", published: "2026-10-17", priority: "0.8" },
   { path: "about/", kind: "page", priority: "0.5" },
+  { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },
   { path: "shop/legal.html", kind: "page", priority: "0.2" },
   { path: "privacy/", kind: "page", priority: "0.1" },
