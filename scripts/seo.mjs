@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 
-const SITE = "https://niglasa-bit.github.io/lukas-tools"; // switch to https://thesystemizedlife.com with the domain
+const SITE = "https://thesystemizedlife.com";
 const root = resolve(dirname(new URL(import.meta.url).pathname), "..");
 const args = process.argv.slice(2);
 const check = args.includes("--check");
