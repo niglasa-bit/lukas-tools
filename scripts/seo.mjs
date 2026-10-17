@@ -3,6 +3,7 @@
 // so the script can be rerun any time.
 // Run:   node scripts/seo.mjs           (after changing PAGES or SITE; commit the result)
 //        node scripts/seo.mjs --check   (CI: fails if a page is out of date)
+//        node scripts/seo.mjs --indexnow (after deploy: notify Bing/Yandex of the page URLs)
 // Own domain live: set SITE to https://thesystemizedlife.com and rerun.
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
@@ -14,6 +15,8 @@ const check = args.includes("--check");
 const base = SITE.replace(/\/$/, "");
 const NAME = "The Systemized Life";
 const SELLER = "Sevenflowlabs Oy";
+// IndexNow key (public by design: the file <key>.txt at the site root proves ownership to Bing/Yandex).
+const INDEXNOW_KEY = "a6f83ddd418bf314e076c0c9569c5484";
 const AI_NOTE = "Lukas is an AI-generated character, made by Sevenflow.";
 
 // Search phrase first in the title (same rule as the YouTube titles, lukas-influencer lukas_youtube/HAKUSANAT.md).
@@ -118,6 +121,13 @@ out("404.html", `<!DOCTYPE html>
 <p><small>${AI_NOTE} Educational content, not financial advice.</small></p>
 </div></body></html>
 `);
+
+// --indexnow: tell Bing/Yandex the sitemap URLs changed (run after a deploy of new or edited pages).
+if (args.includes("--indexnow")) {
+  const res = await fetch("https://api.indexnow.org/indexnow", { method: "POST", headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ host: new URL(base).host, key: INDEXNOW_KEY, keyLocation: url(INDEXNOW_KEY + ".txt"), urlList: PAGES.map((p) => url(p.path)) }) });
+  console.log("indexnow " + res.status);
+}
 
 if (stale.length) { console.error("seo: out of date, run node scripts/seo.mjs:\n" + stale.join("\n")); process.exit(1); }
 console.log(check ? "seo ok · " + PAGES.length + " pages" : "seo written · base " + base);
