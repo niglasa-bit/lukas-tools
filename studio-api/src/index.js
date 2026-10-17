@@ -30,6 +30,7 @@ import { CONTENT_YEAR } from "./content-year.js";
 import { CONTENT_AUTOPILOT } from "./content-autopilot.js";
 import { CONTENT_ENOUGH } from "./content-enough.js";
 import { sampleFor } from "./sample.js";
+import * as news from "./newsletter.js";
 
 // Product keys an app can ask for, the name used in emails, and the content it gets.
 const PRODUCT_INFO = {
@@ -62,6 +63,8 @@ const PURCHASE_MAIL_TTL = 7 * 24 * 3600; // the purchase email is the buyer's du
 const MIN_ORDER_LEN = 8;        // shortest order / contract number accepted, same for /activate, B2B teams and the apps
 const RATE_WINDOW = 3600;       // /activate limits are per hour: RATE_ACTIVATE_IP (default 60) and RATE_ACTIVATE_EMAIL (default 10)
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
+
+const NEWS_HELPERS = { body, json, normEmail, isEmail, now, rateLimited, tooMany };
 
 export default {
   async fetch(request, env) {
@@ -97,6 +100,9 @@ async function route(request, env, url) {
   if (p === "/order" && m === "GET") return orderLookup(env, url);
   if (p === "/outbox" && m === "GET") return outbox(request, env);
   if (p === "/outbox/ack" && m === "POST") return outboxAck(request, env);
+  if (p === "/subscribe" && m === "POST") return news.subscribe(request, env, NEWS_HELPERS);
+  if (p === "/subscribe/confirm" && m === "GET") return news.confirm(env, url, NEWS_HELPERS);
+  if (p === "/unsubscribe" && m === "GET") return news.unsubscribe(env, url, NEWS_HELPERS);
   if (p.startsWith("/admin")) return admin(request, env, url, p);
   return json({ error: "not_found" }, 404);
 }
