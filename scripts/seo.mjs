@@ -127,6 +127,8 @@ out("404.html", `<!DOCTYPE html>
 <li><a href="${url("focus/")}">Focus Leak Calculator</a></li>
 <li><a href="${url("samples/")}">Free printable samples</a></li>
 <li><a href="${url("shop/")}">Shop</a></li>
+<li><a href="${url("blog/")}">Blog</a></li>
+<li><a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">Lukas on YouTube</a> · <a href="https://www.youtube.com/@LukasSystemized/live">Systems Radio, 24/7 lofi</a></li>
 </ul>
 <p><small>Educational content, not financial advice.</small></p>
 </div></body></html>
