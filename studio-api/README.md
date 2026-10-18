@@ -46,7 +46,7 @@ alongside, so older Beacons orders still unlock.
 2. Stripe → Payment Links, one per product:
    - **Metadata**: `product` = the exact name from the table below (e.g. `Money Plan Studio`). This decides what the order unlocks.
    - **After payment**: "Don't show confirmation page" → redirect to `https://<site>/shop/thanks.html?session_id={CHECKOUT_SESSION_ID}`.
-   - **Terms**: require the buyer to agree, with custom text: "I want access right away and understand that my 14-day right of withdrawal ends once access is given."
+   - **Terms**: require the buyer to agree, with custom text: "I want access right away. I can still withdraw within 14 days of purchase and get a full refund."
    - Paste the link into `shop/config.js` (`paymentLink`) together with the price label.
 3. Stripe → Developers → Webhooks → Add endpoint `https://lukas-studio-api.<you>.workers.dev/stripe-webhook`, events
    `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `charge.dispute.created`.
@@ -56,7 +56,7 @@ alongside, so older Beacons orders still unlock.
    thank-you page shows `LK-…`, the purchase email arrives, the app unlocks, and a refund in the dashboard locks it again.
 
 What happens on a sale: the webhook records the order (order code `LK-XXXXXXXX`, derived from the Checkout session),
-emails the buyer the code with an "Open the app" button and the withdrawal-right confirmation, and the thank-you page
+emails the buyer the code with an "Open the app" button and the confirmation of the request for immediate access and the 14-day withdrawal, and the thank-you page
 reads the same code from `/order`. A full refund or a dispute closes that one order (shown on the admin page);
 anything else the buyer owns keeps working. Codes and purchase emails go out through Resend once
 `RESEND_API_KEY` + `MAIL_FROM` are set on the shop's domain (remove `MAIL_WEBHOOK_URL` to stop using Gmail).

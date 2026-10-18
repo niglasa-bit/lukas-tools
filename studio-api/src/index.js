@@ -672,7 +672,9 @@ function codeMail(name, code, deviceName, productName, team) {
 </div>`;
 }
 // Sent once per Stripe order. Also confirms, on a durable medium, that the buyer asked for immediate
-// access and so gave up the 14-day withdrawal right (required for digital content in the EU).
+// access (KSL 6:13 and 6:15). App access is an ongoing digital service, not a one-off download, so the
+// 14-day withdrawal right is not lost when access starts; the 14-day full refund covers it (lakitarkastaja
+// raportti 18.10.2026, löydös 5).
 function purchaseMail(env, name, product, order) {
   const hi = name ? `Hi ${escapeHtml(String(name).split(" ")[0])},` : "Hi,";
   const r = orderRule({ product }, productRules(env));
@@ -683,7 +685,7 @@ function purchaseMail(env, name, product, order) {
   <p style="font-size:28px;font-weight:800;letter-spacing:.08em;margin:8px 0 16px">${escapeHtml(order.toUpperCase())}</p>
   ${apps}
   <p>Open the app, enter this email address and the order code, and we'll send you a 6-digit code. Works on up to ${parseInt(env.MAX_DEVICES || "3", 10)} devices.</p>
-  <p style="color:#5F8A99;font-size:13px">You asked for immediate access to digital content and acknowledged that the 14-day right of withdrawal ends once access is given.${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
+  <p style="color:#5F8A99;font-size:13px">You asked for access to start right away. You can still withdraw within 14 days of purchase and get a full refund: reply to this email.${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
   <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life</p>
 </div>`;
 }
