@@ -1,30 +1,400 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Free Money Calculators and Simple Money Systems · The Systemized Life</title><meta name="description" content="Free money and focus calculators, plain-English money lessons and simple money systems by Lukas. Educational, not financial advice.">
+<title>Free Money Calculators and Simple Money Systems · The Systemized Life</title>
+<meta name="description" content="Free money and focus calculators, plain-English money lessons and simple money systems by Lukas. Educational, not financial advice.">
+<meta name="theme-color" content="#F7F4EA">
 <meta property="og:type" content="website"><meta property="og:site_name" content="The Systemized Life"><meta property="og:title" content="Free Money Calculators and Simple Money Systems · The Systemized Life"><meta property="og:description" content="Free money and focus calculators, plain-English money lessons and simple money systems by Lukas. Educational, not financial advice."><meta name="twitter:card" content="summary">
 <style>
-:root{--bg:#F3FAF8;--card:#fff;--ink:#1F3A5F;--ink2:#3E5F7A;--line:#CFE6E1;--accent:#2A9D8F}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F2A33;--card:#16363F;--ink:#EAF6F4;--ink2:#B9D7DA;--line:#2A5561;--accent:#5CC8B8}}
-:root[data-theme="dark"]{--bg:#0F2A33;--card:#16363F;--ink:#EAF6F4;--ink2:#B9D7DA;--line:#2A5561;--accent:#5CC8B8}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
-.wrap{max-width:560px;margin:0 auto;padding:28px 16px 48px}h1{font-size:26px;margin:0}p.sub{color:var(--ink2);margin:4px 0 22px}
-a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px;color:inherit;text-decoration:none}
-a.card b{font-size:18px}a.card span{display:block;color:var(--ink2);font-size:14px;margin-top:4px}a.card:hover{border-color:var(--accent)}
-.more{margin-top:22px;font-size:14px;color:var(--ink2)}.more a{color:var(--accent)}
-form.news{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-top:14px}form.news b{font-size:18px}form.news span{display:block;color:var(--ink2);font-size:14px;margin:4px 0 10px}.news-row{display:flex;flex-wrap:wrap;gap:8px}.news-row input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}.news-row button{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:var(--accent);color:#fff;cursor:pointer}.news-hp{position:absolute;left:-9999px;width:1px;height:1px}.news-msg{display:block;margin-top:8px;color:var(--ink2)}
+:root{--paper:#F7F4EA;--grid:rgba(27,36,51,.07);--card:#FFFDF6;--ink:#1B2433;--ink2:#4A5468;--line:#D9D3C2;--red:#C2362B;--red-ink:#A82B21;--hl:#FFE45C;--green:#2E7D4F;--amber:#B26B00;--shadow:0 1px 0 rgba(27,36,51,.08),0 6px 18px -10px rgba(27,36,51,.35)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#141A24;--grid:rgba(240,234,214,.06);--card:#1C2431;--ink:#F0EAD6;--ink2:#B7B2A3;--line:#334055;--red:#F06A5C;--red-ink:#F28B80;--hl:#8A7400;--green:#6FCF97;--amber:#F2B24C;--shadow:0 1px 0 rgba(0,0,0,.4),0 8px 22px -12px rgba(0,0,0,.8)}}
+:root[data-theme="dark"]{--paper:#141A24;--grid:rgba(240,234,214,.06);--card:#1C2431;--ink:#F0EAD6;--ink2:#B7B2A3;--line:#334055;--red:#F06A5C;--red-ink:#F28B80;--hl:#8A7400;--green:#6FCF97;--amber:#F2B24C;--shadow:0 1px 0 rgba(0,0,0,.4),0 8px 22px -12px rgba(0,0,0,.8)}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;font:17px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow-x:hidden}
+a{color:var(--red-ink)}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px;border-radius:6px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--paper);padding:8px 12px;border-radius:8px;z-index:20}.skip:focus{left:8px}
+#pencil{position:fixed;left:0;top:0;height:4px;width:100%;background:var(--red);transform-origin:0 50%;transform:scaleX(0);z-index:10}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 0 4px;font-size:15px}
+header.top b{letter-spacing:.02em}
+header.top nav{display:flex;gap:14px;flex-wrap:wrap}header.top nav a{color:var(--ink2);text-decoration:none}header.top nav a:hover{color:var(--red-ink);text-decoration:underline}
+.hand{font-family:"Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE",cursive}
+section{padding:40px 0 8px}
+h1{font-size:clamp(34px,8.5vw,58px);line-height:1.05;margin:14px 0 14px;letter-spacing:-.02em}
+h2{font-size:clamp(25px,5.5vw,34px);line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+.kicker{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--red-ink);font-weight:700;margin:0 0 6px}
+.lede{font-size:clamp(18px,3.6vw,21px);color:var(--ink2);max-width:36em;margin:0 0 20px}
+.sub{color:var(--ink2);margin:0 0 18px}
+mark{background:linear-gradient(100deg,transparent 2%,var(--hl) 4%,var(--hl) 96%,transparent 98%) no-repeat 0 85%/0% 60%;color:inherit;padding:0 .08em;transition:background-size 1s .35s ease}
+.in mark,html:not(.js) mark{background-size:100% 60%}
+.hero{position:relative;padding-top:6px}
+.stamp{display:inline-grid;place-items:center;border:3px solid var(--red);color:var(--red);border-radius:10px;padding:6px 12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:14px;line-height:1.1;transform:rotate(-8deg);mix-blend-mode:multiply}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stamp{mix-blend-mode:normal}}
+.hero .stamp{font-size:13px;margin-top:22px;opacity:0}
+.hero.in .stamp,html:not(.js) .hero .stamp{animation:thump .5s 1.1s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes thump{0%{opacity:0;transform:rotate(-8deg) scale(2.2)}100%{opacity:.92;transform:rotate(-8deg) scale(1)}}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:10px 18px;border-radius:12px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);font:inherit;font-weight:650;text-decoration:none;cursor:pointer;box-shadow:3px 3px 0 var(--red);transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--red)}.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--red)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:3px 3px 0 var(--line)}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.trio div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;color:var(--ink2);box-shadow:var(--shadow)}
+.trio b{display:block;color:var(--ink);font-size:16px}
+@media (max-width:520px){.trio{grid-template-columns:1fr}header.top nav{display:none}}
+/* verdict game */
+.board{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px 18px 18px;position:relative;overflow:hidden}
+.board .meta{display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);margin-bottom:10px;gap:10px}
+.dots{display:flex;gap:6px;align-items:center}.dots i{width:10px;height:10px;border-radius:50%;border:2px solid var(--line);display:block}.dots i.on{background:var(--ink);border-color:var(--ink)}.dots i.ok{background:var(--green);border-color:var(--green)}.dots i.no{background:var(--red);border-color:var(--red)}
+.claim{font-size:clamp(21px,4.6vw,27px);line-height:1.25;margin:4px 0 4px;font-weight:700;min-height:2.5em}
+.src{font-size:14px;color:var(--ink2);margin:0 0 16px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.choices button{min-height:52px;border-radius:12px;border:2px solid var(--ink);background:transparent;color:var(--ink);font:inherit;font-weight:700;cursor:pointer;transition:background .15s,transform .12s}
+.choices button:hover{background:var(--paper);transform:translateY(-1px)}
+.choices button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.choices button:disabled{cursor:default;transform:none}
+@media (max-width:420px){.choices{grid-template-columns:1fr}}
+.result{margin-top:16px;border-top:2px dashed var(--line);padding-top:14px;display:none}
+.result.show{display:block}
+.result .stamp{font-size:18px;margin:2px 0 10px}
+.result.show .stamp{animation:thump2 .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes thump2{0%{opacity:0;transform:rotate(-8deg) scale(2)}100%{opacity:1;transform:rotate(-8deg) scale(1)}}
+.stamp.t{border-color:var(--green);color:var(--green)}.stamp.c{border-color:var(--amber);color:var(--amber)}
+.result p{margin:0 0 10px}
+.you{font-weight:700}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.watch{font-weight:650}
+.final{text-align:center;padding:10px 0 4px}
+.final .score{font-size:clamp(44px,12vw,72px);font-weight:800;line-height:1;margin:6px 0}
+/* paths */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 14px}
+.tabs button{min-height:46px;padding:8px 16px;border-radius:999px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.panel[hidden]{display:none}
+.panel .big{font-size:20px;font-weight:700;margin:0 0 10px}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.steps li::before{content:counter(s);width:30px;height:30px;border-radius:50%;border:2px solid var(--red);color:var(--red);display:grid;place-items:center;font-weight:800;font-size:15px}
+.steps a{font-weight:650}
+.steps span{display:block;color:var(--ink2);font-size:15px}
+/* calculator */
+.calc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.calc label{font-weight:650;display:block;margin-bottom:6px}
+.calc input[type=range]{width:100%;accent-color:var(--red);height:32px}
+.calc .out{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.calc .out div{border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.calc .out small{display:block;color:var(--ink2);font-size:13px}
+.calc .out b{font-size:clamp(24px,6vw,32px);font-variant-numeric:tabular-nums}
+.calc .out .later b{color:var(--red-ink)}
+.fine{font-size:13px;color:var(--ink2);margin:10px 0 0}
+.hours{margin:12px 0 0;font-size:16px}
+/* week */
+.week{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (max-width:560px){.week{grid-template-columns:1fr}}
+.week a{display:block;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--red);border-radius:12px;padding:14px;color:inherit;text-decoration:none;box-shadow:var(--shadow);transition:transform .15s}
+.week a:hover{transform:translateY(-2px)}
+.week b{display:block;font-size:17px}.week span{display:block;color:var(--ink2);font-size:15px;margin-top:2px}
+.week em{font-style:normal;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red-ink)}
+.live{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+/* tools */
+.tools{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (max-width:560px){.tools{grid-template-columns:1fr}}
+.tools a,.tools div{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;color:inherit;text-decoration:none;box-shadow:var(--shadow)}
+.tools a:hover{border-color:var(--ink)}
+.tools b{display:block}.tools span{display:block;color:var(--ink2);font-size:15px;margin-top:2px}
+.tools .tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:2px solid currentColor;border-radius:6px;padding:0 6px;margin-bottom:6px;color:var(--green)}
+.tools .tag.paid{color:var(--ink2)}
+.tools .key{grid-column:1/-1;border:2px solid var(--ink)}
+.signoff{text-align:center;padding:56px 0 20px}
+.signoff .hand{font-size:clamp(26px,6vw,38px);margin:0 0 6px}
+footer{font-size:14px;color:var(--ink2);border-top:1px solid var(--line);padding:18px 0 40px;text-align:center}
+.rv{opacity:1}
+.js .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}.js .rv{opacity:1;transform:none}mark{background-size:100% 60%}.hero .stamp{opacity:.92}#pencil{display:none}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+form.news{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px auto 0;max-width:560px;text-align:left;box-shadow:var(--shadow)}form.news b{font-size:18px}form.news span{display:block;color:var(--ink2);font-size:14px;margin:4px 0 10px}.news-row{display:flex;flex-wrap:wrap;gap:8px}.news-row input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}.news-row button{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:var(--red);color:#fff;cursor:pointer}.news-hp{position:absolute;left:-9999px;width:1px;height:1px}.news-msg{display:block;margin-top:8px;color:var(--ink2)}
 </style>
+<script>document.documentElement.className="js"</script>
+
 <!-- seo --><link rel="canonical" href="https://thesystemizedlife.com/"><meta property="og:url" content="https://thesystemizedlife.com/"><meta name="msvalidate.01" content="3E2708C1CCEFDD9865268063BFC2ACC9"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://thesystemizedlife.com/#org","name":"The Systemized Life","url":"https://thesystemizedlife.com/","description":"Simple money systems and free calculators. Sold by Sevenflowlabs Oy.","parentOrganization":{"@type":"Organization","name":"Sevenflowlabs Oy","url":"https://sevenflowlabs.com"}},{"@type":"WebSite","@id":"https://thesystemizedlife.com/#site","name":"The Systemized Life","url":"https://thesystemizedlife.com/","publisher":{"@id":"https://thesystemizedlife.com/#org"},"inLanguage":"en"}]}</script><!-- /seo -->
-</head><body><div class="wrap">
-<h1>Lukas · The Systemized Life</h1><p class="sub">Free, simple tools. One small system at a time. ☕🐶</p>
-<a class="card" href="blog/"><b>📝 The blog</b><span>Plain-English money lessons, checked against the evidence. Start with how a family got out of 30,000 € of high-interest debt.</span></a>
-<a class="card" href="samples/"><b>🎁 Free samples of the Lukas apps</b><span>Try a real piece of each tool: the price-tag reader, the 20-minute automation audit and the first 3 days of The Enough Habit. No sign-up.</span></a>
-<a class="card" href="future-cost/"><b>💸 The Future Cost Calculator</b><span>That $1,000 phone really costs $7,612. See the real price of any purchase + the Rich Dad asset test.</span></a>
-<a class="card" href="https://shop.beacons.ai/lukas.systemized/849e0d27-8d77-4db2-a6ba-f1aba525500a"><b>📘 The No-Code AI Budget System</b><span>A budget that runs itself — built with AI, zero coding. 7 steps + 10 copy-paste prompts.</span></a>
-<a class="card" href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ"><b>▶ Lukas on YouTube</b><span>Money books tested against the evidence. Otto is the judge.</span></a>
-<a class="card" href="https://www.youtube.com/@LukasSystemized/live"><b>🎧 Systems Radio</b><span>Free calm lofi, live 24/7. Good for focus while you plan.</span></a>
-<a class="card" href="focus/"><b>⏱️ The Focus Leak Calculator</b><span>How many hours a year does your desk steal? Find out in 30 seconds.</span></a>
+</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="pencil" aria-hidden="true"></div>
+<div class="wrap">
+<header class="top"><b>Lukas · The Systemized Life</b>
+<nav aria-label="Sections"><a href="#test">The test</a><a href="#start">Start</a><a href="#week">Watch</a><a href="#tools">Tools</a><a href="blog/">Blog</a></nav></header>
+
+<main id="main">
+<section class="hero rv" aria-labelledby="h1">
+<span class="stamp" aria-hidden="true">Fact-<br>checked</span>
+<h1 id="h1">Money, life and systems, <mark>made simple</mark>.</h1>
+<p class="lede">I take the most famous money books and the rules everyone repeats, test them against modern research and real numbers, and keep only the small systems that actually work. Otto the dog is the judge.</p>
+<div class="btns"><a class="btn" href="#test">Take the 60-second test</a><a class="btn ghost" href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">▶ Watch on YouTube</a></div>
+<div class="trio">
+<div><b>Book verdicts</b>Famous book vs modern evidence. True, false, or it's complicated.</div>
+<div><b>Small systems</b>Plain-English steps you can set up in one sitting and forget.</div>
+<div><b>No stress</b>If you've started saving, you're already ahead. We build from there.</div>
+</div>
+</section>
+
+<section id="test" class="rv" aria-labelledby="h-test">
+<p class="kicker">The verdict board</p>
+<h2 id="h-test">True, false, or it's complicated?</h2>
+<p class="sub">Six money rules Lukas has already put on trial. Make your call, then see what the evidence said.</p>
+<div class="board" id="board">
+<div class="meta"><span id="count">Rule 1 of 6</span><span class="dots" id="dots" aria-hidden="true"></span></div>
+<p class="claim" id="claim" aria-live="polite"></p>
+<p class="src" id="src"></p>
+<div class="choices" role="group" aria-label="Your verdict">
+<button type="button" data-v="t">True</button><button type="button" data-v="f">False</button><button type="button" data-v="c">It's complicated</button>
+</div>
+<div class="result" id="result" aria-live="polite">
+<span class="stamp" id="stamp"></span>
+<p class="you" id="you"></p>
+<p id="why"></p>
+<div class="row"><a class="watch" id="watch" href="#">▶ Watch the full verdict</a><button type="button" class="btn" id="next">Next rule</button></div>
+</div>
+<div class="final" id="final" hidden aria-live="polite">
+<p class="kicker">Your score vs the evidence</p>
+<p class="score" id="score"></p>
+<p id="finalmsg"></p>
+<div class="btns" style="justify-content:center"><a class="btn" href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ?sub_confirmation=1">Subscribe for the next verdict</a><button type="button" class="btn ghost" id="again">Play again</button></div>
+</div>
+<noscript><p>The interactive board needs JavaScript. The verdicts are all on <a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">the YouTube channel</a>.</p></noscript>
+</div>
+</section>
+
+<section id="start" class="rv" aria-labelledby="h-start">
+<p class="kicker">Start here</p>
+<h2 id="h-start">Where are you right now?</h2>
+<p class="sub">Pick the one that sounds most like you. Three steps each, smallest first.</p>
+<div class="tabs" role="tablist" aria-label="Where are you right now?">
+<button type="button" role="tab" id="t-a" aria-controls="p-a" aria-selected="true">Just starting</button>
+<button type="button" role="tab" id="t-b" aria-controls="p-b" aria-selected="false" tabindex="-1">Already saving</button>
+<button type="button" role="tab" id="t-c" aria-controls="p-c" aria-selected="false" tabindex="-1">Short on time</button>
+</div>
+<div class="panel" role="tabpanel" id="p-a" aria-labelledby="t-a">
+<p class="big">Good news: the first system is the smallest one.</p>
+<ol class="steps">
+<li><div><a href="https://youtu.be/u5W-13f7fog">Watch: a 100-year-old money book vs modern science</a><span>Seven rules, seven verdicts. The best place to start.</span></div></li>
+<li><div><a href="blog/"><span class="tag">Free</span><b>The blog</b><span>Plain-English money lessons, checked against the evidence.</span></a>
+<a href="future-cost/">See the real price of one purchase</a><span>The Future Cost Calculator, free, 30 seconds.</span></div></li>
+<li><div><a href="https://beacons.ai/lukas.systemized/alltools">Get the free 1-Page Money Plan</a><span>Your whole money picture on one page.</span></div></li>
+</ol>
+</div>
+<div class="panel" role="tabpanel" id="p-b" aria-labelledby="t-b" hidden>
+<p class="big">You're further ahead than you think. Now keep more of it.</p>
+<ol class="steps">
+<li><div><a href="https://youtu.be/1EpbPlHbAzk">Watch: the 1% that quietly eats a third of your money</a><span>Five things the industry says about fees, five verdicts.</span></div></li>
+<li><div><a href="https://youtu.be/lL3m18VMXqk">Watch: The Psychology of Money, fact-checked</a><span>How to stop your finish line from moving.</span></div></li>
+<li><div><a href="samples/">Try a free piece of each Lukas app</a><span>No sign-up. Then decide if you want the whole thing.</span></div></li>
+</ol>
+</div>
+<div class="panel" role="tabpanel" id="p-c" aria-labelledby="t-c" hidden>
+<p class="big">Time is the money nobody tracks. Start there.</p>
+<ol class="steps">
+<li><div><a href="focus/">Find your focus leak</a><span>How many hours a year does your desk steal? Free.</span></div></li>
+<li><div><a href="https://youtu.be/hNNIQ0OCuhw">Watch: Keynes promised you a 15-hour week</a><span>Where the extra time went, and how to win some back.</span></div></li>
+<li><div><a href="samples/">Try the 20-minute automation audit</a><span>A free sample from The Autopilot Workbook.</span></div></li>
+</ol>
+</div>
+</section>
+
+<section id="price" class="rv" aria-labelledby="h-price">
+<p class="kicker">Try one small system</p>
+<h2 id="h-price">What does that purchase really cost?</h2>
+<p class="sub">Slide to any price. The second number is what the same money could grow to if it were invested instead.</p>
+<div class="calc">
+<label for="amt">Price today: <span id="amtv">$1,000</span></label>
+<input type="range" id="amt" min="10" max="5000" step="10" value="1000" aria-describedby="calcnote">
+<label for="yrs" style="margin-top:8px">Years from now: <span id="yrsv">30</span></label>
+<input type="range" id="yrs" min="5" max="40" step="1" value="30">
+<div class="out" aria-live="polite">
+<div><small>Price today</small><b id="now">$1,000</b></div>
+<div class="later"><small>Invested instead</small><b id="later">$7,612</b></div>
+</div>
+<p class="hours" id="hours"></p>
+<p class="fine" id="calcnote">Example: 7% a year, before inflation and fees. Not a promise and not financial advice. Nothing you type leaves your device. <a href="future-cost/">Open the full calculator →</a></p>
+</div>
+</section>
+
+<section id="week" class="rv" aria-labelledby="h-week">
+<p class="kicker">On the channel</p>
+<h2 id="h-week">Every week, one more rule on trial.</h2>
+<p class="sub" id="localtime">New long videos go up at 20:00 Helsinki time.</p>
+<div class="week">
+<a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ/videos"><em>Long videos</em><b>Famous book vs modern evidence</b><span>One book, a handful of rules, a verdict on each. About 12 to 15 minutes.</span></a>
+<a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ"><em>Fridays from 13 November</em><b>The Market Mirror</b><span>This week's market headlines next to what history says usually comes next.</span></a>
+<a href="https://www.youtube.com/@LukasSystemized/live"><em><span class="live" aria-hidden="true"></span>Live now, 24/7</em><b>Systems Radio</b><span>Lofi to plan, study and budget to. Every track credited on screen.</span></a>
+<a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ/shorts"><em>Shorts</em><b>One idea in under a minute</b><span>Each short points to the long video with the full story.</span></a>
+</div>
+</section>
+
+<section id="tools" class="rv" aria-labelledby="h-tools">
+<p class="kicker">The toolbox</p>
+<h2 id="h-tools">Tools that do the remembering for you.</h2>
+<p class="sub">Free tools first. The apps are one-time purchases with no subscription, and your numbers stay on your device.</p>
+<div class="tools">
+<a href="future-cost/"><span class="tag">Free</span><b>The Future Cost Calculator</b><span>The real price of any purchase, plus the Rich Dad asset test.</span></a>
+<a href="focus/"><span class="tag">Free</span><b>The Focus Leak Calculator</b><span>How many hours a year your desk steals.</span></a>
+<a href="samples/"><span class="tag">Free</span><b>Free samples of the Lukas apps</b><span>The price-tag reader, the automation audit and 3 days of The Enough Habit.</span></a>
+<a href="https://beacons.ai/lukas.systemized/alltools"><span class="tag">Free</span><b>1-Page Money Plan &amp; Sunday Wealth Tracker</b><span>Printable, on the all-tools page.</span></a>
+<a class="key" href="https://shop.beacons.ai/lukas.systemized/ae888bce-9e94-4136-b32d-39d915158f8c"><span class="tag paid">App bundle</span><b>🗝️ Lukas All-Access</b><span>Money Plan Studio, The Autopilot Workbook, The Systemized Year and The Enough Habit in one purchase.</span></a>
+<a href="https://beacons.ai/lukas.systemized"><span class="tag paid">App</span><b>Money Plan Studio</b><span>Your whole money plan on one page and a 10-minute Sunday check-in.</span></a>
+<a href="https://shop.beacons.ai/lukas.systemized/531e5986-ab7b-4716-b9b4-4d929767c981"><span class="tag paid">App</span><b>The Autopilot Workbook</b><span>Hand the boring weekly tasks to a system. No code.</span></a>
+<a href="https://shop.beacons.ai/lukas.systemized/d2c0433c-a5ce-4203-83a6-815985a10e28"><span class="tag paid">App</span><b>The Enough Habit</b><span>One small frugal goal a day for 66 days, in a two-minute morning check.</span></a>
+<a href="https://shop.beacons.ai/lukas.systemized/849e0d27-8d77-4db2-a6ba-f1aba525500a"><span class="tag paid">Guide</span><b>The No-Code AI Budget System</b><span>A budget that runs itself. 7 steps and 10 copy-paste prompts.</span></a>
+<div><span class="tag paid">Coming late November</span><b>The Systemized Year</b><span>Your whole year on one page: money, time, focus and what money is actually for.</span></div>
+</div>
+</section>
+
+<section class="signoff rv" aria-label="Sign-off">
+<p class="hand">One small system at a time.</p>
+<p class="sub">If something here helped, the best thank-you is a <a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ?sub_confirmation=1">subscribe</a>. Otto counts them. Personally.</p>
 <form class="news" data-source="home"><b>One short money lesson a week</b><span>Plain English, sources included. No spam, unsubscribe any time.</span><div class="news-row"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address" autocomplete="email"><button type="submit">Subscribe</button></div><input type="text" name="website" tabindex="-1" autocomplete="off" class="news-hp" aria-hidden="true"><small class="news-msg" role="status"></small></form>
-<p class="more">Free Sunday Wealth Tracker, 1-Page Money Plan &amp; more → <a href="https://beacons.ai/lukas.systemized/alltools">all tools</a><br>
-Your numbers stay on your device. Not financial advice. <a href="about/">About</a> · <a href="legal/">Imprint &amp; privacy</a></p>
-</div><script src="news.js" defer></script>
+</section>
+</main>
+
+<footer>Educational content, not financial advice. Your numbers in the tools stay on your device.<br><a href="privacy/">Privacy (YouTube comments tool)</a> · <a href="shop/legal.html">Shop terms &amp; privacy</a> · <a href="links/">Links</a> · <a href="about/">About</a> · <a href="legal/">Imprint &amp; privacy</a></footer>
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Reveal sections as they scroll in; the hero shows at once.
+  var rv = document.querySelectorAll(".rv");
+  if ("IntersectionObserver" in window && !reduce) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -10% 0px" });
+    rv.forEach(function (el) { io.observe(el); });
+  } else rv.forEach(function (el) { el.classList.add("in"); });
+  requestAnimationFrame(function () { rv[0].classList.add("in"); });
+
+  // Reading progress as a red pencil line.
+  var pencil = document.getElementById("pencil"), ticking = false;
+  function prog() {
+    var h = document.documentElement.scrollHeight - innerHeight;
+    pencil.style.transform = "scaleX(" + (h > 0 ? Math.min(1, scrollY / h) : 0) + ")";
+    ticking = false;
+  }
+  addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(prog); } }, { passive: true });
+
+  // The verdict board. Verdicts come from the published videos.
+  var B = "https://youtu.be/";
+  var RULES = [
+    { c: "Save at least one coin in ten before you spend anything.", s: "The Richest Man in Babylon, 1926", v: "t", l: "True",
+      w: "Paying yourself first is the rule research keeps confirming: decide once, automatically, before the money can be spent.", u: B + "u5W-13f7fog" },
+    { c: "A 1% yearly fund fee is small.", s: "What the fund industry tells you", v: "f", l: "False",
+      w: "Over a lifetime, 1% a year takes roughly a fifth to a third of the final result. Small number, big bill.", u: B + "1EpbPlHbAzk" },
+    { c: "Own your home. It's the best investment you'll ever make.", s: "The Richest Man in Babylon, 1926", v: "c", l: "It's complicated",
+      w: "Half true. Not paying rent can free money to invest, but a home is also a cost, and the 'best investment' part doesn't hold for everyone.", u: B + "u5W-13f7fog" },
+    { c: "No one is crazy with money.", s: "Morgan Housel, The Psychology of Money", v: "t", l: "True",
+      w: "Everyone runs the rules their own past wrote. The decade you grew up in shapes your money habits, and the research backs it.", u: B + "lL3m18VMXqk" },
+    { c: "With fund managers, you get what you pay for.", s: "What the fund industry tells you", v: "f", l: "False",
+      w: "On average, no. Over twenty years about nine in ten professionally picked funds paid more and got less than the plain index.", u: B + "1EpbPlHbAzk" },
+    { c: "Your 'necessary' expenses grow to match your income, unless you stop them.", s: "The Richest Man in Babylon, 1926", v: "t", l: "True",
+      w: "Parkinson proved the problem decades later. The fix is a system that moves money before lifestyle can absorb it.", u: B + "u5W-13f7fog" }
+  ];
+  var LBL = { t: "True", f: "False", c: "It's complicated" };
+  var i = 0, score = 0, answered = false, marks = [];
+  var $ = function (id) { return document.getElementById(id); };
+  var btns = document.querySelectorAll(".choices button");
+  var dots = $("dots");
+  RULES.forEach(function () { dots.appendChild(document.createElement("i")); });
+
+  function draw() {
+    var r = RULES[i];
+    answered = false;
+    $("count").textContent = "Rule " + (i + 1) + " of " + RULES.length;
+    $("claim").textContent = "“" + r.c + "”";
+    $("src").textContent = r.s;
+    $("result").classList.remove("show");
+    btns.forEach(function (b) { b.disabled = false; b.setAttribute("aria-pressed", "false"); });
+    [].forEach.call(dots.children, function (d, k) { d.className = marks[k] || (k === i ? "on" : ""); });
+  }
+  function pick(v, btn) {
+    if (answered) return;
+    answered = true;
+    var r = RULES[i], ok = v === r.v;
+    if (ok) score++;
+    marks[i] = ok ? "ok" : "no";
+    btns.forEach(function (b) { b.disabled = true; });
+    btn.setAttribute("aria-pressed", "true");
+    var st = $("stamp");
+    st.textContent = "Verdict: " + r.l;
+    st.className = "stamp " + (r.v === "f" ? "" : r.v);
+    $("you").textContent = ok ? "You called it. " + LBL[v] + " matches the evidence." : "You said " + LBL[v] + ". The evidence said " + r.l + ".";
+    $("why").textContent = r.w;
+    $("watch").href = r.u;
+    $("next").textContent = i === RULES.length - 1 ? "See my score" : "Next rule";
+    $("result").classList.remove("show"); void $("result").offsetWidth; $("result").classList.add("show");
+    dots.children[i].className = marks[i];
+    $("next").focus({ preventScroll: true });
+  }
+  function next() {
+    if (i < RULES.length - 1) { i++; draw(); btns[0].focus({ preventScroll: true }); return; }
+    ["count", "claim", "src"].forEach(function (id) { $(id).hidden = true; });
+    document.querySelector(".choices").hidden = true;
+    $("result").classList.remove("show");
+    $("final").hidden = false;
+    $("score").textContent = score + " / " + RULES.length;
+    $("finalmsg").textContent = score >= 5 ? "You read money like a fact-checker. You're ahead, so keep going."
+      : score >= 3 ? "Solid. A few of these surprise almost everyone, and now they won't surprise you."
+      : "The rules everyone repeats are often the shakiest ones. You just checked six of them, and that's the habit that matters.";
+    $("again").focus({ preventScroll: true });
+  }
+  btns.forEach(function (b) { b.addEventListener("click", function () { pick(b.getAttribute("data-v"), b); }); });
+  $("next").addEventListener("click", next);
+  $("again").addEventListener("click", function () {
+    i = 0; score = 0; marks = [];
+    ["count", "claim", "src"].forEach(function (id) { $(id).hidden = false; });
+    document.querySelector(".choices").hidden = false;
+    $("final").hidden = true; draw(); btns[0].focus({ preventScroll: true });
+  });
+  draw();
+
+  // Tabs with arrow-key support.
+  var tabs = [].slice.call(document.querySelectorAll('[role="tab"]'));
+  function sel(t) {
+    tabs.forEach(function (x) {
+      var on = x === t;
+      x.setAttribute("aria-selected", on); x.tabIndex = on ? 0 : -1;
+      $(x.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  tabs.forEach(function (t, k) {
+    t.addEventListener("click", function () { sel(t); });
+    t.addEventListener("keydown", function (e) {
+      var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (d) { var n = tabs[(k + d + tabs.length) % tabs.length]; sel(n); n.focus(); e.preventDefault(); }
+    });
+  });
+
+  // Mini future-cost calculator (7% a year, example only).
+  var fmt = function (n) { return "$" + Math.round(n).toLocaleString("en-US"); };
+  function calc() {
+    var a = +$("amt").value, y = +$("yrs").value, f = a * Math.pow(1.07, y);
+    $("amtv").textContent = fmt(a); $("now").textContent = fmt(a); $("yrsv").textContent = y;
+    $("later").textContent = fmt(f);
+    $("hours").innerHTML = "That's <b>" + (f / a).toFixed(1) + "×</b> the sticker price, " + y + " years from now.";
+  }
+  $("amt").addEventListener("input", calc); $("yrs").addEventListener("input", calc); calc();
+
+  // Show the 20:00 Helsinki release time in the visitor's own time zone.
+  try {
+    var now = new Date(), d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 18, 0));
+    var hel = +new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Helsinki", hour: "numeric", hourCycle: "h23" }).format(d);
+    d = new Date(d.getTime() + (20 - hel) * 3600000);
+    var mine = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (zone !== "Europe/Helsinki") $("localtime").textContent = "New long videos go up at 20:00 Helsinki time. That's " + mine + " where you are.";
+  } catch (e) {}
+})();
+</script>
+<script src="news.js" defer></script>
 </body></html>
