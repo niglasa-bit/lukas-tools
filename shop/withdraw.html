@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Withdraw from a Purchase</title><meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css"><script src="config.js"></script>
+<style>
+label{display:block;font-weight:600;margin:14px 0 4px}
+input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.err{display:block;color:#B42318;font-size:14px;margin-top:4px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0 16px}dt{color:var(--ink2)}dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.stop{background:#B42318;color:#fff}
+</style></head>
+<body><div class="wrap">
+<h1>Withdraw from a purchase</h1>
+<p class="sub">You can withdraw from any purchase within 14 days of buying it and get a full refund. No reason needed.</p>
+
+<form id="f" class="card" novalidate>
+<label for="fullname">Your name</label><input id="fullname" name="fullname" autocomplete="name" required><small class="err" data-for="fullname"></small>
+<label for="email">Email you bought with</label><input id="email" name="email" type="email" autocomplete="email" required><small class="err" data-for="email"></small>
+<label for="order">Order code</label><input id="order" name="order" placeholder="LK-XXXXXXXX" autocapitalize="characters" required><small class="err" data-for="order"></small>
+<p class="small">The order code is in your purchase email and on the thank-you page. The receipt confirming your withdrawal is sent to the same email.</p>
+<div class="btns"><button class="btn" type="submit">Continue</button></div>
+<small class="err" data-for=""></small>
+</form>
+
+<div id="confirm" class="card" hidden>
+<h2 style="margin-top:0">Confirm your withdrawal</h2>
+<dl id="sum"></dl>
+<p class="small">Access to this product ends right away. Anything else you bought keeps working.</p>
+<div class="btns"><button class="btn stop" id="yes" type="button">Confirm withdrawal</button><button class="btn ghost" id="back" type="button">Go back</button></div>
+<small class="err" id="cerr"></small>
+</div>
+
+<div id="done" class="card" hidden></div>
+
+<p class="small">Something not working instead? Reply to your purchase email and we'll help. You can also withdraw by emailing <a href="mailto:sales@sevenflowlabs.com">sales@sevenflowlabs.com</a>.</p>
+<footer><a href="./">Back to the shop</a> · <a href="legal.html">Terms, refunds &amp; privacy</a></footer>
+</div>
+<script>
+var S = window.SHOP, f = document.getElementById("f"), conf = document.getElementById("confirm"), done = document.getElementById("done");
+var api = S.api.replace(/\/+$/, "") + "/withdraw", last = null;
+function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+var q = new URLSearchParams(location.search).get("order"); if (q) f.order.value = q.slice(0, 40);
+function errs(field, msg){ f.querySelectorAll(".err").forEach(function(e){ e.textContent = e.getAttribute("data-for") === field ? (msg||"") : ""; }); if (field && f[field]) f[field].focus(); }
+function data(confirm){ return { name: f.fullname.value.trim(), email: f.email.value.trim(), order: f.order.value.trim(), confirm: !!confirm }; }
+function post(body){ return fetch(api, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
+function rows(j, extra){ return [["Product", j.product + (j.amount ? " · " + j.amount : "")], ["Order code", j.order], ["Bought", j.bought]].concat(extra||[]).map(function(r){ return "<dt>"+esc(r[0])+"</dt><dd>"+esc(r[1])+"</dd>"; }).join(""); }
+function local(iso){ try { return new Date(iso).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" }); } catch(e) { return iso; } }
+f.addEventListener("submit", function(e){
+  e.preventDefault(); errs("", "");
+  if (!f.fullname.value.trim()) return errs("fullname", "Enter your name.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.value.trim())) return errs("email", "Enter the email address you used for the purchase.");
+  if (!f.order.value.trim()) return errs("order", "Enter the order code from your purchase email.");
+  post(data(false)).then(function(j){
+    if (j.status === "confirm") { last = data(true); document.getElementById("sum").innerHTML = rows(j, [["Name", last.name], ["Receipt to", j.email]]); f.hidden = true; conf.hidden = false; document.getElementById("yes").focus(); }
+    else if (j.status === "already") show("<h2 style='margin-top:0'>Already withdrawn</h2><dl>"+rows(j, [["Withdrawn", local(j.at)]])+"</dl><p class='small'>The receipt was sent to your email.</p>");
+    else if (j.status === "closed") show("<h2 style='margin-top:0'>Nothing to withdraw</h2><p>"+esc(j.message)+"</p>");
+    else errs(j.field === "name" ? "fullname" : (j.field || ""), j.message || "Something went wrong. Try again in a moment.");
+  }).catch(function(){ errs("", "Couldn't reach the shop. Check your connection and try again."); });
+});
+document.getElementById("back").onclick = function(){ conf.hidden = true; f.hidden = false; };
+document.getElementById("yes").onclick = function(){
+  var b = this; b.disabled = true; document.getElementById("cerr").textContent = "";
+  post(last).then(function(j){
+    b.disabled = false;
+    if (j.status === "withdrawn" || j.status === "already") show("<h2 style='margin-top:0'>Withdrawal confirmed ✔</h2><dl>"+rows(j, [["Withdrawn", local(j.at)]])+"</dl><p>"+(j.refund === "refunded" ? "Your payment has been refunded in full. Depending on your bank it shows up within 5–10 days." : "We'll refund your payment in full within 14 days.")+"</p><p class='small'>A receipt with these details is on its way to your email. Keep it.</p>");
+    else document.getElementById("cerr").textContent = j.message || "Something went wrong. Try again in a moment.";
+  }).catch(function(){ b.disabled = false; document.getElementById("cerr").textContent = "Couldn't reach the shop. Check your connection and try again."; });
+};
+function show(html){ f.hidden = true; conf.hidden = true; done.innerHTML = html; done.hidden = false; }
+</script></body></html>

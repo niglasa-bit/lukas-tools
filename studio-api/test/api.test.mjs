@@ -459,3 +459,41 @@ console.log("ok · all API checks passed");
   globalThis.fetch = realFetch; delete env.RESEND_API_KEY; delete env.NEWS_FROM;
 }
 console.log("ok · newsletter checks passed");
+
+// Withdrawal function (KSL 6:14 a §): identify → separate confirmation → order closed, refund, receipt with date and time.
+{
+  const calls = []; const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { calls.push({ u: String(u), o }); return new Response("{}", { status: 200 }); };
+  const today = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const old = new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 16).replace("T", " ");
+  await env.STUDIO.put("buyer:wd@example.com", JSON.stringify({ email: "wd@example.com", name: "Wanda Buyer", devices: [], orders: [
+    { order: "lk-aaaa1111", product: "Money Plan Studio", amount: "$49.00", date: today, pi: "pi_new", source: "stripe" },
+    { order: "lk-bbbb2222", product: "Money Plan Studio", amount: "$49.00", date: old, pi: "pi_old", source: "stripe" }] }));
+  let r = await call("/withdraw", { method: "POST", body: { email: "wd@example.com", order: "LK-AAAA1111" } });
+  assert.equal(r.status, 400); assert.equal(r.j.field, "name", "name is asked");
+  r = await call("/withdraw", { method: "POST", body: { email: "wd@example.com", order: "LK-ZZZZ0000", name: "Wanda" } });
+  assert.equal(r.status, 404, "unknown order for this email");
+  r = await call("/withdraw", { method: "POST", body: { email: "wd@example.com", order: "LK-BBBB2222", name: "Wanda" } });
+  assert.equal(r.j.error, "past_deadline", "14 days have passed");
+  r = await call("/withdraw", { method: "POST", body: { email: "WD@example.com", order: "lk-aaaa1111", name: "Wanda Buyer" } });
+  assert.equal(r.j.status, "confirm", "first step only shows what would be withdrawn");
+  assert.equal(r.j.order, "LK-AAAA1111");
+  assert.equal(JSON.parse(await env.STUDIO.get("buyer:wd@example.com")).orders[0].closed, undefined, "nothing changes before confirming");
+  r = await call("/withdraw", { method: "POST", body: { email: "wd@example.com", order: "LK-AAAA1111", name: "Wanda Buyer", confirm: true } });
+  assert.equal(r.j.status, "withdrawn"); assert.equal(r.j.refund, "manual", "no Stripe key → refund by hand");
+  const o = JSON.parse(await env.STUDIO.get("buyer:wd@example.com")).orders[0];
+  assert.equal(o.closed, "withdrawal"); assert.equal(o.withdrawal.name, "Wanda Buyer");
+  const outbox = [...env.STUDIO.m.entries()].filter(([k]) => k.startsWith("mail:")).map(([, v]) => JSON.parse(v)).filter((m) => m.to === "wd@example.com");
+  assert.equal(outbox.length, 1); assert.match(outbox[0].subject, /Withdrawal confirmed/); assert.match(outbox[0].html, /Finnish time/); assert.match(outbox[0].html, /UTC/);
+  r = await call("/withdraw", { method: "POST", body: { email: "wd@example.com", order: "LK-AAAA1111", name: "Wanda Buyer", confirm: true } });
+  assert.equal(r.j.status, "already", "a second click does not withdraw twice");
+  // With a Stripe key the payment is refunded at once
+  env.STRIPE_SECRET_KEY = "rk_test";
+  const b = JSON.parse(await env.STUDIO.get("buyer:wd@example.com")); b.orders[1].date = today; await env.STUDIO.put("buyer:wd@example.com", JSON.stringify(b));
+  r = await call("/withdraw", { method: "POST", body: { email: "wd@example.com", order: "LK-BBBB2222", name: "Wanda Buyer", confirm: true } });
+  assert.equal(r.j.refund, "refunded");
+  const refund = calls.find((c) => c.u.endsWith("/v1/refunds"));
+  assert.match(refund.o.body, /payment_intent=pi_old/);
+  globalThis.fetch = realFetch; delete env.STRIPE_SECRET_KEY;
+}
+console.log("ok · withdrawal checks passed");
