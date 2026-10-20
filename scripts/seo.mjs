@@ -54,6 +54,7 @@ const PAGES = [
   { path: "links/", kind: "page", priority: "0.5" },
   { path: "shop/legal.html", kind: "page", priority: "0.2" },
   { path: "privacy/", kind: "page", priority: "0.1" },
+  { path: "radio/terms/", kind: "page", priority: "0.2" },
 ];
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
