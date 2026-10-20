@@ -30,6 +30,7 @@ import { CONTENT_YEAR } from "./content-year.js";
 import { CONTENT_AUTOPILOT } from "./content-autopilot.js";
 import { CONTENT_ENOUGH } from "./content-enough.js";
 import { sampleFor } from "./sample.js";
+import * as news from "./newsletter.js";
 
 // Product keys an app can ask for, the name used in emails, and the content it gets.
 const PRODUCT_INFO = {
@@ -62,6 +63,8 @@ const PURCHASE_MAIL_TTL = 7 * 24 * 3600; // the purchase email is the buyer's du
 const MIN_ORDER_LEN = 8;        // shortest order / contract number accepted, same for /activate, B2B teams and the apps
 const RATE_WINDOW = 3600;       // /activate limits are per hour: RATE_ACTIVATE_IP (default 60) and RATE_ACTIVATE_EMAIL (default 10)
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
+
+const NEWS_HELPERS = { body, json, normEmail, isEmail, now, rateLimited, tooMany };
 
 export default {
   async fetch(request, env) {
@@ -97,6 +100,9 @@ async function route(request, env, url) {
   if (p === "/order" && m === "GET") return orderLookup(env, url);
   if (p === "/outbox" && m === "GET") return outbox(request, env);
   if (p === "/outbox/ack" && m === "POST") return outboxAck(request, env);
+  if (p === "/subscribe" && m === "POST") return news.subscribe(request, env, NEWS_HELPERS);
+  if (p === "/subscribe/confirm" && m === "GET") return news.confirm(env, url, NEWS_HELPERS);
+  if (p === "/unsubscribe" && m === "GET") return news.unsubscribe(env, url, NEWS_HELPERS);
   if (p.startsWith("/admin")) return admin(request, env, url, p);
   return json({ error: "not_found" }, 404);
 }
@@ -666,7 +672,9 @@ function codeMail(name, code, deviceName, productName, team) {
 </div>`;
 }
 // Sent once per Stripe order. Also confirms, on a durable medium, that the buyer asked for immediate
-// access and so gave up the 14-day withdrawal right (required for digital content in the EU).
+// access (KSL 6:13 and 6:15). App access is an ongoing digital service, not a one-off download, so the
+// 14-day withdrawal right is not lost when access starts; the 14-day full refund covers it (lakitarkastaja
+// raportti 18.10.2026, löydös 5).
 function purchaseMail(env, name, product, order) {
   const hi = name ? `Hi ${escapeHtml(String(name).split(" ")[0])},` : "Hi,";
   const r = orderRule({ product }, productRules(env));
@@ -677,7 +685,7 @@ function purchaseMail(env, name, product, order) {
   <p style="font-size:28px;font-weight:800;letter-spacing:.08em;margin:8px 0 16px">${escapeHtml(order.toUpperCase())}</p>
   ${apps}
   <p>Open the app, enter this email address and the order code, and we'll send you a 6-digit code. Works on up to ${parseInt(env.MAX_DEVICES || "3", 10)} devices.</p>
-  <p style="color:#5F8A99;font-size:13px">You asked for immediate access to digital content and acknowledged that the 14-day right of withdrawal ends once access is given.${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
+  <p style="color:#5F8A99;font-size:13px">You asked for access to start right away. You can still withdraw within 14 days of purchase and get a full refund: reply to this email.${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
   <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life</p>
 </div>`;
 }

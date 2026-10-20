@@ -232,7 +232,7 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
   let mails = (await call("/outbox", { headers: { "X-Sync-Secret": "sync" } })).j.mails.filter((m) => m.to === "sara@example.com");
   assert.equal(mails.length, 1, "one purchase email");
   const code = mails[0].subject.match(/LK-[0-9A-F]{8}/)[0];
-  assert.match(mails[0].html, /year\//); assert.match(mails[0].html, /right of withdrawal/); assert.match(mails[0].html, /Sevenflow Oy/);
+  assert.match(mails[0].html, /year\//); assert.match(mails[0].html, /withdraw within 14 days/); assert.match(mails[0].html, /Sevenflow Oy/);
 
   r = await call("/order?session_id=cs_test_year1");
   assert.equal(r.j.status, "ready"); assert.equal(r.j.order, code); assert.equal(r.j.email, "sa•••@example.com");
@@ -427,3 +427,35 @@ assert.deepEqual(r.j.buyers.find((b) => b.email === "mikko@acme.fi").products, [
 }
 
 console.log("ok · all API checks passed");
+
+// Newsletter: double opt-in via signed links, contact added in Resend only after the click
+{
+  const calls = []; const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { calls.push({ u: String(u), o }); return new Response("{}", { status: 200 }); };
+  const raw = async (path, init) => worker.fetch(new Request("https://api.test" + path, init), env, {});
+  let r = await call("/subscribe", { method: "POST", body: { email: "reader@example.com" } });
+  assert.equal(r.status, 503, "not ready without Resend config");
+  env.RESEND_API_KEY = "re_test"; env.NEWS_FROM = "Lukas <hello@example.com>";
+  r = await call("/subscribe", { method: "POST", body: { email: "nope" } }); assert.equal(r.status, 400);
+  r = await call("/subscribe", { method: "POST", body: { email: "bot@example.com", website: "x" } });
+  assert.equal(r.j.status, "check_email"); assert.equal(calls.length, 0, "honeypot sends nothing");
+  r = await call("/subscribe", { method: "POST", body: { email: "Reader@Example.com", source: "blog" } });
+  assert.equal(r.j.status, "check_email");
+  const mail = JSON.parse(calls.at(-1).o.body); assert.deepEqual(mail.to, ["reader@example.com"]);
+  const link = mail.html.match(/href="([^"]+confirm[^"]+)"/)[1].replace(/&amp;/g, "&");
+  assert.equal(calls.filter((c) => c.u.endsWith("/contacts")).length, 0, "no contact before the click");
+  let res = await raw(new URL(link).pathname + new URL(link).search.replace(/t=[0-9a-f]+/, "t=bad"));
+  assert.match(await res.text(), /not valid/);
+  res = await raw(new URL(link).pathname + new URL(link).search);
+  assert.equal(res.status, 303);
+  assert.equal(calls.filter((c) => c.u.endsWith("/contacts")).length, 1);
+  assert.equal(JSON.parse(await env.STUDIO.get("news:reader@example.com")).source, "blog");
+  const welcome = JSON.parse(calls.at(-1).o.body); assert.match(welcome.subject, /Welcome/);
+  r = await call("/subscribe", { method: "POST", body: { email: "reader@example.com" } }); assert.equal(r.j.status, "subscribed");
+  const un = welcome.html.match(/href="([^"]+unsubscribe[^"]+)"/)[1].replace(/&amp;/g, "&");
+  res = await raw(new URL(un).pathname + new URL(un).search);
+  assert.match(await res.text(), /unsubscribed/);
+  assert.equal(calls.at(-1).o.method, "PATCH"); assert.equal(await env.STUDIO.get("news:reader@example.com"), null);
+  globalThis.fetch = realFetch; delete env.RESEND_API_KEY; delete env.NEWS_FROM;
+}
+console.log("ok · newsletter checks passed");

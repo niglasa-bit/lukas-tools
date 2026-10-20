@@ -20,7 +20,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const CONFIG = fileURLToPath(new URL("../../shop/config.js", import.meta.url));
-const TERMS = "I want access right away and understand that my 14-day right of withdrawal ends once access is given.";
+const TERMS = "I want access right away. I can still withdraw within 14 days of purchase and get a full refund.";
 const EVENTS = ["checkout.session.completed", "checkout.session.async_payment_succeeded", "charge.refunded", "charge.dispute.created"];
 // metadata.product is what the Worker unlocks by (DEFAULT_PRODUCTS in src/index.js).
 const CATALOG = [
