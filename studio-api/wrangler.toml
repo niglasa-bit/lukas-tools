@@ -22,7 +22,7 @@ APP_BASE = "https://thesystemizedlife.com"
 NOTIFY_EMAIL = "sales@sevenflowlabs.com"
 NEWS_FROM = "Lukas <hello@thesystemizedlife.com>"
 # One line under the purchase email.
-SELLER = "Sold via Stripe for Sevenflowlabs Oy, Business ID 3660293-5"
+SELLER = "Sold through Link, LLC (Stripe) for Sevenflowlabs Oy, Business ID 3660293-5"
 # /activate limits per hour (defaults 60 per IP, 10 per email):
 # RATE_ACTIVATE_IP = "60"
 # RATE_ACTIVATE_EMAIL = "10"
