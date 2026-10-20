@@ -31,6 +31,7 @@ import { CONTENT_AUTOPILOT } from "./content-autopilot.js";
 import { CONTENT_ENOUGH } from "./content-enough.js";
 import { sampleFor } from "./sample.js";
 import * as news from "./newsletter.js";
+import { withdraw } from "./withdraw.js";
 
 // Product keys an app can ask for, the name used in emails, and the content it gets.
 const PRODUCT_INFO = {
@@ -65,6 +66,7 @@ const RATE_WINDOW = 3600;       // /activate limits are per hour: RATE_ACTIVATE_
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
 
 const NEWS_HELPERS = { body, json, normEmail, isEmail, now, rateLimited, tooMany };
+const WITHDRAW_HELPERS = { ...NEWS_HELPERS, normOrder, getBuyer, putBuyer, sendMail, maskEmail, escapeHtml, PURCHASE_MAIL_TTL };
 
 export default {
   async fetch(request, env) {
@@ -103,6 +105,7 @@ async function route(request, env, url) {
   if (p === "/subscribe" && m === "POST") return news.subscribe(request, env, NEWS_HELPERS);
   if (p === "/subscribe/confirm" && m === "GET") return news.confirm(env, url, NEWS_HELPERS);
   if (p === "/unsubscribe" && m === "GET") return news.unsubscribe(env, url, NEWS_HELPERS);
+  if (p === "/withdraw" && m === "POST") return withdraw(request, env, WITHDRAW_HELPERS);
   if (p.startsWith("/admin")) return admin(request, env, url, p);
   return json({ error: "not_found" }, 404);
 }
@@ -385,6 +388,7 @@ function money(cents, cur) {
 function maskEmail(e) { const [u, d] = String(e).split("@"); return (u || "").slice(0, 2) + "•••@" + (d || ""); }
 
 const APP_PATHS = { studio: "studio/", year: "year/", autopilot: "autopilot/", enough: "enough/" };
+function withdrawUrl(env, order) { return String(env.APP_BASE || "https://niglasa-bit.github.io/lukas-tools").replace(/\/+$/, "") + "/shop/withdraw.html?order=" + encodeURIComponent(order.toUpperCase()); }
 function appUrl(env, key) { return String(env.APP_BASE || "https://niglasa-bit.github.io/lukas-tools").replace(/\/+$/, "") + "/" + APP_PATHS[key]; }
 
 // When there is no MAIL_WEBHOOK_URL, codes wait here and the Apps Script sends them (polls every minute).
@@ -685,7 +689,7 @@ function purchaseMail(env, name, product, order) {
   <p style="font-size:28px;font-weight:800;letter-spacing:.08em;margin:8px 0 16px">${escapeHtml(order.toUpperCase())}</p>
   ${apps}
   <p>Open the app, enter this email address and the order code, and we'll send you a 6-digit code. Works on up to ${parseInt(env.MAX_DEVICES || "3", 10)} devices.</p>
-  <p style="color:#5F8A99;font-size:13px">You asked for access to start right away. You can still withdraw within 14 days of purchase and get a full refund: reply to this email.${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
+  <p style="color:#5F8A99;font-size:13px">You asked for access to start right away. You can still withdraw within 14 days of purchase and get a full refund: <a href="${withdrawUrl(env, order)}" style="color:#5F8A99">withdraw from this purchase</a> (or reply to this email).${env.SELLER ? "<br>" + escapeHtml(env.SELLER) : ""}</p>
   <p style="color:#5F8A99;font-size:13px">One small system at a time. ☕<br>Lukas · The Systemized Life</p>
 </div>`;
 }
@@ -726,7 +730,7 @@ const B=document.getElementById("buyers"); B.querySelectorAll("tr+tr").forEach(e
 for(const b of d.buyers){const tr=B.insertRow();
 cell(tr,esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span>");
 cell(tr,esc((b.products||[]).join(", ")||"nothing"));
-cell(tr,(b.orders||[]).map(o=>"<code>"+esc(String(o.order||"").slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+")</b>":"")).join("<br>"));
+cell(tr,(b.orders||[]).map(o=>"<code>"+esc(String(o.order||"").slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+(o.refund?", refund "+esc(o.refund):"")+")</b>":"")).join("<br>"));
 const dv=cell(tr); (b.devices||[]).forEach((x,i)=>{if(i) dv.appendChild(document.createElement("br")); dv.appendChild(document.createTextNode(String(x.name||"")+" ")); btn(dv,"×",()=>act("remove-device",b.email,null,x.id));});
 const td=cell(tr); btn(td,"Reset devices",()=>act("reset-devices",b.email)); btn(td,"Revoke",()=>{if(confirm("Remove buyer? Use after a refund."))act("revoke",b.email);});}
 if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=5 class=muted>No buyers yet.</td>";}}

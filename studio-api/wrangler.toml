@@ -17,10 +17,11 @@ MAX_DEVICES = "3"
 # Comma-separated. Leave empty while testing locally.
 ALLOWED_ORIGINS = "https://niglasa-bit.github.io,https://thesystemizedlife.com,https://www.thesystemizedlife.com"
 # Where the apps live; links in the purchase email and on the thank-you page.
-# Uncomment once thesystemizedlife.com serves this repo (until then the GitHub Pages address is used).
-# APP_BASE = "https://thesystemizedlife.com"
-# One line under the purchase email.
+APP_BASE = "https://thesystemizedlife.com"
+# Gets a copy of every withdrawal (src/withdraw.js), so a refund made by hand is not forgotten.
+NOTIFY_EMAIL = "sales@sevenflowlabs.com"
 NEWS_FROM = "Lukas <hello@thesystemizedlife.com>"
+# One line under the purchase email.
 SELLER = "Sold via Stripe for Sevenflowlabs Oy, Business ID 3660293-5"
 # /activate limits per hour (defaults 60 per IP, 10 per email):
 # RATE_ACTIVATE_IP = "60"
@@ -31,8 +32,9 @@ SELLER = "Sold via Stripe for Sevenflowlabs Oy, Business ID 3660293-5"
 #   SYNC_SECRET       shared with the Gmail Apps Script (sync + mail webhook)
 #   ADMIN_TOKEN       opens /admin (type it when asked, or /admin#token=...)
 #   STRIPE_WEBHOOK_SECRET  whsec_... from the Stripe webhook endpoint (/stripe-webhook)
-#   STRIPE_SECRET_KEY      optional, a restricted key with Checkout Sessions read; only used when a
-#                          Payment Link has no metadata.product
+#   STRIPE_SECRET_KEY      optional, a restricted key with Checkout Sessions read (used when a Payment Link
+#                          has no metadata.product) and Refunds write (a withdrawal at /withdraw refunds at once;
+#                          without it the refund is made by hand in Stripe within 14 days)
 #   MAIL_WEBHOOK_URL  the Apps Script web-app URL (sends codes from your Gmail). Optional:
 #   RESEND_API_KEY + MAIL_FROM   if you later get a domain and prefer Resend
 #   RESEND_API_KEY + NEWS_FROM   newsletter (src/newsletter.js); RESEND_AUDIENCE_ID optional
