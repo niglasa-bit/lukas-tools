@@ -2,9 +2,15 @@ LUKAS FREE SAMPLE PACK · NEW 0 USD BEACONS PRODUCT
 
 Product name (exact): Lukas Free Sample Pack
 (Never put a paid product's name in it: Money Plan Studio, Autopilot Workbook, Enough Habit, Systemized Year, All-Access. The unlock matches on names.)
-Price: 0 USD (free product; Beacons collects the email).
+Price: 0 USD (free product; Beacons collects the email ONLY to deliver the file).
+
+BEFORE CREATING (legal review Yritys#50, 22.10.2026):
+1. Check that Beacons offers a data processing agreement (DPA) for creators' customer data (Beacons privacy policy / terms / help). If there is none, do NOT create the product: report back, and the free pack is shared as a direct link instead.
+2. No marketing to these emails: do NOT add a newsletter or marketing checkbox in Beacons and do NOT export the Beacons customer list to Resend or any mailing tool. The newsletter invite is inside the PDF (double opt-in on the blog).
+3. No marketing text in the delivery email.
+4. Beacons customer list of this product: delete entries older than 30 days (monthly).
 Button: Get the free samples
-Card line: Try every Lukas tool free. Real pieces, no card, no sign-up.
+Card line: Try every Lukas tool free. Real pieces, no card. Just your email.
 File: PDF of https://niglasa-bit.github.io/lukas-tools/samples/ (Edge -> Print -> Save as PDF, A4, background graphics on).
 Cover: make a simple cover of its own, not a copy of any other product's cover.
 Store order (HOME and ALL TOOLS): put it 2nd, right under Lukas All-Access. The 1-Page Money Plan (Free) stays last.
@@ -18,3 +24,5 @@ Try before you buy, for real.
 🧾 Days 1–3 (from The Enough Habit) · the 2-minute morning check and your first three goals.
 
 No sign-up inside the apps, nothing to install. If one of them helps, the full tool is one click away.
+
+Privacy: we use your email only to send the file. The weekly money lesson is separate: subscribe inside the PDF if you want it. Details: thesystemizedlife.com/shop/legal.html#privacy.
