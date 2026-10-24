@@ -54,7 +54,8 @@ Osoite: `https://lukas-studio-api.lukas-systemized.workers.dev/admin`. Kirjoita 
 Mitä sivulla tehdään:
 - **Hyväksy (approve):** ostaja, jonka aktivointi tuli ennen kuin osto synkronoitui. Tarkista, että sähköposti löytyy Stripestä, ja hyväksy oikea tuote.
 - **Poista laite:** ostaja on vaihtanut puhelinta ja kolme laitetta on täynnä. Poista vanhin.
-- **Revoke:** poistaa ostajan kokonaan (kaikki tuotteet ja laitteet). Käytä vain tietojen poistopyyntöön tai väärinkäyttöön (koodi jaettu laajasti), ei tavalliseen palautukseen, joka sulkee vain yhden tilauksen itsestään. Kirjaa syy.
+- **Close (refund):** sulkee yhden tilauksen, kun palautus tehtiin Beaconsissa tai käsin Stripessä (Beacons ei ilmoita palautuksista Workerille). Muut ostajan tuotteet toimivat edelleen, ja tilaus jää näkyviin merkinnällä "refund".
+- **Revoke all:** poistaa ostajan kokonaan (kaikki tuotteet ja laitteet). Käytä vain tietojen poistopyyntöön tai väärinkäyttöön (koodi jaettu laajasti), ei tavalliseen palautukseen, joka sulkee vain yhden tilauksen itsestään. Kirjaa syy.
 - **Lisää tiimi:** B2B-lisenssi (luku 6).
 - Tilauksen rivillä näkyy "withdrawal" ja palautuksen tila (refunded / manual / failed).
 

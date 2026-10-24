@@ -33,10 +33,10 @@ export async function subscribe(request, env, h) {
 
 export async function confirm(env, url, h) {
   const email = h.normEmail(url.searchParams.get("e"));
-  if (!h.isEmail(email) || url.searchParams.get("t") !== await token(env, "confirm:" + email)) return page("This link is not valid", "Sign up again on the blog and use the newest email.");
+  if (!h.isEmail(email) || !h.secretOk(url.searchParams.get("t") || "", await token(env, "confirm:" + email))) return page("This link is not valid", "Sign up again on the blog and use the newest email.");
   if (!ready(env)) return page("The newsletter opens soon", "Please try the link again later.");
   if (!await env.STUDIO.get("news:" + email)) {
-    const r = await resend(env, "POST", contactsPath(env), { email, unsubscribed: false });
+    const r = await resend(env, "POST", contactsPath(env), { email, unsubscribed: false }).catch(() => ({ ok: false, status: 0 }));
     if (!r.ok && r.status !== 409) { console.error("resend contact failed", r.status); return page("Something went wrong", "Please click the link again in a minute."); }
     const source = String(url.searchParams.get("s") || "site").replace(/[^a-z0-9/_-]/gi, "").slice(0, 40);
     await env.STUDIO.put("news:" + email, JSON.stringify({ at: h.now(), source }));
@@ -48,9 +48,9 @@ export async function confirm(env, url, h) {
 
 export async function unsubscribe(env, url, h) {
   const email = h.normEmail(url.searchParams.get("e"));
-  if (!h.isEmail(email) || url.searchParams.get("t") !== await token(env, "unsub:" + email)) return page("This link is not valid", "Use the unsubscribe link in the newest email, or reply to it and we'll remove you.");
+  if (!h.isEmail(email) || !h.secretOk(url.searchParams.get("t") || "", await token(env, "unsub:" + email))) return page("This link is not valid", "Use the unsubscribe link in the newest email, or reply to it and we'll remove you.");
   if (ready(env)) {
-    const r = await resend(env, "PATCH", contactsPath(env) + "/" + encodeURIComponent(email), { unsubscribed: true });
+    const r = await resend(env, "PATCH", contactsPath(env) + "/" + encodeURIComponent(email), { unsubscribed: true }).catch(() => ({ ok: false, status: 0 }));
     if (!r.ok && r.status !== 404) { console.error("resend unsubscribe failed", r.status); return page("Something went wrong", "Please click the link again in a minute."); }
   }
   await env.STUDIO.delete("news:" + email);
@@ -60,7 +60,7 @@ export async function unsubscribe(env, url, h) {
 function ready(env) { return !!(env.RESEND_API_KEY && env.NEWS_FROM); }
 function contactsPath(env) { return env.RESEND_AUDIENCE_ID ? "/audiences/" + env.RESEND_AUDIENCE_ID + "/contacts" : "/contacts"; }
 function resend(env, method, path, body) {
-  return fetch(RESEND + path, { method, headers: { "content-type": "application/json", Authorization: "Bearer " + env.RESEND_API_KEY }, body: JSON.stringify(body) });
+  return fetch(RESEND + path, { method, headers: { "content-type": "application/json", Authorization: "Bearer " + env.RESEND_API_KEY }, body: JSON.stringify(body), signal: AbortSignal.timeout(10000) });
 }
 async function send(env, to, subject, html) {
   try { const r = await resend(env, "POST", "/emails", { from: env.NEWS_FROM, to: [to], subject, html }); if (r.ok) return true; console.error("resend send failed", r.status); }

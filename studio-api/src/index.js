@@ -24,6 +24,11 @@
 //   rl:<scope>:<id> {n,exp}                                       (rate-limit counter for /activate, TTL = window)
 //   session:<id>    {email,order,product}                         (Stripe Checkout session → order code, for the thank-you page; TTL 30 d)
 //   pi:<id>         {email,order}                                 (Stripe payment intent → order, so a refund finds it)
+//
+// Abuse resistance, two layers: the RL binding (Workers Rate Limiting, in memory per Cloudflare location, costs no
+// KV writes) stops bursts on every public route before anything is read or written; the hourly KV counters below
+// (rateLimited) cap sustained use per IP and per email. KV writes are the scarce resource on the free plan, so
+// both layers fail open and a KV quota error answers 503 "busy" instead of a crash.
 
 import { CONTENT } from "./content.js";
 import { CONTENT_YEAR } from "./content-year.js";
@@ -65,7 +70,7 @@ const MIN_ORDER_LEN = 8;        // shortest order / contract number accepted, sa
 const RATE_WINDOW = 3600;       // /activate limits are per hour: RATE_ACTIVATE_IP (default 60) and RATE_ACTIVATE_EMAIL (default 10)
 const TOKEN_MAX_AGE = 400 * 24 * 3600; // ~13 months; re-issued silently on /content
 
-const NEWS_HELPERS = { body, json, normEmail, isEmail, now, rateLimited, tooMany };
+const NEWS_HELPERS = { body, json, normEmail, isEmail, now, rateLimited, tooMany, secretOk };
 const WITHDRAW_HELPERS = { ...NEWS_HELPERS, normOrder, getBuyer, putBuyer, sendMail, maskEmail, escapeHtml, PURCHASE_MAIL_TTL };
 
 export default {
@@ -81,6 +86,8 @@ export default {
       return res;
     } catch (e) {
       console.error("server_error", e && e.stack || e);
+      // KV daily quota or a KV outage: tell the app to try again later instead of a bare 500.
+      if (/KV|limit exceeded|too many requests/i.test(String(e && e.message || e))) return json({ error: "busy", message: "We're very busy right now. Please try again in a few minutes." }, 503, { ...cors, "retry-after": "300" });
       return json({ error: "server_error" }, 500, cors);
     }
   },
@@ -89,6 +96,10 @@ export default {
 async function route(request, env, url) {
   const p = url.pathname.replace(/\/+$/, "") || "/";
   const m = request.method;
+  const ip = request.headers.get("CF-Connecting-IP") || "";
+  // Burst gate for the public routes. Stripe signs its calls and the Apps Script sends a secret, so those two are
+  // only counted when the secret is wrong (see authFail).
+  if (BURST_ROUTES.has(p) && !(await burst(env, p, ip))) return tooMany(60);
 
   if (p === "/" && m === "GET") return json({ ok: true, service: "money-plan-studio-api" });
   if (p === "/activate" && m === "POST") return activate(request, env);
@@ -134,7 +145,12 @@ async function activate(request, env) {
     // the admin page shows it with a one-click approve. Never reveal whether the email exists.
     const key = "pending:" + email;
     const prev = (await env.STUDIO.get(key, "json")) || { attempts: 0 };
-    await env.STUDIO.put(key, JSON.stringify({ email, order, product, deviceName, created: prev.created || now(), last: now(), attempts: (prev.attempts || 0) + 1 }), { expirationTtl: PENDING_TTL });
+    // The same try again within 10 minutes changes nothing on the admin page, so it costs no KV write.
+    const same = prev.order === order && prev.product === product && now() - (prev.last || 0) < 600;
+    if (!same) {
+      try { await env.STUDIO.put(key, JSON.stringify({ email, order, product, deviceName, created: prev.created || now(), last: now(), attempts: (prev.attempts || 0) + 1 }), { expirationTtl: PENDING_TTL }); }
+      catch (e) { console.error("pending write failed", String(e && e.message || e)); }
+    }
     return json({ status: "pending", message: "We couldn't match that order yet. New purchases take a few minutes to arrive. Try again shortly, or reply to your receipt email and Lukas will unlock it by hand." });
   }
 
@@ -239,7 +255,7 @@ async function removeDevice(request, env) {
   const auth = await authed(request, env);
   if (!auth.ok) return json({ error: auth.error }, 401);
   const b = await body(request);
-  const id = String(b.deviceId || "");
+  const id = String(b.deviceId || "").slice(0, 64);
   if (!id || id === auth.payload.d) return json({ error: "cannot_remove_self" }, 400);
   await adminOrSelfRemoveDevice(env, auth.buyer, id);
   return json({ ok: true, devices: auth.buyer.devices.map((d) => ({ id: d.id, name: d.name, created: d.created, this: d.id === auth.payload.d })) });
@@ -252,7 +268,7 @@ async function adminOrSelfRemoveDevice(env, buyer, deviceId) {
 // ---------- sync from Gmail (Apps Script) ----------
 
 async function sync(request, env) {
-  if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return json({ error: "forbidden" }, 403);
+  if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return authFail(request, env, "sync");
   const b = await body(request, SYNC_BODY_MAX);
   const sales = Array.isArray(b.sales) ? b.sales : [];
   let added = 0, updated = 0, skipped = 0;
@@ -288,7 +304,8 @@ async function recordSale(env, s) {
 // from the Checkout session id, shown on the thank-you page and in the purchase email.
 
 async function stripeWebhook(request, env) {
-  const raw = await request.text();
+  const raw = await readText(request, STRIPE_BODY_MAX);
+  if (raw == null) return json({ error: "too_large" }, 413);
   if (!(await stripeSignatureOk(raw, request.headers.get("Stripe-Signature"), env.STRIPE_WEBHOOK_SECRET))) return json({ error: "bad_signature" }, 400);
   let ev; try { ev = JSON.parse(raw); } catch { return json({ error: "bad_json" }, 400); }
   const o = (ev.data && ev.data.object) || {};
@@ -356,7 +373,7 @@ async function stripeProductName(env, o) {
   if (meta) return String(meta).slice(0, 120);
   if (!env.STRIPE_SECRET_KEY) return "";
   try {
-    const r = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(o.id)}/line_items?limit=10`, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY } });
+    const r = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(o.id)}/line_items?limit=10`, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY }, signal: AbortSignal.timeout(FETCH_TIMEOUT) });
     const j = await r.json();
     return (j.data || []).map((li) => li.description || "").filter(Boolean).join(" + ").slice(0, 120);
   } catch { return ""; }
@@ -393,7 +410,7 @@ function appUrl(env, key) { return String(env.APP_BASE || "https://niglasa-bit.g
 
 // When there is no MAIL_WEBHOOK_URL, codes wait here and the Apps Script sends them (polls every minute).
 async function outbox(request, env) {
-  if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return json({ error: "forbidden" }, 403);
+  if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return authFail(request, env, "outbox");
   const list = await env.STUDIO.list({ prefix: "mail:" });
   const mails = [];
   for (const k of list.keys) {
@@ -403,7 +420,7 @@ async function outbox(request, env) {
   return json({ mails });
 }
 async function outboxAck(request, env) {
-  if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return json({ error: "forbidden" }, 403);
+  if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return authFail(request, env, "outbox");
   const b = await body(request);
   for (const id of (b.ids || [])) await env.STUDIO.delete("mail:" + String(id).slice(0, 80));
   return json({ ok: true });
@@ -419,7 +436,7 @@ async function admin(request, env, url, p) {
       "content-security-policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" } });
   }
   const token = request.headers.get("X-Admin-Token") || "";
-  if (!secretOk(token, env.ADMIN_TOKEN)) return json({ error: "forbidden" }, 403);
+  if (!secretOk(token, env.ADMIN_TOKEN)) return authFail(request, env, "admin");
 
   if (p === "/admin" && request.method === "GET") {
     const buyers = [], pending = [];
@@ -450,8 +467,17 @@ async function admin(request, env, url, p) {
     const buyer = await getBuyer(env, email); if (!buyer) return json({ error: "no_buyer" }, 404);
     await adminOrSelfRemoveDevice(env, buyer, String(b.deviceId || "")); return json({ ok: true });
   }
+  if (p === "/admin/close-order") {
+    // A Beacons refund (Beacons sends no webhook) or a refund made by hand: close that one order, like a Stripe
+    // refund does. Everything else the buyer owns keeps working, and the record stays for the books.
+    const buyer = await getBuyer(env, email); if (!buyer) return json({ error: "no_buyer" }, 404);
+    const o = (buyer.orders || []).find((x) => x.order === normOrder(b.order)); if (!o) return json({ error: "no_order" }, 404);
+    const why = ["refund", "dispute", "withdrawal"].includes(b.why) ? b.why : "refund";
+    if (!o.closed) { o.closed = why; o.closedAt = now(); await putBuyer(env, buyer); }
+    return json({ ok: true, products: entitlements(buyer, env) });
+  }
   if (p === "/admin/revoke") {
-    // Refund or chargeback: remove the buyer entirely. Their devices stop at the next launch.
+    // Remove the buyer entirely (all orders). For one refunded order use Close order instead. Their devices stop at the next launch.
     await env.STUDIO.delete("buyer:" + email); await env.STUDIO.delete("pending:" + email); return json({ ok: true });
   }
   if (p === "/admin/team") return addTeam(env, b);
@@ -582,14 +608,34 @@ async function rateLimited(env, id, limit, windowSec = RATE_WINDOW) {
   if (!(limit > 0)) return false;
   const key = "rl:" + id.slice(0, 160);
   const t = now();
-  const rec = await env.STUDIO.get(key, "json");
-  const cur = rec && rec.exp > t ? rec : { n: 0, exp: t + windowSec };
-  if (cur.n >= limit) return true;
-  cur.n++;
-  await env.STUDIO.put(key, JSON.stringify(cur), { expirationTtl: Math.max(60, cur.exp - t) });
+  // Fail open: if KV is out of quota the burst gate still holds, and a buyer is not locked out by a counter.
+  try {
+    const rec = await env.STUDIO.get(key, "json");
+    const cur = rec && rec.exp > t ? rec : { n: 0, exp: t + windowSec };
+    if (cur.n >= limit) return true;
+    cur.n++;
+    await env.STUDIO.put(key, JSON.stringify(cur), { expirationTtl: Math.max(60, cur.exp - t) });
+  } catch (e) { console.error("rate counter failed", String(e && e.message || e)); }
   return false;
 }
-function tooMany() { return json({ error: "rate_limited", message: "Too many attempts. Wait an hour and try again, or reply to your receipt email." }, 429, { "retry-after": String(RATE_WINDOW) }); }
+function tooMany(sec = RATE_WINDOW) {
+  const message = sec < RATE_WINDOW ? "Too many requests. Wait a minute and try again." : "Too many attempts. Wait an hour and try again, or reply to your receipt email.";
+  return json({ error: "rate_limited", message }, 429, { "retry-after": String(sec) });
+}
+
+// Routes the burst gate covers (everything a stranger can call without a secret).
+const BURST_ROUTES = new Set(["/activate", "/verify", "/content", "/sample", "/me", "/me/remove-device", "/order", "/subscribe", "/subscribe/confirm", "/unsubscribe", "/withdraw"]);
+// Workers Rate Limiting binding RL (wrangler.toml [[ratelimits]], e.g. 40 per 60 s per key and location). No binding or
+// an error = allow: the KV counters still hold the hourly limits.
+async function burst(env, scope, ip) {
+  if (!env.RL || !ip) return true;
+  try { return (await env.RL.limit({ key: scope + ":" + ip })).success !== false; } catch { return true; }
+}
+// A wrong secret on /admin, /sync or /outbox: 403, and after a burst of wrong guesses from one IP, 429.
+async function authFail(request, env, scope) {
+  if (!(await burst(env, "fail-" + scope, request.headers.get("CF-Connecting-IP") || ""))) return tooMany(60);
+  return json({ error: "forbidden" }, 403);
+}
 
 async function getBuyer(env, email) { return env.STUDIO.get("buyer:" + email, "json"); }
 async function putBuyer(env, buyer) { return env.STUDIO.put("buyer:" + buyer.email, JSON.stringify(buyer)); }
@@ -601,20 +647,29 @@ function isEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 function now() { return Math.floor(Date.now() / 1000); }
 // JSON bodies are read up to a byte cap (also without Content-Length), so a huge body can't tie up the Worker.
 // Only the Gmail sync sends a long sales list; everything else is a small form.
-const BODY_MAX = 16 * 1024, SYNC_BODY_MAX = 1024 * 1024;
+// Stripe events are a few kilobytes; the cap only keeps a forged giant body from being read before the signature check.
+const BODY_MAX = 16 * 1024, SYNC_BODY_MAX = 1024 * 1024, STRIPE_BODY_MAX = 256 * 1024;
+const FETCH_TIMEOUT = 10000; // ms for every outside call (Apps Script, Resend, Stripe), so a slow service can't hang a request
 async function body(request, max = BODY_MAX) {
-  if (Number(request.headers.get("content-length") || 0) > max || !request.body) return {};
+  const text = await readText(request, max);
+  if (!text) return {};
+  try { return JSON.parse(text); } catch { return {}; }
+}
+// The body as text, or null when it is over `max` bytes (checked while reading, not only from Content-Length).
+async function readText(request, max) {
+  if (Number(request.headers.get("content-length") || 0) > max) return null;
+  if (!request.body) return "";
   const reader = request.body.getReader(); const parts = []; let bytes = 0;
   try {
     for (;;) {
       const { done, value } = await reader.read(); if (done) break;
       bytes += value.byteLength;
-      if (bytes > max) { await reader.cancel().catch(() => {}); return {}; }
+      if (bytes > max) { await reader.cancel().catch(() => {}); return null; }
       parts.push(value);
     }
-    const all = new Uint8Array(bytes); let off = 0; for (const p of parts) { all.set(p, off); off += p.byteLength; }
-    return JSON.parse(new TextDecoder().decode(all));
-  } catch { return {}; }
+  } catch { return null; }
+  const all = new Uint8Array(bytes); let off = 0; for (const p of parts) { all.set(p, off); off += p.byteLength; }
+  return new TextDecoder().decode(all);
 }
 function json(obj, status = 200, extra = {}) { return new Response(JSON.stringify(obj), { status, headers: { ...JSON_HEADERS, ...extra } }); }
 
@@ -663,7 +718,7 @@ function unb64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.lengt
 async function sendMail(env, mail, ttl = CODE_TTL) {
   if (env.MAIL_WEBHOOK_URL) {
     try {
-      const r = await fetch(env.MAIL_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ secret: env.SYNC_SECRET, ...mail }), redirect: "follow" });
+      const r = await fetch(env.MAIL_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ secret: env.SYNC_SECRET, ...mail }), redirect: "follow", signal: AbortSignal.timeout(FETCH_TIMEOUT) });
       const text = await r.text();
       let j = null; try { j = JSON.parse(text); } catch {}
       if (r.ok && j && j.ok === true) return "webhook";
@@ -672,7 +727,7 @@ async function sendMail(env, mail, ttl = CODE_TTL) {
   }
   if (env.RESEND_API_KEY && env.MAIL_FROM) {
     try {
-      const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: "Bearer " + env.RESEND_API_KEY }, body: JSON.stringify({ from: env.MAIL_FROM, to: [mail.to], subject: mail.subject, html: mail.html }) });
+      const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: "Bearer " + env.RESEND_API_KEY }, body: JSON.stringify({ from: env.MAIL_FROM, to: [mail.to], subject: mail.subject, html: mail.html }), signal: AbortSignal.timeout(FETCH_TIMEOUT) });
       if (r.ok) return "resend";
       console.error("resend failed", r.status);
     } catch (e) { console.error("resend failed", String(e && e.message || e)); }
@@ -746,10 +801,12 @@ const B=document.getElementById("buyers"); B.querySelectorAll("tr+tr").forEach(e
 for(const b of d.buyers){const tr=B.insertRow();
 cell(tr,esc(b.name||"")+"<br><span class=muted>"+esc(b.email)+(b.team?" · team "+esc(b.team.name)+(b.team.until?" until "+new Date(b.team.until*1000).toISOString().slice(0,10):""):b.approved?" · manual":"")+"</span>");
 cell(tr,esc((b.products||[]).join(", ")||"nothing"));
-cell(tr,(b.orders||[]).map(o=>"<code>"+esc(String(o.order||"").slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+(o.refund?", refund "+esc(o.refund):"")+")</b>":"")).join("<br>"));
+const oc=cell(tr); (b.orders||[]).forEach((o,i)=>{if(i) oc.appendChild(document.createElement("br")); const s=document.createElement("span"); s.innerHTML="<code>"+esc(String(o.order||"").slice(0,11))+"</code> "+esc(o.product||"")+" "+esc(o.amount||"")+(o.closed?" <b>("+esc(o.closed)+(o.refund?", refund "+esc(o.refund):"")+")</b>":""); oc.appendChild(s); oc.appendChild(document.createTextNode(" "));
+if(!o.closed&&o.product!=="manual") btn(oc,"Close (refund)",()=>{if(confirm("Close this order? Use after a Beacons or manual refund. Other purchases keep working."))post("close-order",{email:b.email,order:o.order,why:"refund"});});});
 const dv=cell(tr); (b.devices||[]).forEach((x,i)=>{if(i) dv.appendChild(document.createElement("br")); dv.appendChild(document.createTextNode(String(x.name||"")+" ")); btn(dv,"×",()=>act("remove-device",b.email,null,x.id));});
-const td=cell(tr); btn(td,"Reset devices",()=>act("reset-devices",b.email)); btn(td,"Revoke",()=>{if(confirm("Remove buyer? Use after a refund."))act("revoke",b.email);});}
+const td=cell(tr); btn(td,"Reset devices",()=>act("reset-devices",b.email)); btn(td,"Revoke all",()=>{if(confirm("Remove this buyer and ALL their purchases? For one refunded order use Close (refund)."))act("revoke",b.email);});}
 if(!d.buyers.length){B.insertRow().innerHTML="<td colspan=5 class=muted>No buyers yet.</td>";}}
+async function post(a,data){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify(data)}); load();}
 async function act(a,email,order,deviceId,product){await fetch("/admin/"+a,{method:"POST",headers:H,body:JSON.stringify({email,order,deviceId,products:product?[product]:undefined})}); load();}
 async function approve(){await fetch("/admin/approve",{method:"POST",headers:H,body:JSON.stringify({email:aEmail.value,name:aName.value,order:aOrder.value,products:aProd.value.split(",")})}); aEmail.value=aName.value=aOrder.value=""; load();}
 async function team(){const r=await fetch("/admin/team",{method:"POST",headers:H,body:JSON.stringify({team:tName.value,order:tOrder.value,until:tUntil.value,products:[tProd.value],emails:tEmails.value})}); const j=await r.json(); tMsg.textContent=j.ok?(j.seats+" seats ("+j.added+" new)"):(j.error||"error"); if(j.ok) tEmails.value=""; load();}

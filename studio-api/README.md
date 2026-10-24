@@ -79,7 +79,7 @@ anything else the buyer owns keeps working. Codes and purchase emails go out thr
 
 ## Admin
 
-`https://lukas-studio-api.<you>.workers.dev/admin#token=YOUR_ADMIN_TOKEN` (or just `/admin`, and type the token when asked) shows buyers, their devices and anyone whose activation arrived before the sale synced (one-click approve). Revoke after a refund. The token sits after `#`, so it never reaches the server or its logs; the page keeps it for that browser tab only and sends it in the `X-Admin-Token` header. `?token=` links no longer work for the data, so update old bookmarks.
+`https://lukas-studio-api.<you>.workers.dev/admin#token=YOUR_ADMIN_TOKEN` (or just `/admin`, and type the token when asked) shows buyers, their devices and anyone whose activation arrived before the sale synced (one-click approve). After a Beacons or manual refund, press **Close (refund)** on that order (Stripe refunds close it by themselves); **Revoke all** removes the buyer and every purchase. The token sits after `#`, so it never reaches the server or its logs; the page keeps it for that browser tab only and sends it in the `X-Admin-Token` header. `?token=` links no longer work for the data, so update old bookmarks.
 
 ## Several products, one lock
 
@@ -102,6 +102,7 @@ Each app's premium content is one file in `src/` (`content.js`, `content-year.js
 - Every printed plan carries “Licensed to <name> · <email>” and a faint watermark.
 - `/activate` is limited per hour: 60 calls per IP (`RATE_ACTIVATE_IP`) and 10 per email (`RATE_ACTIVATE_EMAIL`); after that it answers 429. Parked activations (`pending:`) expire after 14 days. Order codes and B2B contract numbers need at least 8 characters (`MIN_ORDER_LEN`), in the Worker and in every app.
 - `/subscribe` is limited to 10 per IP and 3 per email per hour, and to 300 confirmation emails per day for the whole service (`NEWS_PER_DAY`), so rotating IPs cannot use it to mail strangers. JSON bodies are read up to 16 KB (the Gmail sync up to 1 MB), also without a Content-Length header.
+- Every public route also has a burst gate: the `RL` rate-limit binding in `wrangler.toml` (40 calls per minute per IP and route, in memory, no KV writes). Wrong secrets on `/admin`, `/sync` and `/outbox` answer 403 and, after a burst from one IP, 429. The Stripe webhook body is capped at 256 KB, and every outside call (Apps Script, Resend, Stripe) times out after 10 s. If KV runs out of its daily write quota (free plan: 1 000 writes a day), the counters let buyers through and other calls answer 503 "busy" instead of crashing.
 - What it does **not** do: stop a buyer from handing their email + receipt to a friend (max 3 devices, visible on the admin page), or stop screenshots. No downloadable product can.
 
 ## Local test
