@@ -253,7 +253,7 @@ async function adminOrSelfRemoveDevice(env, buyer, deviceId) {
 
 async function sync(request, env) {
   if (!secretOk(request.headers.get("X-Sync-Secret"), env.SYNC_SECRET)) return json({ error: "forbidden" }, 403);
-  const b = await body(request);
+  const b = await body(request, SYNC_BODY_MAX);
   const sales = Array.isArray(b.sales) ? b.sales : [];
   let added = 0, updated = 0, skipped = 0;
   for (const s of sales) {
@@ -578,12 +578,12 @@ function oneTimeCode() {
 
 // Fixed-window counter in KV (same pattern as the code tries). KV is eventually consistent, so the limit is
 // approximate under a burst, but it caps sustained abuse of KV writes and the mail quota.
-async function rateLimited(env, id, limit) {
+async function rateLimited(env, id, limit, windowSec = RATE_WINDOW) {
   if (!(limit > 0)) return false;
   const key = "rl:" + id.slice(0, 160);
   const t = now();
   const rec = await env.STUDIO.get(key, "json");
-  const cur = rec && rec.exp > t ? rec : { n: 0, exp: t + RATE_WINDOW };
+  const cur = rec && rec.exp > t ? rec : { n: 0, exp: t + windowSec };
   if (cur.n >= limit) return true;
   cur.n++;
   await env.STUDIO.put(key, JSON.stringify(cur), { expirationTtl: Math.max(60, cur.exp - t) });
@@ -599,7 +599,23 @@ function normEmail(s) { return String(s || "").trim().toLowerCase().slice(0, 120
 function normOrder(s) { return String(s || "").trim().toLowerCase().replace(/^(?:order)?\s*#?\s*:?\s*/i, "").slice(0, 80); }
 function isEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 function now() { return Math.floor(Date.now() / 1000); }
-async function body(request) { try { return await request.json(); } catch { return {}; } }
+// JSON bodies are read up to a byte cap (also without Content-Length), so a huge body can't tie up the Worker.
+// Only the Gmail sync sends a long sales list; everything else is a small form.
+const BODY_MAX = 16 * 1024, SYNC_BODY_MAX = 1024 * 1024;
+async function body(request, max = BODY_MAX) {
+  if (Number(request.headers.get("content-length") || 0) > max || !request.body) return {};
+  const reader = request.body.getReader(); const parts = []; let bytes = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      bytes += value.byteLength;
+      if (bytes > max) { await reader.cancel().catch(() => {}); return {}; }
+      parts.push(value);
+    }
+    const all = new Uint8Array(bytes); let off = 0; for (const p of parts) { all.set(p, off); off += p.byteLength; }
+    return JSON.parse(new TextDecoder().decode(all));
+  } catch { return {}; }
+}
 function json(obj, status = 200, extra = {}) { return new Response(JSON.stringify(obj), { status, headers: { ...JSON_HEADERS, ...extra } }); }
 
 function corsHeaders(env, origin) {

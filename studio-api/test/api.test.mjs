@@ -497,3 +497,20 @@ console.log("ok · newsletter checks passed");
   globalThis.fetch = realFetch; delete env.STRIPE_SECRET_KEY;
 }
 console.log("ok · withdrawal checks passed");
+
+// Attack prevention (Niko 24.10.2026): body size cap and the whole-service daily cap on confirmation emails
+{
+  const calls = []; const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { calls.push(String(u)); return new Response("{}", { status: 200 }); };
+  const big = JSON.stringify({ email: "x@example.com", order: "a".repeat(40000) });
+  const stream = new ReadableStream({ start(c) { const b = new TextEncoder().encode(big); c.enqueue(b.slice(0, 20000)); c.enqueue(b.slice(20000)); c.close(); } });
+  let r = await worker.fetch(new Request("https://x/activate", { method: "POST", headers: { "content-type": "application/json", "CF-Connecting-IP": "9.9.9.1" }, body: stream, duplex: "half" }), env, {});
+  assert.equal(r.status, 400, "a body over the cap is read as empty, also without Content-Length");
+  const e2 = { ...env, STUDIO: new KV(), RESEND_API_KEY: "re_test", NEWS_FROM: "Lukas <hello@example.com>", NEWS_PER_DAY: "3" };
+  const sub = (i) => worker.fetch(new Request("https://x/subscribe", { method: "POST", headers: { "content-type": "application/json", "CF-Connecting-IP": "10.0.0." + i }, body: JSON.stringify({ email: `r${i}@example.com` }) }), e2, {});
+  for (let i = 1; i <= 3; i++) assert.equal((await sub(i)).status, 200);
+  assert.equal((await sub(4)).status, 429, "daily cap holds even when the IP changes");
+  assert.equal(calls.filter((u) => u.includes("resend")).length, 3);
+  globalThis.fetch = realFetch;
+}
+console.log("ok · attack prevention checks passed");
