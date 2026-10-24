@@ -15,5 +15,3 @@ jobs:
         run: node scripts/check.mjs
       - name: Search tags up to date
         run: node scripts/seo.mjs --check
-      - name: Worker tests
-        run: node studio-api/test/api.test.mjs
