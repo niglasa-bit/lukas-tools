@@ -10,6 +10,9 @@
 const RESEND = "https://api.resend.com";
 const SITE = "https://thesystemizedlife.com";
 const RATE_IP = 10, RATE_EMAIL = 3; // per hour
+// Whole-service cap on confirmation emails per day, so rotating IPs can't use the form to mail strangers or burn the
+// Resend quota. NEWS_PER_DAY overrides it; empty means the default, never unlimited.
+const NEWS_PER_DAY = 300;
 
 export async function subscribe(request, env, h) {
   const b = await h.body(request);
@@ -19,6 +22,7 @@ export async function subscribe(request, env, h) {
   if (!ready(env)) return h.json({ error: "not_ready", message: "The newsletter opens soon." }, 503);
   const ip = request.headers.get("CF-Connecting-IP") || "";
   if ((ip && await h.rateLimited(env, "news-ip:" + ip, RATE_IP)) || await h.rateLimited(env, "news-email:" + email, RATE_EMAIL)) return h.tooMany();
+  if (await h.rateLimited(env, "news-day", parseInt(env.NEWS_PER_DAY, 10) > 0 ? parseInt(env.NEWS_PER_DAY, 10) : NEWS_PER_DAY, 86400)) return h.tooMany();
   if (await env.STUDIO.get("news:" + email)) return h.json({ status: "subscribed" });
   const source = String(b.source || "site").replace(/[^a-z0-9/_-]/gi, "").slice(0, 40) || "site";
   const link = new URL(request.url).origin + "/subscribe/confirm?e=" + encodeURIComponent(email) + "&s=" + source + "&t=" + await token(env, "confirm:" + email);

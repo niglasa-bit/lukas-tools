@@ -101,6 +101,7 @@ Each app's premium content is one file in `src/` (`content.js`, `content-year.js
 - Lessons, rules and prompts come from the Worker only after that check. The app shell is public and that's fine.
 - Every printed plan carries “Licensed to <name> · <email>” and a faint watermark.
 - `/activate` is limited per hour: 60 calls per IP (`RATE_ACTIVATE_IP`) and 10 per email (`RATE_ACTIVATE_EMAIL`); after that it answers 429. Parked activations (`pending:`) expire after 14 days. Order codes and B2B contract numbers need at least 8 characters (`MIN_ORDER_LEN`), in the Worker and in every app.
+- `/subscribe` is limited to 10 per IP and 3 per email per hour, and to 300 confirmation emails per day for the whole service (`NEWS_PER_DAY`), so rotating IPs cannot use it to mail strangers. JSON bodies are read up to 16 KB (the Gmail sync up to 1 MB), also without a Content-Length header.
 - What it does **not** do: stop a buyer from handing their email + receipt to a friend (max 3 devices, visible on the admin page), or stop screenshots. No downloadable product can.
 
 ## Local test
