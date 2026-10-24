@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+.assetsignore
+node_modules
+.wrangler
+.dev.vars
+scripts
+studio-api
+wrangler.jsonc
+CNAME
+*.md
