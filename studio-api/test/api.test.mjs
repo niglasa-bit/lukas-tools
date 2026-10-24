@@ -514,3 +514,51 @@ console.log("ok · withdrawal checks passed");
   globalThis.fetch = realFetch;
 }
 console.log("ok · attack prevention checks passed");
+
+// Resilience (24.10.2026): burst gate without KV writes, failed-secret slowdown, Stripe body cap, KV quota degrades
+// gracefully, repeated pending tries cost no writes, one refunded Beacons order closes alone.
+{
+  const hits = new Map();
+  const RL = { async limit({ key }) { const n = (hits.get(key) || 0) + 1; hits.set(key, n); return { success: n <= 2 }; } };
+  const e3 = { ...env, STUDIO: new KV(), RL };
+  const req = (path, init = {}, e = e3) => worker.fetch(new Request("https://x" + path, { method: "POST", ...init, headers: { "content-type": "application/json", "CF-Connecting-IP": "7.7.7.7", ...(init.headers || {}) } }), e, {});
+  const v = () => req("/verify", { body: JSON.stringify({ email: "a@example.com", code: "123456", deviceId: "d" }) });
+  assert.equal((await v()).status, 400); assert.equal((await v()).status, 400);
+  const blocked = await v(); assert.equal(blocked.status, 429, "third burst call from one IP is stopped");
+  assert.equal(blocked.headers.get("retry-after"), "60");
+  assert.equal([...e3.STUDIO.m.keys()].filter((k) => k.startsWith("rl:")).length, 0, "the burst gate writes nothing to KV");
+  assert.equal((await req("/verify", { headers: { "CF-Connecting-IP": "7.7.7.8" }, body: JSON.stringify({}) })).status, 400, "another IP is not affected");
+  // Rate limiter outage = allow (the hourly KV limits still apply)
+  const e4 = { ...e3, RL: { async limit() { throw new Error("down"); } } };
+  for (let i = 0; i < 4; i++) assert.equal((await req("/verify", { body: "{}" }, e4)).status, 400);
+  // Wrong admin token: 403, then 429 after a burst; the right token still works from another IP
+  const adm = (t, ip = "6.6.6.6") => worker.fetch(new Request("https://x/admin", { headers: { "X-Admin-Token": t, Accept: "application/json", "CF-Connecting-IP": ip } }), e3, {});
+  assert.equal((await adm("guess1")).status, 403); assert.equal((await adm("guess2")).status, 403);
+  assert.equal((await adm("guess3")).status, 429, "brute force on the admin token slows down");
+  assert.equal((await adm("admin", "6.6.6.7")).status, 200);
+  // Stripe webhook: a giant forged body is refused before any signature work
+  const big = await worker.fetch(new Request("https://x/stripe-webhook", { method: "POST", body: "x".repeat(300 * 1024) }), { ...env, STRIPE_WEBHOOK_SECRET: "whsec_t" }, {});
+  assert.equal(big.status, 413);
+  // KV daily write quota hit: unknown buyer still gets the pending answer, a real buyer gets 503 busy (not a crash)
+  class FullKV extends KV { async put() { throw new Error("KV put() limit exceeded for the day."); } }
+  const e5 = { ...env, STUDIO: new FullKV() };
+  e5.STUDIO.m.set("buyer:q@example.com", JSON.stringify({ email: "q@example.com", orders: [{ order: "lk-q1234567", product: "Money Plan Studio" }], devices: [] }));
+  let r = await req("/activate", { body: JSON.stringify({ email: "nobody@example.com", order: "lk-00000000", deviceId: "d" }) }, e5);
+  assert.equal((await r.json()).status, "pending");
+  r = await req("/activate", { body: JSON.stringify({ email: "q@example.com", order: "LK-Q1234567", deviceId: "d" }) }, e5);
+  assert.equal(r.status, 503); assert.equal((await r.json()).error, "busy");
+  // The same pending try again within 10 minutes: no new KV write
+  const e6 = { ...env, STUDIO: new KV() };
+  const act = () => req("/activate", { headers: { "CF-Connecting-IP": "5.5.5.5" }, body: JSON.stringify({ email: "p@example.com", order: "lk-pppp1111", deviceId: "d" }) }, e6);
+  await act(); await act(); await act();
+  assert.equal(JSON.parse(await e6.STUDIO.get("pending:p@example.com")).attempts, 1);
+  // Admin: close one refunded Beacons order; the other purchase keeps working
+  e6.STUDIO.m.set("buyer:two@example.com", JSON.stringify({ email: "two@example.com", devices: [], orders: [
+    { order: "11111111-aaaa", product: "Money Plan Studio" }, { order: "22222222-bbbb", product: "The Enough Habit" }] }));
+  const close = (body) => worker.fetch(new Request("https://x/admin/close-order", { method: "POST", headers: { "X-Admin-Token": "admin", "content-type": "application/json" }, body: JSON.stringify(body) }), { ...env, PRODUCT_MATCH: "", STUDIO: e6.STUDIO }, {});
+  r = await close({ email: "two@example.com", order: "Order #: 22222222-BBBB" });
+  assert.deepEqual((await r.json()).products, ["studio"]);
+  assert.equal(JSON.parse(await e6.STUDIO.get("buyer:two@example.com")).orders[1].closed, "refund");
+  assert.equal((await close({ email: "two@example.com", order: "nope-nope-nope" })).status, 404);
+}
+console.log("ok · resilience checks passed");

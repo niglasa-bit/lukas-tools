@@ -8,6 +8,16 @@ compatibility_date = "2026-01-01"
 binding = "STUDIO"
 id = "92f802a9b9a246ddb3a8f4ab17dc22bb"
 
+# Burst limit for every public route (src/index.js burst()): 40 calls per 60 s per IP and route, counted in memory per
+# Cloudflare location, no KV writes. Needs wrangler 4.36 or newer. Without this block the hourly KV limits still apply.
+[[ratelimits]]
+name = "RL"
+namespace_id = "2401"
+
+  [ratelimits.simple]
+  limit = 40
+  period = 60
+
 [vars]
 # Which Beacons product names unlock which products: see DEFAULT_PRODUCTS in src/index.js
 # (Money Plan Studio, The Systemized Year, the hidden Year upgrade, Systemized Life Pass, The Autopilot Workbook).

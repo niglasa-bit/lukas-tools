@@ -50,6 +50,7 @@ async function refund(env, pi) {
       method: "POST",
       headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, "content-type": "application/x-www-form-urlencoded", "Idempotency-Key": "withdraw-" + pi },
       body: "payment_intent=" + encodeURIComponent(pi) + "&reason=requested_by_customer&metadata[reason]=withdrawal",
+      signal: AbortSignal.timeout(10000),
     });
     if (r.ok) return "refunded";
     console.error("stripe refund failed", r.status);
