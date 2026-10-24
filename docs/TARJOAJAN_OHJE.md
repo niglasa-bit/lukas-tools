@@ -1,6 +1,6 @@
 # Lukasin digituotteet: tarjoajan ohje (v1, 22.10.2026)
 
-Kenelle: sille, joka hoitaa Lukasin kaupan tilaukset, palautukset ja asiakastuen (nyt Niko, myöhemmin työntekijä tai kumppani). Ohje on kirjoitettu niin, että sen mukaan voi toimia ilman, että tuntee koodia. Tekninen asennus ja julkaisu ovat omistajan ohjeessa: `studio-api/README.md` ja `shop/README.md`. Standardi: `/mnt/project-files/sevenflow/tuote/ohjestandardi.md`.
+Kenelle: sille, joka hoitaa Lukasin kaupan tilaukset, palautukset ja asiakastuen (nyt Niko, myöhemmin työntekijä tai kumppani). Ohje on kirjoitettu niin, että sen mukaan voi toimia ilman, että tuntee koodia. Tekninen asennus ja julkaisu ovat omistajan ohjeessa: `studio-api/README.md` (yksityinen repo `lukas-influencer`) ja `shop/README.md`. Standardi: `/mnt/project-files/sevenflow/tuote/ohjestandardi.md`.
 
 ## 1. Mitä myydään yhdellä sivulla
 
