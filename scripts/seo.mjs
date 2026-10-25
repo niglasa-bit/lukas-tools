@@ -24,7 +24,7 @@ const BING_VERIFY = "3E2708C1CCEFDD9865268063BFC2ACC9";
 // price = USD price from shop/config.js; paid apps are described as software for sale.
 const PAGES = [
   { path: "", file: "index.html", kind: "home", priority: "1.0",
-    title: "Free Money Calculators and Simple Money Systems · The Systemized Life",
+    title: "Free Money Calculators and Simple Money Systems · Lukas",
     description: "Free money and focus calculators, plain-English money lessons and simple money systems by Lukas. Educational, not financial advice." },
   { path: "future-cost/", kind: "calculator", priority: "0.9",
     title: "Future Cost Calculator: What a Purchase Really Costs If You Invested It",
@@ -54,6 +54,7 @@ const PAGES = [
   { path: "links/", kind: "page", priority: "0.5" },
   { path: "shop/legal.html", kind: "page", priority: "0.2" },
   { path: "privacy/", kind: "page", priority: "0.1" },
+  { path: "radio/terms/", kind: "page", priority: "0.2" },
 ];
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -101,7 +102,9 @@ for (const p of PAGES) {
   else description = (html.match(/<meta name="description" content="([^"]*)"/) || [, ""])[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&");
   const tags = ['<link rel="canonical" href="' + url(p.path) + '">', '<meta property="og:url" content="' + url(p.path) + '">'];
   if (description && !/name="description"/.test(html)) tags.push('<meta name="description" content="' + esc(description) + '">');
-  if (!/property="og:title"/.test(html)) tags.push('<meta property="og:type" content="website"><meta property="og:site_name" content="' + NAME + '"><meta property="og:title" content="' + esc(title) + '">' + (description ? '<meta property="og:description" content="' + esc(description) + '">' : "") + '<meta name="twitter:card" content="summary">');
+  if (!/property="og:title"/.test(html)) tags.push('<meta property="og:type" content="website"><meta property="og:site_name" content="' + NAME + '"><meta property="og:title" content="' + esc(title) + '">' + (description ? '<meta property="og:description" content="' + esc(description) + '">' : "") + '<meta name="twitter:card" content="summary_large_image">');
+  // Share picture (1200×630) for pages without their own; apps keep their icon.
+  if (!/property="og:image"/.test(html)) tags.push('<meta property="og:image" content="' + url("og.png") + '"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="' + url("og.png") + '">');
   if (p.kind === "home") tags.push('<meta name="msvalidate.01" content="' + BING_VERIFY + '">');
   const ld = jsonld(p, title, description || "");
   if (ld) tags.push(ld);
