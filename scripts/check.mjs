@@ -1,4 +1,4 @@
-// Repo check: syntax of every inline and standalone script, manifests, local links and asset paths.
+// Repo check: syntax of every inline and standalone script, manifests, local links, asset paths and old links.
 // Run: node scripts/check.mjs   (CI runs it on every push and PR)
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdtempSync } from "node:fs";
 import { join, dirname, resolve, extname } from "node:path";
@@ -64,6 +64,16 @@ for (const f of files.filter((f) => f.endsWith("sw.js"))) {
     const p = u === "./" ? join(dirname(f), "index.html") : resolve(dirname(f), u);
     if (!existsSync(p)) errors.push(rel(f) + ": precache file missing " + u);
   }
+}
+
+// Old links: Beacons is closed and the site lives at thesystemizedlife.com, so no page may point to beacons.ai or
+// the old github.io address (the one link everywhere is https://thesystemizedlife.com/links/).
+const OLD_LINK = /(?:[a-z0-9-]+\.)?beacons\.ai\b|niglasa-bit\.github\.io/i;
+for (const f of files) {
+  if (!/\.(html|js|mjs|json|md|txt|xml|webmanifest|css)$/.test(f) || rel(f) === "scripts/check.mjs") continue;
+  readFileSync(f, "utf8").split("\n").forEach((line, n) => {
+    if (OLD_LINK.test(line)) errors.push(rel(f) + ":" + (n + 1) + ": old link (use https://thesystemizedlife.com/links/): " + line.trim().slice(0, 120));
+  });
 }
 
 if (errors.length) { console.error(errors.join("\n")); console.error("\n" + errors.length + " problem(s)"); process.exit(1); }
