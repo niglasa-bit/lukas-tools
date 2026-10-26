@@ -367,7 +367,7 @@ var $=function(i){return document.getElementById(i);};
 // Free sample: index.html?sample runs days 1-3 from the public GET /sample?product=enough, with no login and no
 // device slot. Its progress lives under its own key so a later purchase starts clean; saved tokens are never touched.
 var SAMPLE=new URLSearchParams(location.search).has("sample");
-var BUY_URL="https://shop.beacons.ai/lukas.systemized/d2c0433c-a5ce-4203-83a6-815985a10e28", ALL_URL="https://beacons.ai/lukas.systemized";
+var BUY_URL="../shop/", ALL_URL="../shop/";
 var BASE_KEY="lukas-enough-v1", KEY=SAMPLE?"lukas-enough-sample-v1":BASE_KEY, STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
 var TOTAL=66, CATCH=11, LIMIT=66; // LIMIT = last calendar day this copy can use (3 in the sample) // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
 // API address comes from the meta tag. ?api= is only for local development (a localhost API on a page

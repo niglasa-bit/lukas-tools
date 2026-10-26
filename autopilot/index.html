@@ -413,7 +413,7 @@ var $=function(i){return document.getElementById(i);};
 // Free sample (?sample): no gate, no device, no token. Its progress lives under its own key, so a later
 // purchase starts clean and the sample never touches the buyer's real data or sign-in.
 var SAMPLE=new URLSearchParams(location.search).has("sample");
-var BUY_URL="https://shop.beacons.ai/lukas.systemized/531e5986-ab7b-4716-b9b4-4d929767c981", ALL_URL="https://beacons.ai/lukas.systemized";
+var BUY_URL="../shop/", ALL_URL="../shop/";
 var THEME_KEY="lukas-autopilot-v1-theme";
 var KEY=SAMPLE?"lukas-autopilot-sample-v1":"lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
 // API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
