@@ -420,6 +420,12 @@ function enter(){
 }
 function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); if(m) msg("g-msg",m); }
 if(SAMPLE) startSample(); else if(S.auth.token) enter();
+// A refund, a withdrawal or a removed device ends access on the server at once. While the app stays open it checks
+// again when it comes back on screen (after 2 min) and every 15 min, and a lost licence reloads to the sign-in gate.
+(function(){ var last=Date.now();
+  function recheck(){ if(!C||!S.auth.token||(typeof SAMPLE!=="undefined"&&SAMPLE)||document.visibilityState!=="visible"||Date.now()-last<120000) return; last=Date.now();
+    api("/content").then(function(r){ if(r&&r.token){ S.auth.token=r.token; save(); } if(r&&/^(not_owned|revoked|device_removed|bad_token|token_expired)$/.test(r.error||"")) location.reload(); }).catch(function(){}); }
+  document.addEventListener("visibilitychange",recheck); setInterval(function(){ if(Date.now()-last>=900000) recheck(); },60000); })();
 
 // ---------- free sample ----------
 // Only /sample is called (no /content, /me or /activate, no Authorization header). Before you buy works fully;

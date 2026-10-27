@@ -457,8 +457,9 @@ $("g-other").addEventListener("click",function(){ $("g-owned").classList.add("hi
 function enter(token){
   api("/content?product="+PRODUCT,null,token).then(function(r){
     if(r.error==="not_owned"){ // signed in through another Lukas tool, but this one isn't bought (yet)
+      if(!(r.products||[]).length){ showGate("This purchase is no longer active: it was refunded or withdrawn. Reply to your purchase email if that's wrong."); return; }
       showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
-      $("g-owned-msg").textContent="This device already has another Lukas tool. The Enough Habit is its own purchase. If you just bought it, give it a few minutes and reopen this page.";
+      $("g-owned-msg").textContent="This device already has another Lukas tool. The Enough Habit is its own purchase. If you just bought it, give it a few minutes and reopen this page. If it was refunded, access to it has ended.";
       return; }
     if(r.error){ if(!token&&/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error)){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
     C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
@@ -472,6 +473,12 @@ function enter(token){
 function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
 (function(){ if(SAMPLE) return startSample(); if(S.auth.token) return enter(); if(S.auth.signedOut) return;
   var o=others().filter(function(x){ return x.auth.token; })[0]; if(o){ deviceId(); enter(o.auth.token); } })();
+// A refund, a withdrawal or a removed device ends access on the server at once. While the app stays open it checks
+// again when it comes back on screen (after 2 min) and every 15 min, and a lost licence reloads to the sign-in gate.
+(function(){ var last=Date.now();
+  function recheck(){ if(!C||!S.auth.token||(typeof SAMPLE!=="undefined"&&SAMPLE)||document.visibilityState!=="visible"||Date.now()-last<120000) return; last=Date.now();
+    api("/content?product="+PRODUCT).then(function(r){ if(r&&r.token){ S.auth.token=r.token; save(); } if(r&&/^(not_owned|revoked|device_removed|bad_token|token_expired)$/.test(r.error||"")) location.reload(); }).catch(function(){}); }
+  document.addEventListener("visibilitychange",recheck); setInterval(function(){ if(Date.now()-last>=900000) recheck(); },60000); })();
 
 // ---------- free sample ----------
 function startSample(){
