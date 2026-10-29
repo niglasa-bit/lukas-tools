@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help with a Purchase</title><meta name="description" content="Lost your order code, got a new phone or want a refund? Fix it here in a minute.">
+<link rel="stylesheet" href="style.css"><script src="config.js"></script>
+<style>
+label{display:block;font-weight:600;margin:14px 0 4px}
+input,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+textarea{min-height:120px;resize:vertical}
+.err{display:block;color:#B42318;font-size:14px;margin-top:4px}
+.topics{display:grid;gap:8px;margin-top:6px}
+.topics label{display:flex;gap:10px;align-items:flex-start;font-weight:400;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--bg)}
+.topics input{width:auto;margin-top:4px;accent-color:var(--accent)}
+.topics label:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.topics b{display:block}.topics span{color:var(--ink2);font-size:14px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+</style></head>
+<body><div class="wrap">
+<h1>Help with a purchase</h1>
+<p class="sub">Most things are fixed right here in a minute, any time of day.</p>
+
+<form id="f" class="card" novalidate>
+<fieldset class="topics" style="border:0;padding:0;margin:0">
+<legend style="font-weight:600;margin-bottom:6px">What do you need?</legend>
+<label><input type="radio" name="topic" value="code"><div><b>My order code</b><span>Lost the purchase email or the code doesn't work. We send it again.</span></div></label>
+<label><input type="radio" name="topic" value="devices"><div><b>New device</b><span>New phone or laptop and the app says the device limit is full. We email you a link that clears your devices.</span></div></label>
+<label><input type="radio" name="topic" value="refund"><div><b>A refund</b><span>Full refund within 14 days of buying, no reason needed.</span></div></label>
+<label><input type="radio" name="topic" value="other"><div><b>Something else</b><span>A bug, a question or anything the options above don't fix. A person replies by email.</span></div></label>
+</fieldset>
+<small class="err" data-for="topic"></small>
+<label for="email">Email you bought with</label><input id="email" name="email" type="email" autocomplete="email" required><small class="err" data-for="email"></small>
+<div id="msgbox" hidden><label for="message">What happened?</label><textarea id="message" name="message" maxlength="3000" placeholder="Which app, what you tried, and what you saw."></textarea><small class="err" data-for="message"></small>
+<p class="small">Please don't include card numbers or passwords.</p></div>
+<div class="btns"><button class="btn" type="submit">Send</button></div>
+<small class="err" data-for=""></small>
+</form>
+
+<div id="done" class="card" hidden></div>
+
+<p class="small">You can also write to <a href="mailto:sales@sevenflowlabs.com">sales@sevenflowlabs.com</a>. We use your email only to answer you (<a href="legal.html#privacy">privacy</a>).</p>
+<footer><a href="./">Back to the shop</a> · <a href="legal.html">Terms, refunds &amp; privacy</a> · <a href="withdraw.html">Withdraw from a purchase</a></footer>
+</div>
+<script>
+var S = window.SHOP, f = document.getElementById("f"), done = document.getElementById("done"), box = document.getElementById("msgbox");
+var api = S.api.replace(/\/+$/, "") + "/help";
+function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function topic(){ var t = f.querySelector("input[name=topic]:checked"); return t ? t.value : ""; }
+var q = new URLSearchParams(location.search).get("topic"); if (q) { var r = f.querySelector("input[name=topic][value='"+q.replace(/[^a-z]/g,"")+"']"); if (r) r.checked = true; }
+function sync(){ box.hidden = topic() !== "other"; }
+f.addEventListener("change", sync); sync();
+function errs(field, msg){ f.querySelectorAll(".err").forEach(function(e){ e.textContent = e.getAttribute("data-for") === field ? (msg||"") : ""; }); var el = field === "topic" ? f.querySelector("input[name=topic]") : f[field]; if (el && el.focus) el.focus(); }
+f.addEventListener("submit", function(e){
+  e.preventDefault(); errs("", "");
+  var t = topic(), email = f.email.value.trim(), message = f.message.value.trim();
+  if (!t) return errs("topic", "Choose what you need help with.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return errs("email", "Enter the email address you bought with.");
+  if (t === "other" && message.length < 5) return errs("message", "Tell us in a few words what happened.");
+  var b = f.querySelector("button[type=submit]"); b.disabled = true;
+  fetch(api, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ topic: t, email: email, message: t === "other" ? message : "" }) })
+    .then(function(r){ return r.json(); }).then(function(j){
+      b.disabled = false;
+      if (j.status === "answer") show("<h2 style='margin-top:0'>Refunds</h2><p>"+esc(j.message)+"</p><p><a class='btn' href='withdraw.html'>Withdraw from a purchase</a></p>");
+      else if (j.status === "sent") show("<h2 style='margin-top:0'>Check your email ✉️</h2><p>"+esc(j.message)+"</p>");
+      else if (j.status === "received") show("<h2 style='margin-top:0'>Message sent ✔</h2><p>"+esc(j.message)+"</p>");
+      else errs(j.field || "", j.message || "Something went wrong. Try again in a moment.");
+    }).catch(function(){ b.disabled = false; errs("", "Couldn't reach the shop. Check your connection and try again, or email sales@sevenflowlabs.com."); });
+});
+function show(html){ f.hidden = true; done.innerHTML = html + "<p class='small'><a href='help.html'>Need something else?</a></p>"; done.hidden = false; done.scrollIntoView({ block: "nearest" }); }
+</script></body></html>
