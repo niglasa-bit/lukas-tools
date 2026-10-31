@@ -1,5 +1,5 @@
 // Repo check: syntax of every inline and standalone script, manifests, local links, asset paths and old links.
-// Run: node scripts/check.mjs   (CI runs it on every push and PR)
+// Run: node scripts/check.mjs   (CI runs it on every push and PR; live outside links: scripts/livelinks.mjs, weekly)
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdtempSync } from "node:fs";
 import { join, dirname, resolve, extname } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -74,6 +74,21 @@ for (const f of files) {
   readFileSync(f, "utf8").split("\n").forEach((line, n) => {
     if (OLD_LINK.test(line)) errors.push(rel(f) + ":" + (n + 1) + ": old link (use https://thesystemizedlife.com/links/): " + line.trim().slice(0, 120));
   });
+}
+
+// Site links (Niko 31.10.2026: "Lukaksen sivuilta puuttuu linkkejä"): every public page links back to the home page,
+// the blog and the shop, so no visitor gets stuck in an app, a calculator or a shop page. The links page (the one bio
+// link everywhere) also lists the blog, the samples and About. Guides opened from the purchase email (start-here),
+// error pages, the radio overlay, blog posts (own nav) and blog/about/legal (own header) are not checked here.
+const SITE_LINKS = { home: /href=["'](?:\.\.\/)*(?:\.\/)?["']|href=["']https:\/\/thesystemizedlife\.com\/["']/, blog: /href=["'][^"']*blog\/["']/, shop: /href=["'](?:\.\.\/)*(?:shop\/|\.\/)["']|href=["'][^"']*\/shop\/["']/ };
+const NO_SITE_LINKS = /(^|\/)(start-here|404|thanks-[^/]*)\.html$|^radio\/|^blog\/|^about\/|^legal\/|^index\.html$|^studio-api\/|^tools\//;
+for (const f of files.filter((f) => f.endsWith(".html") && !NO_SITE_LINKS.test(rel(f)))) {
+  const html = readFileSync(f, "utf8");
+  for (const [name, re] of Object.entries(SITE_LINKS)) if (!re.test(html)) errors.push(rel(f) + ": no link to the " + name + " page (add Home · Blog · Shop to the footer)");
+}
+{
+  const links = readFileSync(join(root, "links/index.html"), "utf8");
+  for (const need of ["../blog/", "../samples/", "../about/", "../shop/"]) if (!links.includes('href="' + need + '"')) errors.push("links/index.html: the bio link page must link to " + need);
 }
 
 if (errors.length) { console.error(errors.join("\n")); console.error("\n" + errors.length + " problem(s)"); process.exit(1); }
