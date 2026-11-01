@@ -27,7 +27,7 @@ const PAGES = [
     title: "Free Money Calculators and Simple Money Systems · Lukas",
     description: "Free money and focus calculators, plain-English money lessons and simple money systems by Lukas. Educational, not financial advice." },
   { path: "future-cost/", kind: "calculator", priority: "0.9",
-    title: "Future Cost Calculator: What a Purchase Really Costs If You Invested It",
+    title: "Future Cost Calculator: What a Purchase Really Costs",
     description: "Free calculator: what a purchase really costs if you had invested the money instead, plus the Rich Dad asset test. By Lukas · The Systemized Life." },
   { path: "focus/", kind: "calculator", priority: "0.8",
     title: "Focus Leak Calculator: Hours Lost to Interruptions Every Year",
@@ -48,11 +48,14 @@ const PAGES = [
     title: "The Autopilot Workbook: Automate the Boring Tasks, No Code",
     description: "Find the boring tasks that eat your week and hand them to a system. No code: recipes, fill-in prompts and short lessons. By Lukas · The Systemized Life." },
   { path: "blog/", kind: "page", priority: "0.8" },
-  { path: "blog/why-this-blog-exists/", kind: "article", published: "2026-10-17", priority: "0.8" },
+  { path: "blog/why-this-blog-exists/", kind: "article", published: "2026-10-17", priority: "0.8",
+    title: "30,000 € of Debt at 30: Why This Blog Exists · The Systemized Life" },
   { path: "about/", kind: "page", priority: "0.5" },
   { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },
-  { path: "shop/legal.html", kind: "page", priority: "0.2" },
+  { path: "shop/legal.html", kind: "page", priority: "0.2",
+    description: "Terms of sale, refunds (14 days, no reason needed) and privacy for the Lukas shop. Sold by Sevenflowlabs Oy, Finland." },
+  { path: "shop/help.html", kind: "page", priority: "0.3" },
   { path: "privacy/", kind: "page", priority: "0.1" },
   { path: "radio/terms/", kind: "page", priority: "0.2" },
 ];
@@ -103,6 +106,7 @@ for (const p of PAGES) {
   const tags = ['<link rel="canonical" href="' + url(p.path) + '">', '<meta property="og:url" content="' + url(p.path) + '">'];
   if (description && !/name="description"/.test(html)) tags.push('<meta name="description" content="' + esc(description) + '">');
   if (!/property="og:title"/.test(html)) tags.push('<meta property="og:type" content="website"><meta property="og:site_name" content="' + NAME + '"><meta property="og:title" content="' + esc(title) + '">' + (description ? '<meta property="og:description" content="' + esc(description) + '">' : "") + '<meta name="twitter:card" content="summary_large_image">');
+  else if (description && !/property="og:description"/.test(html)) tags.push('<meta property="og:description" content="' + esc(description) + '">');
   // Share picture (1200×630) for pages without their own; apps keep their icon.
   if (!/property="og:image"/.test(html)) tags.push('<meta property="og:image" content="' + url("og.png") + '"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="' + url("og.png") + '">');
   if (p.kind === "home") tags.push('<meta name="msvalidate.01" content="' + BING_VERIFY + '">');
@@ -115,8 +119,9 @@ for (const p of PAGES) {
 
 out("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
   PAGES.map((p) => "  <url><loc>" + url(p.path) + "</loc><priority>" + p.priority + "</priority></url>").join("\n") + "\n</urlset>\n");
-// Buyer pages (start-here, thanks) and the rewards helper stay out of search.
-out("robots.txt", "User-agent: *\nDisallow: /shop/thanks.html\nDisallow: /tools/\nDisallow: /*/start-here.html\n\nSitemap: " + url("sitemap.xml") + "\n");
+// Thanks page and the rewards helper stay out of search; buyer start-here pages carry noindex instead
+// (a robots.txt block would hide that noindex from search engines).
+out("robots.txt", "User-agent: *\nDisallow: /shop/thanks.html\nDisallow: /tools/\n\nSitemap: " + url("sitemap.xml") + "\n");
 out("404.html", `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Page not found · ${NAME}</title><meta name="robots" content="noindex">
