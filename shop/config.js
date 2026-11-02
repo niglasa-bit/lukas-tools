@@ -14,8 +14,16 @@ window.SHOP = {
       line: "Your whole year on one page: money, time, focus and the things money is actually for. Twelve fifteen-minute check-ins." },
     { name: "The Autopilot Workbook", app: "autopilot/", emoji: "⚙️", price: "$39", paymentLink: "https://buy.stripe.com/cNi00keW1emk16v7ut3Nm03",
       line: "Find the boring tasks that eat your week and hand them to a system. No code. Recipes, fill-in prompts and short lessons." },
-    { name: "The Enough Habit", app: "enough/", emoji: "🧾", price: "$29", paymentLink: "", hidden: true,
+    { name: "The Enough Habit", app: "enough/", emoji: "🧾", price: "$29", paymentLink: "https://systemized6.gumroad.com/l/enough-habit", via: "Gumroad",
       line: "One small frugal goal a day for 66 days, inside a two-minute morning check." },
+    { name: "The No-Code AI Budget System", emoji: "🤖", price: "$14", paymentLink: "https://systemized6.gumroad.com/l/no-code-ai-budget-system", via: "Gumroad",
+      trust: ["8-page PDF + 10 copy-paste prompts", "One-time payment, yours to keep", "14-day refund, no questions"],
+      note: "Works with ChatGPT, Claude or Gemini and any bank.",
+      line: "A budget that runs itself, built with free AI tools. 7 short steps and 10 prompts. Zero coding." },
+    { name: "The Systemized Kitchen", emoji: "🥕", price: "$9", paymentLink: "https://systemized6.gumroad.com/l/systemized-kitchen", via: "Gumroad",
+      trust: ["One file, works offline in any browser", "One-time payment, yours to keep", "14-day refund, no questions"],
+      note: "Your data stays on your device.",
+      line: "Your weekly grocery budget, cooked into recipes that still fit, for 1 to 5 people." },
   ],
   newsletter: "", // MailerLite / Kit sign-up form URL
 };

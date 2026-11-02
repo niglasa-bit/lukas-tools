@@ -22,6 +22,7 @@
 <script>
 var S = window.SHOP, list = document.getElementById("list");
 document.getElementById("seller").textContent = S.seller;
+var TRUST = ["Runs in your browser, no account", "Up to 3 devices, one-time payment", "14-day refund, no questions"];
 function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   var ready = !!p.paymentLink;
@@ -29,8 +30,9 @@ S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   d.innerHTML = "<h2 class='t'><span aria-hidden='true'>"+esc(p.emoji)+"</span> "+esc(p.name)+"</h2><span class='d'>"+esc(p.line)+"</span>"+
     "<div class='row'><span class='price'>"+esc(p.price)+"</span>"+
     "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"' aria-label='Buy "+esc(p.name)+"'":"aria-disabled='true' role='link'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
-    "<ul class='trust'><li>Runs in your browser, no account</li><li>Up to 3 devices, one-time payment</li><li>14-day refund, no questions</li></ul>"+
-    (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : "<p class='small'>Opens all four apps with one order code.</p>");
+    "<ul class='trust'>"+(p.trust||TRUST).map(function(t){return "<li>"+esc(t)+"</li>";}).join("")+"</ul>"+
+    (p.via ? "<p class='small'>Checkout on "+esc(p.via)+", which handles tax and your receipt.</p>" : "")+
+    (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : p.note ? "<p class='small'>"+esc(p.note)+"</p>" : "<p class='small'>Opens all four apps with one order code.</p>");
   list.appendChild(d);
 });
 </script></body></html>
