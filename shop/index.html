@@ -8,8 +8,12 @@
 <body><div class="wrap">
 <h1>The Systemized Life · Shop</h1>
 <p class="sub">Small systems that run themselves. One-time payment, no subscription. Opens in your browser on up to 3 devices.</p>
+<h2 class="start">Start free</h2>
+<p class="free"><a href="../samples/">🎁 Free samples</a><a href="../future-cost/">💸 Future Cost Calculator</a><a href="../focus/">⏱️ Focus Leak Calculator</a></p>
+<p class="small">No sign-up, no card. When a free tool helps, the paid one does the rest for you.</p>
+<h2>The tools</h2>
 <div id="list"></div>
-<p class="more">Looking for the free tools? <a href="../links/">All free tools →</a></p>
+<p class="more">More free tools and videos: <a href="../links/">All links →</a></p>
 <footer>
   Made by <span id="seller"></span>. Not financial advice.<br>
   Merchant of record: <b>Sold through Link, LLC</b> (a Stripe company), which handles sales tax and your receipt.<br>
@@ -25,6 +29,7 @@ S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   d.innerHTML = "<h2 class='t'><span aria-hidden='true'>"+esc(p.emoji)+"</span> "+esc(p.name)+"</h2><span class='d'>"+esc(p.line)+"</span>"+
     "<div class='row'><span class='price'>"+esc(p.price)+"</span>"+
     "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"' aria-label='Buy "+esc(p.name)+"'":"aria-disabled='true' role='link'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
+    "<ul class='trust'><li>Runs in your browser, no account</li><li>Up to 3 devices, one-time payment</li><li>14-day refund, no questions</li></ul>"+
     (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : "<p class='small'>Opens all four apps with one order code.</p>");
   list.appendChild(d);
 });
