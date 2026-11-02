@@ -47,7 +47,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.45 Inter,"Segoe UI",syste
 header{padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none}
-.brand b{display:block;font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+.brand h1{margin:0;display:block;font-size:13px;letter-spacing:.18em;text-transform:uppercase}
 .brand span{font-size:12px;color:var(--muted)}
 h2{font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin:26px 0 10px;color:var(--ink2)}
 h3{font-size:15px;margin:0 0 6px}
@@ -226,6 +226,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 .lock .alt{display:block;margin-top:10px;font-size:13px;color:var(--accent)}
 .top li.locked::before{content:"🔒";background:var(--surface2);font-size:12px}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
+:root h2.serif{text-transform:none;color:inherit}
 </style>
 
 <!-- seo --><link rel="canonical" href="https://thesystemizedlife.com/autopilot/"><meta property="og:url" content="https://thesystemizedlife.com/autopilot/"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"The Autopilot Workbook","description":"Find the boring tasks that eat your week and hand them to a system. No code: recipes, fill-in prompts and short lessons. By Lukas · The Systemized Life.","url":"https://thesystemizedlife.com/autopilot/","applicationCategory":"FinanceApplication","operatingSystem":"Any (web browser)","isAccessibleForFree":false,"offers":{"@type":"Offer","price":"39","priceCurrency":"USD","url":"https://thesystemizedlife.com/shop/"},"publisher":{"@id":"https://thesystemizedlife.com/#org"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Systemized Life","item":"https://thesystemizedlife.com/"},{"@type":"ListItem","position":2,"name":"The Autopilot Workbook","item":"https://thesystemizedlife.com/autopilot/"}]}]}</script><!-- /seo -->
@@ -234,7 +235,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 <div class="sbar hidden" id="sbar" role="region" aria-label="Free sample"><div class="in"><span><b>Free sample</b> · Your audit is free. <span id="sbar-n">3 recipes and 5 prompts</span> to try.</span><a class="btn primary" id="sbar-buy" href="#" target="_blank" rel="noopener">Get the full workbook</a></div></div>
 <div class="wrap">
   <header>
-    <div class="brand"><span class="dot"></span><div><b>The Autopilot Workbook</b><span id="byline">by Lukas · The Systemized Life</span></div></div>
+    <div class="brand"><span class="dot"></span><div><h1>The Autopilot Workbook</h1><span id="byline">by Lukas · The Systemized Life</span></div></div>
     <button class="btn sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
   </header>
 
@@ -281,7 +282,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div id="s-intro">
       <div class="card hero">
         <div class="kicker">Start here · 20 minutes</div>
-        <h1 class="serif big" id="s-title"></h1>
+        <h2 class="serif big" id="s-title"></h2>
         <p id="s-lead"></p>
         <div class="actions"><button class="btn primary" id="s-go">Start the audit →</button></div>
       </div>
@@ -289,12 +290,12 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 
     <div id="audit" class="hidden">
       <div class="kicker">Step 1 of 2</div>
-      <h1 class="serif big">What do you have?</h1>
+      <h2 class="serif big">What do you have?</h2>
       <p class="lead">Pick every tool you can use. Recipes only suggest what you actually have.</p>
       <div class="chips" id="a-tracks"></div>
       <p class="hint" id="a-trackHint"></p>
       <div class="kicker" style="margin-top:26px">Step 2 of 2</div>
-      <h1 class="serif big">What do you repeat?</h1>
+      <h2 class="serif big">What do you repeat?</h2>
       <p class="lead">Tick what sounds like your week and fix the numbers. Be honest: the real minutes, not the dream ones.</p>
       <div class="card" style="padding-top:12px">
         <div class="thead"><span></span><span>Task</span><span>Times / wk</span><span>Minutes</span></div>
@@ -308,7 +309,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
 
     <div id="dash" class="hidden">
       <div class="kicker" id="d-kicker">Your autopilot plan</div>
-      <h1 class="serif big" id="d-head"></h1>
+      <h2 class="serif big" id="d-head"></h2>
       <div class="meter">
         <div><small>Repeating work</small><b id="d-cost">0</b><span>hours a year</span></div>
         <div class="back"><small>Hours back</small><b id="d-back">0</b><span id="d-backNote">hours a year so far</span></div>
@@ -329,7 +330,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
   <!-- ===================== RECIPES ===================== -->
   <section id="v-recipes" class="view">
     <div class="kicker">Recipes</div>
-    <h1 class="serif big">Pick one. Build it tonight.</h1>
+    <h2 class="serif big">Pick one. Build it tonight.</h2>
     <div class="chips scroll" id="r-tracks"></div>
     <div class="chips scroll" id="r-areas" style="margin-top:8px"></div>
     <div id="r-list"></div>
@@ -338,7 +339,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
   <!-- ===================== PROMPTS ===================== -->
   <section id="v-prompts" class="view">
     <div class="kicker">Prompt library</div>
-    <h1 class="serif big">Fill the gaps. Copy. Paste.</h1>
+    <h2 class="serif big">Fill the gaps. Copy. Paste.</h2>
     <p class="small muted">Works in ChatGPT, Copilot, Claude or Gemini. Short fields are remembered on this device; pasted text is never saved.</p>
     <input type="search" id="p-q" placeholder="Search prompts" aria-label="Search prompts">
     <div class="chips scroll" id="p-cats" style="margin-top:10px"></div>
@@ -349,14 +350,14 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
   <section id="v-course" class="view">
     <div id="c-index">
       <div class="kicker">The course</div>
-      <h1 class="serif big">Ten short lessons.</h1>
+      <h2 class="serif big">Ten short lessons.</h2>
       <p class="small muted" id="c-progress"></p>
       <div class="card"><div id="c-list"></div></div>
     </div>
     <div id="c-lesson" class="hidden">
       <button class="btn sm ghost" id="c-back">← All lessons</button>
       <div class="kicker" style="margin-top:12px" id="c-k"></div>
-      <h1 class="serif big" id="c-title"></h1>
+      <h2 class="serif big" id="c-title"></h2>
       <div id="c-video"></div>
       <p class="lead" style="margin-top:12px" id="c-sum"></p>
       <ul class="points" id="c-points"></ul>

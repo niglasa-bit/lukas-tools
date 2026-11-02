@@ -44,8 +44,8 @@ header{padding:20px 0 8px;display:flex;align-items:center;justify-content:space-
 .brand{display:flex;align-items:center;gap:10px}
 .brand .dot{width:22px;height:22px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 35%,#FFE9B8,var(--gold));box-shadow:var(--glow);position:relative;overflow:hidden}
 .brand .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--bg);transform:translate(-7px,-3px)}
-.brand b{display:block;font:400 19px/1.1 "Instrument Serif",Georgia,serif;letter-spacing:.01em}
-.brand b i{color:var(--gold-text)}
+.brand h1{margin:0;display:block;font:400 19px/1.1 "Instrument Serif",Georgia,serif;letter-spacing:.01em}
+.brand h1 i{color:var(--gold-text)}
 .brand span{font-size:12px;color:var(--muted)}
 h2{font-size:11px;letter-spacing:.26em;text-transform:uppercase;margin:26px 0 10px;color:var(--lilac);font-weight:800}
 :root[data-theme="light"] h2{color:var(--ink2)}
@@ -254,6 +254,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
 .sheet .nx .ck{width:9mm;height:9mm;border:.5mm solid #F4B740;border-radius:50%;flex:none}
 .sheet .lq{margin-top:4mm;font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-size:11pt;color:#3F3B78}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}label.btn:focus-within{outline:2px solid currentColor;outline-offset:2px}
+:root h2.serif{text-transform:none;color:inherit}
 </style>
 
 <!-- seo --><link rel="canonical" href="https://thesystemizedlife.com/year/"><meta property="og:url" content="https://thesystemizedlife.com/year/"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"The Systemized Year","description":"Your whole year on one page: money, time, focus and the things money is actually for. Twelve fifteen-minute check-ins. By Lukas · The Systemized Life.","url":"https://thesystemizedlife.com/year/","applicationCategory":"FinanceApplication","operatingSystem":"Any (web browser)","isAccessibleForFree":false,"offers":{"@type":"Offer","price":"59","priceCurrency":"USD","url":"https://thesystemizedlife.com/shop/"},"publisher":{"@id":"https://thesystemizedlife.com/#org"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Systemized Life","item":"https://thesystemizedlife.com/"},{"@type":"ListItem","position":2,"name":"The Systemized Year","item":"https://thesystemizedlife.com/year/"}]}]}</script><!-- /seo -->
@@ -261,7 +262,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
 <body>
 <div class="wrap">
   <header>
-    <div class="brand"><span class="dot" aria-hidden="true"></span><div><b>The Systemized <i>Year</i></b><span>by Lukas · The Systemized Life</span></div></div>
+    <div class="brand"><span class="dot" aria-hidden="true"></span><div><h1>The Systemized <i>Year</i></h1><span>by Lukas · The Systemized Life</span></div></div>
     <button class="btn sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
   </header>
 
@@ -301,7 +302,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
     </div>
     <div id="dash" class="hidden">
       <div class="kicker" id="d-kicker"></div>
-      <div class="yhead"><h1 class="serif yh"><span class="yr" id="d-year"></span><em>one orbit, one page.</em></h1><svg class="ring" id="d-ring" viewBox="0 0 260 260" aria-hidden="true"></svg></div>
+      <div class="yhead"><h2 class="serif yh"><span class="yr" id="d-year"></span><em>one orbit, one page.</em></h2><svg class="ring" id="d-ring" viewBox="0 0 260 260" aria-hidden="true"></svg></div>
       <p class="ink2 small" id="d-sub"></p>
       <div class="theme" id="d-theme"><small>This year is about</small><p id="d-themeText"></p></div>
       <div class="areas" id="d-areas"></div>
@@ -319,7 +320,7 @@ nav.tabs button.on{color:var(--gold-text);background:var(--accent-soft)}
   <!-- ===================== MONTH ===================== -->
   <section id="v-month" class="view">
     <div class="mtabs" id="m-tabs"></div>
-    <h1 class="serif mh" id="m-title"></h1>
+    <h2 class="serif mh" id="m-title"></h2>
     <p class="small muted" id="m-sub"></p>
     <div class="stats">
       <div class="stat"><small>In</small><b id="m-in">—</b><span id="m-inNote"></span></div>
