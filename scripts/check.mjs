@@ -91,5 +91,17 @@ for (const f of files.filter((f) => f.endsWith(".html") && !NO_SITE_LINKS.test(r
   for (const need of ["../blog/", "../samples/", "../about/", "../shop/"]) if (!links.includes('href="' + need + '"')) errors.push("links/index.html: the bio link page must link to " + need);
 }
 
+// Contrast (Yritys #152, lukas-influencer #120): the shop's Buy buttons and links use --accent as text on the page and
+// as background behind white text, so the light-theme --accent must reach WCAG AA 4.5:1 against both.
+{
+  const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  for (const p of ["shop/style.css", "privacy/index.html"]) {
+    const m = readFileSync(join(root, p), "utf8").match(/:root\{[^}]*--bg:(#[0-9a-fA-F]{6})[^}]*--accent:(#[0-9a-fA-F]{6})/);
+    if (!m) { errors.push(p + ": light --bg/--accent not found for the contrast check"); continue; }
+    for (const [name, bg] of [["page", m[1]], ["white", "#FFFFFF"]]) if (ratio(m[2], bg) < 4.5) errors.push(p + ": --accent " + m[2] + " on " + name + " is " + ratio(m[2], bg).toFixed(2) + ":1 (needs 4.5:1)");
+  }
+}
+
 if (errors.length) { console.error(errors.join("\n")); console.error("\n" + errors.length + " problem(s)"); process.exit(1); }
 console.log("ok · " + files.length + " files checked");
