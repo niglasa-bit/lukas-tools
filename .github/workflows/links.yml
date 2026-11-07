@@ -1,0 +1,40 @@
+name: links
+# Weekly live link check (Niko 31.10.2026). A broken link opens or updates one issue labelled "linkit", which the
+# night run picks up; the issue closes itself when the next run is clean. Public repo: Actions minutes are free.
+on:
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: links
+  cancel-in-progress: true
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Check live links
+        id: run
+        run: |
+          set +e
+          node scripts/livelinks.mjs > out.txt; echo "code=$?" >> "$GITHUB_OUTPUT"; cat out.txt
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh issue list --label linkit --state open --json number --jq '.[0].number')
+          if [ "${{ steps.run.outputs.code }}" != "0" ]; then
+            { echo "The weekly link check found broken links on thesystemizedlife.com:"; echo; cat out.txt; echo; echo "Fix the link in the page (or replace the dead page) and run the *links* workflow again."; } > body.md
+            gh label create linkit --color D93F0B --description "Broken link on the site" 2>/dev/null || true
+            if [ -n "$n" ]; then gh issue edit "$n" --body-file body.md; else gh issue create --title "Broken links on the site" --label linkit --body-file body.md; fi
+            exit 1
+          elif [ -n "$n" ]; then
+            gh issue close "$n" --comment "The weekly link check is clean again."
+          fi

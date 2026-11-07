@@ -1,5 +1,5 @@
-// Repo check: syntax of every inline and standalone script, manifests, local links and asset paths.
-// Run: node scripts/check.mjs   (CI runs it on every push and PR)
+// Repo check: syntax of every inline and standalone script, manifests, local links, asset paths and old links.
+// Run: node scripts/check.mjs   (CI runs it on every push and PR; live outside links: scripts/livelinks.mjs, weekly)
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdtempSync } from "node:fs";
 import { join, dirname, resolve, extname } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -63,6 +63,43 @@ for (const f of files.filter((f) => f.endsWith("sw.js"))) {
     const u = s.slice(1, -1);
     const p = u === "./" ? join(dirname(f), "index.html") : resolve(dirname(f), u);
     if (!existsSync(p)) errors.push(rel(f) + ": precache file missing " + u);
+  }
+}
+
+// Old links: Beacons is closed and the site lives at thesystemizedlife.com, so no page may point to beacons.ai or
+// the old github.io address (the one link everywhere is https://thesystemizedlife.com/links/).
+const OLD_LINK = /(?:[a-z0-9-]+\.)?beacons\.ai\b|niglasa-bit\.github\.io/i;
+for (const f of files) {
+  if (!/\.(html|js|mjs|json|md|txt|xml|webmanifest|css)$/.test(f) || rel(f) === "scripts/check.mjs") continue;
+  readFileSync(f, "utf8").split("\n").forEach((line, n) => {
+    if (OLD_LINK.test(line)) errors.push(rel(f) + ":" + (n + 1) + ": old link (use https://thesystemizedlife.com/links/): " + line.trim().slice(0, 120));
+  });
+}
+
+// Site links (Niko 31.10.2026: "Lukaksen sivuilta puuttuu linkkejä"): every public page links back to the home page,
+// the blog and the shop, so no visitor gets stuck in an app, a calculator or a shop page. The links page (the one bio
+// link everywhere) also lists the blog, the samples and About. Guides opened from the purchase email (start-here),
+// error pages, the radio overlay, blog posts (own nav) and blog/about/legal (own header) are not checked here.
+const SITE_LINKS = { home: /href=["'](?:\.\.\/)*(?:\.\/)?["']|href=["']https:\/\/thesystemizedlife\.com\/["']/, blog: /href=["'][^"']*blog\/["']/, shop: /href=["'](?:\.\.\/)*(?:shop\/|\.\/)["']|href=["'][^"']*\/shop\/["']/ };
+const NO_SITE_LINKS = /(^|\/)(start-here|404|thanks-[^/]*)\.html$|^radio\/|^blog\/|^about\/|^legal\/|^index\.html$|^studio-api\/|^tools\//;
+for (const f of files.filter((f) => f.endsWith(".html") && !NO_SITE_LINKS.test(rel(f)))) {
+  const html = readFileSync(f, "utf8");
+  for (const [name, re] of Object.entries(SITE_LINKS)) if (!re.test(html)) errors.push(rel(f) + ": no link to the " + name + " page (add Home · Blog · Shop to the footer)");
+}
+{
+  const links = readFileSync(join(root, "links/index.html"), "utf8");
+  for (const need of ["../blog/", "../samples/", "../about/", "../shop/"]) if (!links.includes('href="' + need + '"')) errors.push("links/index.html: the bio link page must link to " + need);
+}
+
+// Contrast (Yritys #152, lukas-influencer #120): the shop's Buy buttons and links use --accent as text on the page and
+// as background behind white text, so the light-theme --accent must reach WCAG AA 4.5:1 against both.
+{
+  const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  for (const p of ["shop/style.css", "privacy/index.html"]) {
+    const m = readFileSync(join(root, p), "utf8").match(/:root\{[^}]*--bg:(#[0-9a-fA-F]{6})[^}]*--accent:(#[0-9a-fA-F]{6})/);
+    if (!m) { errors.push(p + ": light --bg/--accent not found for the contrast check"); continue; }
+    for (const [name, bg] of [["page", m[1]], ["white", "#FFFFFF"]]) if (ratio(m[2], bg) < 4.5) errors.push(p + ": --accent " + m[2] + " on " + name + " is " + ratio(m[2], bg).toFixed(2) + ":1 (needs 4.5:1)");
   }
 }
 

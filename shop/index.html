@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Money Planning Apps and Workbooks · Lukas Shop</title><meta name="description" content="Simple money and time systems by Lukas · The Systemized Life. One-time payment, works on your phone and computer.">
-<meta property="og:type" content="website"><meta property="og:site_name" content="The Systemized Life"><meta property="og:title" content="Money Planning Apps and Workbooks · Lukas Shop"><meta property="og:description" content="Simple money and time systems by Lukas · The Systemized Life. One-time payment, works on your phone and computer."><meta name="twitter:card" content="summary">
+<meta property="og:type" content="website"><meta property="og:site_name" content="The Systemized Life"><meta property="og:title" content="Money Planning Apps and Workbooks · Lukas Shop"><meta property="og:description" content="Simple money and time systems by Lukas · The Systemized Life. One-time payment, works on your phone and computer."><meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://thesystemizedlife.com/shop/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="A template vs. a tool: the tool calculates as you type, opens in your browser with a purchase code and no account, has a built-in Sunday check-in and a 14-day refund."><meta name="twitter:image" content="https://thesystemizedlife.com/shop/og.png">
 <link rel="stylesheet" href="style.css"><script src="config.js"></script>
-<!-- seo --><link rel="canonical" href="https://thesystemizedlife.com/shop/"><meta property="og:url" content="https://thesystemizedlife.com/shop/"><meta property="og:image" content="https://thesystemizedlife.com/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="https://thesystemizedlife.com/og.png"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Systemized Life","item":"https://thesystemizedlife.com/"},{"@type":"ListItem","position":2,"name":"Money Planning Apps and Workbooks","item":"https://thesystemizedlife.com/shop/"}]}]}</script><!-- /seo -->
+<!-- seo --><link rel="canonical" href="https://thesystemizedlife.com/shop/"><meta property="og:url" content="https://thesystemizedlife.com/shop/"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Systemized Life","item":"https://thesystemizedlife.com/"},{"@type":"ListItem","position":2,"name":"Money Planning Apps and Workbooks","item":"https://thesystemizedlife.com/shop/"}]}]}</script><!-- /seo -->
 </head>
 <body><div class="wrap">
 <h1>The Systemized Life · Shop</h1>
 <p class="sub">Small systems that run themselves. One-time payment, no subscription. Opens in your browser on up to 3 devices.</p>
+<h2 class="start">Start free</h2>
+<p class="free"><a href="../samples/">🎁 Free samples</a><a href="../future-cost/">💸 Future Cost Calculator</a><a href="../focus/">⏱️ Focus Leak Calculator</a></p>
+<p class="small">No sign-up, no card. When a free tool helps, the paid one does the rest for you.</p>
+<h2>The tools</h2>
 <div id="list"></div>
-<p class="more">Looking for the free tools? <a href="../links/">All free tools →</a></p>
+<p class="more">More free tools and videos: <a href="../links/">All links →</a></p>
 <footer>
   Made by <span id="seller"></span>. Not financial advice.<br>
   Merchant of record: <b>Sold through Link, LLC</b> (a Stripe company), which handles sales tax and your receipt.<br>
-  <a href="legal.html">Terms, refunds &amp; privacy</a> · <a href="withdraw.html">Withdraw from a purchase</a><br><a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">▶ YouTube</a> · <a href="https://www.youtube.com/@LukasSystemized/live">🎧 Systems Radio (24/7 lofi)</a>
-</footer>
+  <a href="help.html">Help</a> · <a href="legal.html">Terms, refunds &amp; privacy</a> · <a href="withdraw.html">Withdraw from a purchase</a><br><a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">▶ YouTube</a> · <a href="https://www.youtube.com/@LukasSystemized/live">🎧 Systems Radio (24/7 lofi)</a><br><a href="../">Home</a> · <a href="../blog/">Blog</a></footer>
 </div>
 <script>
 var S = window.SHOP, list = document.getElementById("list");
 document.getElementById("seller").textContent = S.seller;
+var TRUST = ["Runs in your browser, no account", "Up to 3 devices, one-time payment", "14-day refund, no questions"];
 function esc(s){return String(s||"").replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   var ready = !!p.paymentLink;
@@ -26,7 +30,9 @@ S.products.filter(function(p){return !p.hidden;}).forEach(function(p){
   d.innerHTML = "<h2 class='t'><span aria-hidden='true'>"+esc(p.emoji)+"</span> "+esc(p.name)+"</h2><span class='d'>"+esc(p.line)+"</span>"+
     "<div class='row'><span class='price'>"+esc(p.price)+"</span>"+
     "<span><a class='btn' "+(ready?"href='"+esc(p.paymentLink)+"' aria-label='Buy "+esc(p.name)+"'":"aria-disabled='true' role='link'")+">"+(ready?"Buy":"Coming soon")+"</a></span></div>"+
-    (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : "<p class='small'>Opens all four apps with one order code.</p>");
+    "<ul class='trust'>"+(p.trust||TRUST).map(function(t){return "<li>"+esc(t)+"</li>";}).join("")+"</ul>"+
+    (p.via ? "<p class='small'>Checkout on "+esc(p.via)+", which handles tax and your receipt.</p>" : "")+
+    (p.app ? "<p class='small'>Already bought it? <a href='../"+esc(p.app)+"'>Open the app</a></p>" : p.note ? "<p class='small'>"+esc(p.note)+"</p>" : "<p class='small'>Opens all four apps with one order code.</p>");
   list.appendChild(d);
 });
 </script></body></html>

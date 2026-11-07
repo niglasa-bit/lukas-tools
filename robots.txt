@@ -1,6 +1,5 @@
 User-agent: *
 Disallow: /shop/thanks.html
 Disallow: /tools/
-Disallow: /*/start-here.html
 
 Sitemap: https://thesystemizedlife.com/sitemap.xml

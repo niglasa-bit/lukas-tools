@@ -243,7 +243,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card hero">
       <div class="kicker">Unlock your copy</div>
       <h3 class="serif" style="font-size:26px;margin:6px 0 8px;line-height:1.1">Hand the boring tasks to a system.</h3>
-      <p class="small">Use the email you bought with and your <b>order code</b> from the purchase email (LK-…; bought on Beacons? use the Order # from that receipt). We'll email you a 6-digit code. One purchase works on up to 3 devices.</p>
+      <p class="small">Use the email you bought with and your <b>order code</b> from the purchase email (LK-…; bought on Gumroad? use your license key; bought on Beacons? use the Order # from that receipt). We'll email you a 6-digit code. One purchase works on up to 3 devices.</p>
       <p class="small" style="margin:0">Got it through your company? Use your work email and the contract number you were given as the Order #.</p>
     </div>
     <div class="card hidden" id="g-owned">
@@ -263,7 +263,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
       <div class="actions"><button class="btn primary" id="g-verify">Unlock</button><button class="btn ghost" id="g-back">Back</button></div>
       <p class="small muted" id="g-msg2" role="status" style="margin-top:10px"></p>
     </div>
-    <footer>What you type stays on this device; only your email and order number are checked.<br>Don't have it yet? <a href="../shop/">See it in the shop</a> · <a href="../links/">The Systemized Life</a> · <a href="../shop/withdraw.html">Withdraw from a purchase</a><br><a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">▶ YouTube</a> · <a href="https://www.youtube.com/@LukasSystemized/live">🎧 Systems Radio (24/7 lofi)</a></footer>
+    <footer>What you type stays on this device; only your email and order number are checked.<br>Don't have it yet? <a href="../shop/">See it in the shop</a> · <a href="../links/">The Systemized Life</a> · <a href="../shop/help.html">Help</a> · <a href="../shop/withdraw.html">Withdraw from a purchase</a><br><a href="https://www.youtube.com/channel/UCl5Ez58VenwMy1hP4lhM9VQ">▶ YouTube</a> · <a href="https://www.youtube.com/@LukasSystemized/live">🎧 Systems Radio (24/7 lofi)</a><br><a href="../">Home</a> · <a href="../blog/">Blog</a></footer>
   </section>
 
   <!-- ===================== SAMPLE: loading / failed ===================== -->
@@ -392,7 +392,7 @@ nav.tabs button.on{color:var(--accent);background:var(--accent-soft)}
     <div class="card" style="margin-top:12px" id="o-out">
       <div class="actions" style="margin-top:0"><button class="btn sm ghost" id="o-logout">Sign out on this device</button></div>
     </div>
-    <footer><span id="o-sign">One small system at a time. ☕</span><br><span id="o-disc"></span><br><a id="o-link" href="../links/">The Systemized Life</a></footer>
+    <footer><span id="o-sign">One small system at a time. ☕</span><br><span id="o-disc"></span><br><a id="o-link" href="../links/">The Systemized Life</a><br><a href="../">Home</a> · <a href="../blog/">Blog</a> · <a href="../shop/">Shop</a></footer>
   </section>
 </div>
 
@@ -413,7 +413,7 @@ var $=function(i){return document.getElementById(i);};
 // Free sample (?sample): no gate, no device, no token. Its progress lives under its own key, so a later
 // purchase starts clean and the sample never touches the buyer's real data or sign-in.
 var SAMPLE=new URLSearchParams(location.search).has("sample");
-var BUY_URL="https://shop.beacons.ai/lukas.systemized/531e5986-ab7b-4716-b9b4-4d929767c981", ALL_URL="https://beacons.ai/lukas.systemized";
+var BUY_URL="../shop/", ALL_URL="../shop/";
 var THEME_KEY="lukas-autopilot-v1-theme";
 var KEY=SAMPLE?"lukas-autopilot-sample-v1":"lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
 // API address comes from the meta tag. ?api= is only for local development (a localhost API on a page
@@ -482,8 +482,9 @@ $("g-other").addEventListener("click",function(){ $("g-owned").classList.add("hi
 function enter(token){
   api("/content?product="+PRODUCT,null,token).then(function(r){
     if(r.error==="not_owned"){ // signed in through another Lukas tool, but this one isn't bought (yet)
+      if(!(r.products||[]).length){ showGate("This purchase is no longer active: it was refunded or withdrawn. Reply to your purchase email if that's wrong."); return; }
       showGate(); $("g-owned").classList.remove("hidden"); $("g-step1").classList.add("hidden");
-      $("g-owned-msg").textContent="This device already has another Lukas tool. The Autopilot Workbook is its own purchase. If you just bought it, give it a few minutes and reopen this page.";
+      $("g-owned-msg").textContent="This device already has another Lukas tool. The Autopilot Workbook is its own purchase. If you just bought it, give it a few minutes and reopen this page. If it was refunded, access to it has ended.";
       return; }
     if(r.error){ if(!token&&/^(bad_token|token_expired|revoked|device_removed)$/.test(r.error)){ S.auth.token=null; save(); } showGate(r.error==="device_removed"?"This device was removed. Request a new code.":r.error==="revoked"?"This licence is no longer active.":""); return; }
     C=r.content; S.auth.signedOut=false; if(token) S.auth.token=token; if(r.token) S.auth.token=r.token;
@@ -496,6 +497,12 @@ function enter(token){
 function showGate(m){ $("gate").classList.add("on"); $("tabs").classList.add("hidden"); document.querySelectorAll(".view").forEach(function(v){ if(v.id!=="gate") v.classList.remove("on"); }); $("g-step2").classList.add("hidden"); $("g-step1").classList.remove("hidden"); $("g-owned").classList.add("hidden"); if(m) msg("g-msg",m); }
 (function(){ if(SAMPLE) return enterSample(); if(S.auth.token) return enter(); if(S.auth.signedOut) return;
   var o=[other(STUDIO_KEY),other(YEAR_KEY)].filter(function(x){ return x&&x.auth&&x.auth.token; })[0]; if(o){ deviceId(); enter(o.auth.token); } })();
+// A refund, a withdrawal or a removed device ends access on the server at once. While the app stays open it checks
+// again when it comes back on screen (after 2 min) and every 15 min, and a lost licence reloads to the sign-in gate.
+(function(){ var last=Date.now();
+  function recheck(){ if(!C||!S.auth.token||(typeof SAMPLE!=="undefined"&&SAMPLE)||document.visibilityState!=="visible"||Date.now()-last<120000) return; last=Date.now();
+    api("/content?product="+PRODUCT).then(function(r){ if(r&&r.token){ S.auth.token=r.token; save(); } if(r&&/^(not_owned|revoked|device_removed|bad_token|token_expired)$/.test(r.error||"")) location.reload(); }).catch(function(){}); }
+  document.addEventListener("visibilitychange",recheck); setInterval(function(){ if(Date.now()-last>=900000) recheck(); },60000); })();
 
 // ---------- free sample ----------
 // Public slice from GET /sample (no auth header, never /content, /me, /activate or a device id).
