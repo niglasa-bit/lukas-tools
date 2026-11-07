@@ -44,7 +44,8 @@ let seo = readFileSync("scripts/seo.mjs", "utf8");
 const entry = '  { path: "blog/' + slug + '/", kind: "article", published: "' + iso + '", priority: "0.8" },\n';
 if (!seo.includes('path: "blog/' + slug + '/"')) {
   const lines = seo.split("\n");
-  const last = lines.map((l, i) => (/^\s*\{ path: "blog\//.test(l) ? i : -1)).filter((i) => i >= 0).pop();
+  let last = lines.map((l, i) => (/^\s*\{ path: "blog\//.test(l) ? i : -1)).filter((i) => i >= 0).pop();
+  while (!/\},\s*$/.test(lines[last])) last++; // an entry can span several lines
   lines.splice(last + 1, 0, entry.trimEnd());
   seo = lines.join("\n");
   writeFileSync("scripts/seo.mjs", seo);
