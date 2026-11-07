@@ -91,6 +91,19 @@ for (const f of files.filter((f) => f.endsWith(".html") && !NO_SITE_LINKS.test(r
   for (const need of ["../blog/", "../samples/", "../about/", "../shop/"]) if (!links.includes('href="' + need + '"')) errors.push("links/index.html: the bio link page must link to " + need);
 }
 
+// Amazon links (lakitarkastus Yritys #191, 2.11.2026): every amazon.* link carries the Associates tag and
+// rel="sponsored", and the page shows Amazon's required line next to the links.
+for (const f of files.filter((x) => x.endsWith(".html"))) {
+  const html = readFileSync(f, "utf8");
+  const amazon = [...html.matchAll(/<a\b[^>]*href="(https?:\/\/(?:www\.)?amazon\.[^"]+)"[^>]*>/g)];
+  if (!amazon.length) continue;
+  for (const m of amazon) {
+    if (!/[?&](amp;)?tag=[a-z0-9-]+-2\d\b/.test(m[1])) errors.push(rel(f) + ": Amazon link without the Associates tag: " + m[1].slice(0, 100));
+    if (!/rel="[^"]*sponsored/.test(m[0])) errors.push(rel(f) + ': Amazon link needs rel="sponsored": ' + m[1].slice(0, 100));
+  }
+  if (!/As an Amazon Associate/.test(html)) errors.push(rel(f) + ": page with Amazon links must show \"As an Amazon Associate ... earns from qualifying purchases\"");
+}
+
 // Contrast (Yritys #152, lukas-influencer #120): the shop's Buy buttons and links use --accent as text on the page and
 // as background behind white text, so the light-theme --accent must reach WCAG AA 4.5:1 against both.
 {
