@@ -114,6 +114,21 @@ for (const f of files.filter((x) => x.endsWith(".html"))) {
   }
 }
 
+// Bundle comparison (KSL 2:12, Lakitarkastaja 8.11.2026): "$N if bought separately" must equal the sum of the
+// separately sold prices of the bundle's parts, which are shown with it.
+{
+  const cfg = readFileSync("shop/config.js", "utf8");
+  const m = cfg.match(/\$(\d+) if bought separately \(([^)]*)\)/);
+  if (!m) errors.push('shop/config.js: All-Access must say "$N if bought separately ($a + $b + ...)"');
+  else {
+    const parts = [...m[2].matchAll(/\$(\d+)/g)].map((x) => +x[1]);
+    const sum = parts.reduce((a, b) => a + b, 0);
+    if (sum !== +m[1]) errors.push("shop/config.js: separately total $" + m[1] + " != parts sum $" + sum);
+    const prices = [...cfg.matchAll(/price: "\$(\d+)"/g)].map((x) => +x[1]);
+    for (const p of parts) if (!prices.includes(p)) errors.push("shop/config.js: bundle part price $" + p + " is not a product price in the shop");
+  }
+}
+
 // Contrast (Yritys #152, lukas-influencer #120): the shop's Buy buttons and links use --accent as text on the page and
 // as background behind white text, so the light-theme --accent must reach WCAG AA 4.5:1 against both.
 {
