@@ -97,3 +97,7 @@ footer.site .follow{display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:8px;f
 footer.site a{color:var(--ink2)}
 footer.site .follow a{color:var(--ink);font-weight:600;text-decoration:none}
 footer.site .follow a:hover{color:var(--stamp)}
+/* Post: number tables (savings-rate rows) */
+table.t{width:100%;border-collapse:collapse;margin:12px 0 16px;font-variant-numeric:tabular-nums;background:var(--card);border:1px solid var(--line)}
+table.t th,table.t td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line)}
+table.t th{background:var(--soft);font-weight:700;color:var(--ink)}
