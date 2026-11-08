@@ -104,6 +104,16 @@ for (const f of files.filter((x) => x.endsWith(".html"))) {
   if (!/As an Amazon Associate/.test(html)) errors.push(rel(f) + ": page with Amazon links must show \"As an Amazon Associate ... earns from qualifying purchases\"");
 }
 
+// Frozen series (Yritys #153, 8.11.2026): the site must not promise a start date for a series that is on hold
+// (Market Mirror, Signs Ahead until the 29.11. review). Mentioning them in blog history is fine; a dated promise is not.
+for (const f of files.filter((x) => x.endsWith(".html"))) {
+  const html = readFileSync(f, "utf8");
+  for (const name of ["Market Mirror", "Signs Ahead"]) {
+    const re = new RegExp("(from|starting|starts|coming)[^<]{0,40}</em>\\s*<b>(The )?" + name, "i");
+    if (re.test(html)) errors.push(rel(f) + ": dated promise for the frozen series " + name + " (remove it or say 'later')");
+  }
+}
+
 // Contrast (Yritys #152, lukas-influencer #120): the shop's Buy buttons and links use --accent as text on the page and
 // as background behind white text, so the light-theme --accent must reach WCAG AA 4.5:1 against both.
 {
