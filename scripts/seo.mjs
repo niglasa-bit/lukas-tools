@@ -50,6 +50,7 @@ const PAGES = [
   { path: "blog/", kind: "page", priority: "0.8" },
   { path: "blog/why-this-blog-exists/", kind: "article", published: "2026-10-17", priority: "0.8",
     title: "30,000 € of Debt at 30: Why This Blog Exists · The Systemized Life" },
+  { path: "blog/savings-rate-retirement-date/", kind: "article", published: "2026-11-10", priority: "0.8" },
   { path: "about/", kind: "page", priority: "0.5" },
   { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },
