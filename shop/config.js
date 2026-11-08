@@ -7,7 +7,7 @@ window.SHOP = {
   seller: "Sevenflowlabs Oy", // Business ID 3660293-5, see legal.html
   products: [
     { name: "All-Access", featured: true, emoji: "🗝️", price: "$99", paymentLink: "https://buy.stripe.com/dRm7sMbJPdigbL9aGF3Nm00",
-      line: "All four tools in one purchase: Money Plan Studio, The Autopilot Workbook, The Systemized Year and The Enough Habit. $176 separately. One-time payment, the same 3 devices for all four." },
+      line: "All four tools in one purchase: Money Plan Studio, The Autopilot Workbook, The Systemized Year and The Enough Habit. $176 if bought separately ($49 + $59 + $39 + $29). One-time payment, the same 3 devices for all four." },
     { name: "Money Plan Studio", app: "studio/", emoji: "🧭", price: "$49", paymentLink: "https://buy.stripe.com/5kQaEY4hn3HG3eD0213Nm01",
       line: "Your whole money plan on one page, a 10-minute Sunday check-in, and a price-tag reader for every purchase." },
     { name: "The Systemized Year", app: "year/", emoji: "🌙", price: "$59", paymentLink: "https://buy.stripe.com/4gM8wQ5lr3HG6qP4ih3Nm02",
