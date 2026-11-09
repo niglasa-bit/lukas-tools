@@ -129,6 +129,14 @@ for (const f of files.filter((x) => x.endsWith(".html"))) {
   }
 }
 
+// Crawlable phantom URLs (Search Console 9.11.2026: "Not found (404)"): an href or src built in a JS string as
+// href="'+VAR+'" is read by Googlebot as the relative URL "'+VAR+'" and reported as a 404. Use a literal path or set
+// .href in code.
+for (const f of files.filter((x) => x.endsWith(".html") || x.endsWith(".js"))) {
+  const src = readFileSync(f, "utf8");
+  for (const m of src.matchAll(/(?:href|src)="'\s*\+[^"]*"/g)) errors.push(rel(f) + ": JS-built link " + m[0] + " is crawled as a 404 URL; use a literal path or set .href in code");
+}
+
 // Contrast (Yritys #152, lukas-influencer #120): the shop's Buy buttons and links use --accent as text on the page and
 // as background behind white text, so the light-theme --accent must reach WCAG AA 4.5:1 against both.
 {

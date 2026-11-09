@@ -367,6 +367,7 @@ var $=function(i){return document.getElementById(i);};
 // Free sample: index.html?sample runs days 1-3 from the public GET /sample?product=enough, with no login and no
 // device slot. Its progress lives under its own key so a later purchase starts clean; saved tokens are never touched.
 var SAMPLE=new URLSearchParams(location.search).has("sample");
+// Shop links are literal "../shop/" inside HTML strings too: a quoted '+VAR+' href is crawled by Google as a 404 URL (Search Console 9.11.2026).
 var BUY_URL="../shop/", ALL_URL="../shop/";
 var BASE_KEY="lukas-enough-v1", KEY=SAMPLE?"lukas-enough-sample-v1":BASE_KEY, STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", AUTO_KEY="lukas-autopilot-v1", PRODUCT="enough";
 var TOTAL=66, CATCH=11, LIMIT=66; // LIMIT = last calendar day this copy can use (3 in the sample) // a catch-up day after every ten goals: calendar days 11, 22, 33, 44, 55, 66
@@ -501,7 +502,7 @@ function lockHTML(){ var tot=C.totals||{}, days=tot.days||TOTAL, goals=tot.goals
   return '<div class="rc lock"><div class="c disp big">Days '+(LIMIT+1)+"-"+days+'</div><div class="c small muted up">Not in the free sample</div><div class="dash"></div>'+
     '<p class="why">Days '+(LIMIT+1)+"-"+days+" are in the full app: "+more+" more goals, "+catches+" catch-up days, your printable wall sheet.</p>"+
     '<div class="dash"></div><div class="row up small"><span>More goals</span><span>'+more+'</span></div><div class="row up small"><span>Catch-up days</span><span>'+catches+'</span></div><div class="row up small"><span>Wall sheet</span><span>1</span></div>'+
-    '<a class="btn print" href="'+BUY_URL+'">Keep going: get all '+days+' days</a><a class="alt" href="'+ALL_URL+'">or get all four Lukas tools (All-Access)</a></div>'; }
+    '<a class="btn print" href="../shop/">Keep going: get all '+days+' days</a><a class="alt" href="../shop/">or get all four Lukas tools (All-Access)</a></div>'; }
 
 // ---------- tabs ----------
 function show(v){ if(v!=="day"&&v!=="setup"){ S.ui=v; save(); }
