@@ -414,6 +414,7 @@ var $=function(i){return document.getElementById(i);};
 // Free sample (?sample): no gate, no device, no token. Its progress lives under its own key, so a later
 // purchase starts clean and the sample never touches the buyer's real data or sign-in.
 var SAMPLE=new URLSearchParams(location.search).has("sample");
+// Shop links are literal "../shop/" inside HTML strings too: a quoted '+VAR+' href is crawled by Google as a 404 URL (Search Console 9.11.2026).
 var BUY_URL="../shop/", ALL_URL="../shop/";
 var THEME_KEY="lukas-autopilot-v1-theme";
 var KEY=SAMPLE?"lukas-autopilot-sample-v1":"lukas-autopilot-v1", STUDIO_KEY="lukas-studio-v1", YEAR_KEY="lukas-year-v1", PRODUCT="autopilot", WEEKS=48;
@@ -532,8 +533,8 @@ function lockHTML(title){ if(!SAMPLE) return ""; var m=missing(), parts=[];
   if(m.recipes) parts.push(plural(m.recipes,"recipe","recipes")); if(m.prompts) parts.push(plural(m.prompts,"prompt","prompts")); if(m.lessons) parts.push(m.lessons+" more lesson"+(m.lessons===1?"":"s"));
   var line=parts.length?(parts.length>1?parts.slice(0,-1).join(", ")+" and "+parts[parts.length-1]:parts[0])+" are in the full workbook.":"The rest is in the full workbook.";
   return '<div class="card lock"><div class="kicker">🔒 '+esc(title||"In the full workbook")+'</div><p class="ink2" style="margin:8px 0 0">'+esc(line)+'</p>'+
-    '<div class="actions"><a class="btn primary" href="'+BUY_URL+'" target="_blank" rel="noopener">Get the full workbook</a></div>'+
-    '<a class="alt" href="'+ALL_URL+'" target="_blank" rel="noopener">or get all four Lukas tools (All-Access)</a></div>'; }
+    '<div class="actions"><a class="btn primary" href="../shop/" target="_blank" rel="noopener">Get the full workbook</a></div>'+
+    '<a class="alt" href="../shop/" target="_blank" rel="noopener">or get all four Lukas tools (All-Access)</a></div>'; }
 
 // Team licences (B2B) show the company instead of the Lukas byline.
 function brand(){ var tm=S.auth.team;
