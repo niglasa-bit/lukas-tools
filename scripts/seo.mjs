@@ -58,6 +58,7 @@ const PAGES = [
   { path: "blog/richest-man-in-babylon-laws-of-gold/", kind: "article", published: "2026-11-08", priority: "0.8" },
   { path: "blog/savings-rate-retirement-date/", kind: "article", published: "2026-11-10", priority: "0.8" },
   { path: "blog/consumer-playbook-1955/", kind: "article", published: "2026-11-08", priority: "0.8" },
+  { path: "blog/snowball-vs-avalanche/", kind: "article", published: "2026-11-12", priority: "0.8" },
   { path: "about/", kind: "page", priority: "0.5" },
   { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },
