@@ -60,6 +60,7 @@ const PAGES = [
   { path: "blog/consumer-playbook-1955/", kind: "article", published: "2026-11-08", priority: "0.8" },
   { path: "blog/snowball-vs-avalanche/", kind: "article", published: "2026-11-12", priority: "0.8" },
   { path: "blog/store-brand-vs-name-brand/", kind: "article", published: "2026-11-13", priority: "0.8" },
+  { path: "blog/money-rules-by-decade/", kind: "article", published: "2026-11-15", priority: "0.8" },
   { path: "about/", kind: "page", priority: "0.5" },
   { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },
