@@ -9,7 +9,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 
 const SITE = "https://thesystemizedlife.com";
-const root = resolve(dirname(new URL(import.meta.url).pathname), "..");
+import { fileURLToPath } from "node:url";
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const check = args.includes("--check");
 const base = SITE.replace(/\/$/, "");
@@ -61,6 +62,7 @@ const PAGES = [
   { path: "blog/snowball-vs-avalanche/", kind: "article", published: "2026-11-12", priority: "0.8" },
   { path: "blog/store-brand-vs-name-brand/", kind: "article", published: "2026-11-13", priority: "0.8" },
   { path: "blog/money-rules-by-decade/", kind: "article", published: "2026-11-15", priority: "0.8" },
+  { path: "blog/stock-market-crash-recovery-history/", kind: "article", published: "2026-11-21", priority: "0.8" },
   { path: "about/", kind: "page", priority: "0.5" },
   { path: "legal/", kind: "page", priority: "0.2" },
   { path: "links/", kind: "page", priority: "0.5" },

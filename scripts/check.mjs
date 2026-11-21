@@ -2,10 +2,11 @@
 // Run: node scripts/check.mjs   (CI runs it on every push and PR; live outside links: scripts/livelinks.mjs, weekly)
 import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdtempSync } from "node:fs";
 import { join, dirname, resolve, extname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 
-const root = resolve(dirname(new URL(import.meta.url).pathname), "..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const skip = new Set(["node_modules", ".git", ".wrangler"]);
 const files = [];
 (function walk(d) {
@@ -17,7 +18,7 @@ const files = [];
 })(root);
 
 const errors = [];
-const rel = (p) => p.slice(root.length + 1);
+const rel = (p) => p.slice(root.length + 1).replace(/\\/g, "/");
 const tmp = mkdtempSync(join(tmpdir(), "check-"));
 
 function syntax(code, label, module) {
